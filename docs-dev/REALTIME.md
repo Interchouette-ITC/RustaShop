@@ -6,21 +6,21 @@ Live shop state is a **product default**, not a plugin. rustashop treats a push 
 
 ## Transport
 
-| Now | Later |
-| --- | --- |
-| WebSocket as first-class gateway beside the HTTP API | Evaluate WebTransport where it helps (unreliable datagrams, HTTP/3 environments) |
+| Now                                                        | Later                                                                            |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| WebSocket as first-class gateway beside the Actix HTTP API | Evaluate WebTransport where it helps (unreliable datagrams, HTTP/3 environments) |
 
 One gateway serves **both** UI stacks and the admin shell.
 
 ## Event categories (v0 interest)
 
-| Category | Examples | Priority |
-| --- | --- | --- |
-| Cart / checkout session | Line changes, totals, validation errors, lock for payment | High |
-| Inventory signals | Low stock, sold out for a variant | High |
-| Order lifecycle | Status transitions for customer and admin | High |
-| Admin feeds | New orders, failed webhooks, sandbox job status | High for admin |
-| Presence / chat | Support presence | Defer |
+| Category                | Examples                                                  | Priority       |
+| ----------------------- | --------------------------------------------------------- | -------------- |
+| Cart / checkout session | Line changes, totals, validation errors, lock for payment | High           |
+| Inventory signals       | Low stock, sold out for a variant                         | High           |
+| Order lifecycle         | Status transitions for customer and admin                 | High           |
+| Admin feeds             | New orders, failed webhooks, sandbox job status           | High for admin |
+| Presence / chat         | Support presence                                          | Defer          |
 
 ## Protocol shape (intent)
 
