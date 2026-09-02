@@ -36,14 +36,28 @@ We think the answer is worth proving in public.
 
 These projects defined what "open-source shop software" means. Each solved real problems; each also shows where a Rust rewrite could help.
 
+Local shallow checkouts (gitignored, not shipped) live under `PHP/` for reading: PrestaShop (`develop`), Sylius (`2.3`), Magento (`2.4-develop`), WooCommerce (`trunk`), OpenCart (`master`).
+
 | Platform                                                                                      | Era / style                 | Strengths                                   | Pain we want to avoid                                   |
 | --------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------------- | ------------------------------------------------------- |
 | [osCommerce](https://www.oscommerce.com/)                                                     | Early 2000s monolith        | Simple mental model, huge extension history | Global state, SQL-in-templates, security surface        |
-| [PrestaShop](https://www.prestashop.com/)                                                     | Module ecosystem, EU retail | Merchant features out of the box, themes    | Legacy core + module conflicts, upgrade fear            |
-| [Magento / Adobe Commerce](https://business.adobe.com/products/magento/magento-commerce.html) | Enterprise PHP              | Catalog complexity, B2B, multi-store        | Heavy ops, slow iteration, extension brittleness        |
-| [Sylius](https://sylius.com/)                                                                 | Symfony, API-first lean     | Clean domain boundaries, modern PHP         | Still PHP runtime costs, hosting model, ecosystem scale |
-| [WooCommerce](https://woocommerce.com/)                                                       | WordPress plugin            | Distribution, content + commerce            | WP coupling, plugin matrix, performance at scale        |
-| [OpenCart](https://www.opencart.com/)                                                         | Lightweight PHP             | Easy small-shop deploy                      | Same class of legacy patterns as peers                  |
+| [PrestaShop](https://www.prestashop.com/)                                                     | Module ecosystem, EU retail | Merchant features out of the box, themes    | Legacy `classes/` + `override/`, float prices in places |
+| [Magento / Adobe Commerce](https://business.adobe.com/products/magento/magento-commerce.html) | Enterprise PHP              | Catalog complexity, B2B, multi-store        | 200+ modules, DI/plugin interception sprawl             |
+| [Sylius](https://sylius.com/)                                                                 | Symfony, API-first lean     | Clean domain boundaries, integer money      | Still PHP runtime costs, hosting model, ecosystem scale |
+| [WooCommerce](https://woocommerce.com/)                                                       | WordPress plugin            | Distribution, content + commerce            | Filter hooks on every cart total, WP coupling           |
+| [OpenCart](https://www.opencart.com/)                                                         | Lightweight PHP             | Easy small-shop deploy, simple Event bus    | Registry/global style, thin domain boundaries           |
+
+### What the clones show (for rustashop design)
+
+Concrete patterns we keep or reject after reading current trees:
+
+| Topic            | Steal / align                                                                                        | Reject                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Money**        | Sylius: order totals as `int` (minor units); Magento: typed pricing interfaces                       | PrestaShop cart price commands still typed as `float`; Woo string/float display filters     |
+| **Cart → order** | Sylius: cart and order share one `Order` model with states (`cart` → `new` → …)                      | Woo: `apply_filters` on nearly every cart getter; hard to reason about final totals         |
+| **Extensions**   | Explicit register/subscribe (OpenCart `Event`, Magento plugins _in theory_)                          | PrestaShop `override/` class replacement; Magento `di.xml` interception across 200+ modules |
+| **API surface**  | Sylius ApiBundle + API Platform; PrestaShop `admin-api` + ApiPlatform; Magento GraphQL module forest | Theme/SQL coupled storefronts as the only path                                              |
+| **Domain split** | Sylius Component vs Bundle layout (Order, Product, Promotion, Channel, Taxation, …)                  | Monolithic `classes/Cart.php` / `class-wc-cart.php` as the forever core                     |
 
 We are **not** building "PrestaShop in Rust" or "Magento with Ferris." We are building a **commerce kernel** with explicit boundaries: catalog, pricing, inventory, cart, checkout, order fulfillment, customer accounts, promotions, content slots, and admin workflows. Themes and modules should attach to **stable interfaces**, not override core classes.
 
