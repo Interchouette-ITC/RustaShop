@@ -2,7 +2,7 @@
 
 ## Opinion
 
-Live shop state is a **product default**, not a plugin. rustashop treats a push channel as part of the platform identity (similar in spirit to Meteor’s realtime default), while keeping HTTP/OpenAPI for bootstrap, idempotent commands, and inbound provider webhooks.
+Live shop state is a **product default**, not a plugin. RustaShop treats a push channel as part of the platform identity (similar in spirit to Meteor’s realtime default), while keeping HTTP/OpenAPI for bootstrap, idempotent commands, and inbound provider webhooks.
 
 ## Transport
 

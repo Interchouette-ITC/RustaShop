@@ -1,7 +1,7 @@
-# **rustashop**
+# **RustaShop**
 
 <p align="center">
-  <img src="docs/brand/logo-mascot-readme.png" alt="rustashop mascot: Ferris in a shopping bag with Rust gear" width="320" />
+  <img src="docs/brand/logo-mascot-readme.png" alt="RustaShop mascot: Ferris in a shopping bag with Rust gear" width="320" />
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ AI is built into the product map (discovery, shopping agents, catalog assist, pr
 | **Extensions**   | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents                       |
 | **AI**           | Native tools and agents on the same API + MCP                                               |
 
-We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/rustashop/issues/29) and [`docs-dev/`](docs-dev/).
+We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/RustaShop/issues/29) and [`docs-dev/`](docs-dev/).
 
 ## Domains
 
@@ -60,7 +60,7 @@ Foundations for implementers (English):
 - [`docs-dev/FOUNDATIONS.md`](docs-dev/FOUNDATIONS.md) - Wasm, contracts, realtime
 - Brand masters: [`assets/`](assets/) · named sizes: [`docs/brand/`](docs/brand/)
 
-Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold ([#10](https://github.com/Interchouette-ITC/rustashop/issues/10)).
+Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold ([#10](https://github.com/Interchouette-ITC/RustaShop/issues/10)).
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
@@ -71,12 +71,12 @@ Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold (
 3. Commits and docs in **English**; conventional commits when code lands.
 
 <p align="center">
-  <img src="docs/brand/badge-stack-readme.png" alt="rustashop stack: Rust API, Angular, rangular" width="480" />
+  <img src="docs/brand/badge-stack-readme.png" alt="RustaShop stack: Rust API, Angular, rangular" width="480" />
 </p>
 
 ## Thanks
 
-**rustashop** will stand on excellent open-source projects and hosts:
+**RustaShop** will stand on excellent open-source projects and hosts:
 
 | Project                                                                                   | Role here                                          |
 | ----------------------------------------------------------------------------------------- | -------------------------------------------------- |

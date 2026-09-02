@@ -4,17 +4,17 @@
 
 The [Wasmer SDK local sandboxes](https://wasmer.io/posts/wasmer-local-sandboxes-for-ai-agents) model embeds runtimes (Python, Node/Edge.js, PHP, Postgres-as-package, and more) **inside** the host application as Wasm-isolated guests: no Docker daemon, fast create, usable from Rust/JS/Python hosts and, for demos, the browser.
 
-For rustashop this is an **innovation and safety surface**: polyglot execution wrapped around a Rust commerce kernel. It is a separate foundation axis from storefront Wasm and from WIT plugins ([WASM-LAYERS.md](WASM-LAYERS.md)).
+For RustaShop this is an **innovation and safety surface**: polyglot execution wrapped around a Rust commerce kernel. It is a separate foundation axis from storefront Wasm and from WIT plugins ([WASM-LAYERS.md](WASM-LAYERS.md)).
 
 ## What we are buying
 
-| Capability | Product meaning |
-| --- | --- |
+| Capability         | Product meaning                                                                 |
+| ------------------ | ------------------------------------------------------------------------------- |
 | In-process sandbox | Run untrusted or foreign code next to the API without a remote microVM per call |
-| Polyglot packages | Accept merchant skills in languages they already use |
-| Agent-local tools | Admin/agent codegen runs locally under our audit policy |
-| Density | Many short-lived sandboxes per host vs container sprawl |
-| Browser twin | Same teaching ABI in docs/playgrounds via Wasmer JS |
+| Polyglot packages  | Accept merchant skills in languages they already use                            |
+| Agent-local tools  | Admin/agent codegen runs locally under our audit policy                         |
+| Density            | Many short-lived sandboxes per host vs container sprawl                         |
+| Browser twin       | Same teaching ABI in docs/playgrounds via Wasmer JS                             |
 
 ## High-value uses
 
@@ -47,7 +47,7 @@ Wasmer JS + Angular or Leptos shell:
 
 ### 4. Migration and compatibility
 
-Reference PHP trees under local `PHP/` (gitexcluded) inform adapters. Product angle: **execute** carefully wrapped legacy glue during cutover, emit rustashop domain events. We are not “a PHP host”; we are a **migration runtime** when needed.
+Reference PHP trees under local `PHP/` (gitexcluded) inform adapters. Product angle: **execute** carefully wrapped legacy glue during cutover, emit RustaShop domain events. We are not “a PHP host”; we are a **migration runtime** when needed.
 
 ### 5. Composed peripheral runtimes
 
@@ -63,11 +63,11 @@ Rust binary + Wasmer packages for POS or air-gapped plugins that cannot call a c
 
 ## UI roles (drivers, not engines)
 
-| UI | Role |
-| --- | --- |
-| **Angular admin** | Script console, extension IDE, agent panel: create job, stream logs, apply or discard results |
-| **rangular / Leptos** | Storefront; optional in-browser Wasmer demo mode for docs |
-| **Both** | Consume host APIs such as job create/status and WS job events |
+| UI                    | Role                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| **Angular admin**     | Script console, extension IDE, agent panel: create job, stream logs, apply or discard results |
+| **rangular / Leptos** | Storefront; optional in-browser Wasmer demo mode for docs                                     |
+| **Both**              | Consume host APIs such as job create/status and WS job events                                 |
 
 ## Host-mediated rules
 
@@ -81,13 +81,13 @@ Rust authorizes; Wasm executes within a jail; audit logs are mandatory.
 
 ## Suggested delivery slices
 
-| Slice | Outcome |
-| --- | --- |
-| **Sandbox harness** | Rust host creates a Wasmer sandbox, runs a fixed Python `quote` fixture, returns adjustments |
-| **Admin console** | Angular UI + audit log + WS logs for one job type |
-| **PHP migration guest** | One legacy hook family bridged to domain events |
-| **Browser twin** | Same fixture ABI in Wasmer JS playground |
-| **Agent default** | Documented policy: agent tools execute sandboxed unless marked first-party |
+| Slice                   | Outcome                                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| **Sandbox harness**     | Rust host creates a Wasmer sandbox, runs a fixed Python `quote` fixture, returns adjustments |
+| **Admin console**       | Angular UI + audit log + WS logs for one job type                                            |
+| **PHP migration guest** | One legacy hook family bridged to domain events                                              |
+| **Browser twin**        | Same fixture ABI in Wasmer JS playground                                                     |
+| **Agent default**       | Documented policy: agent tools execute sandboxed unless marked first-party                   |
 
 ## PyO3 and native connectors
 
