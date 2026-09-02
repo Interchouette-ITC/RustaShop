@@ -74,4 +74,4 @@ These axes are product foundation, not a distraction from catalog/cart/checkout.
 
 ## Related GitHub work
 
-Track delivery under epics labeled `area:wasm`, `area:realtime`, and `area:extensions`. Link new ADRs here when decisions harden.
+Track delivery under epics labeled `area:wasm`, `area:realtime`, `area:extensions`, and `area:ai`. Link new ADRs here when decisions harden.
