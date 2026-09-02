@@ -1,17 +1,22 @@
 # **rustashop**
 
-**A modern open-source commerce platform: Rust on the server, Angular-shaped UI on the web.**
+**One Rust commerce API. Two UIs against it: Angular, or rangular.**
 
-We want a clean, maintainable rewrite of what the PHP e-commerce world built over two decades: the catalog, cart, checkout, orders, payments, shipping, tax, promotions, multi-store, and admin back-office that merchants still depend on every day. Not a clone for nostalgia's sake, but a **2027-ready** stack that keeps the good ideas and drops the legacy weight.
+We want a clean rewrite of what the PHP e-commerce world built over two decades: catalog, cart, checkout, orders, payments, shipping, tax, promotions, multi-store, and admin. Not a clone for nostalgia's sake, but a **2027-ready** stack that keeps the good ideas and drops the legacy weight.
 
-| Layer                           | Technology                                                | Role                                                                       |
-| ------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **Backend**                     | Rust                                                      | APIs, domain logic, persistence, jobs, integrations                        |
-| **Storefront (classic)**        | [Angular](https://angular.dev/)                           | Full SPA where teams already live in TypeScript                            |
-| **Storefront (Rust-native UI)** | [rangular](https://github.com/Interchouette-ITC/rangular) | Angular-shaped `.html` / `.scss` + Rust hosts, compiled to Leptos CSR/wasm |
-| **Shared contract**             | OpenAPI / typed clients                                   | One commerce API, multiple frontends                                       |
+## The idea in one breath
 
-**Status:** vision and case study. No production code yet. This repository is the home for the idea, the architecture notes, and (when we start) the Rust workspace.
+| Piece           | What it is                                                                                                                                |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Product**     | A **Rust** commerce API (domain, persistence, jobs, payments, webhooks)                                                                   |
+| **UI option A** | **[Angular](https://angular.dev/)** (TypeScript SPA)                                                                                      |
+| **UI option B** | **[rangular](https://github.com/Interchouette-ITC/rangular)** (Angular-like `.html` / `.scss`, Rust logic, rendered with **Leptos**/wasm) |
+
+Same OpenAPI contract. Pick **one** storefront stack for a shop (or use both for different surfaces, e.g. Angular admin + rangular storefront). They are **two clients**, not two frameworks stacked on top of each other.
+
+Leptos is not a third UI: it is the **browser render target** for the rangular path (`rangular` authoring → compile → Leptos DOM/wasm).
+
+**Status:** vision and case study. No production code yet.
 
 ---
 
@@ -21,7 +26,7 @@ Open-source e-commerce still runs largely on PHP stacks. They work, they ship, a
 
 **rustashop** asks a direct question:
 
-> Can we rebuild a credible, extensible, open-source commerce platform in **Rust + modern web UI**, without pretending the last twenty years of merchant requirements never happened?
+> Can we rebuild a credible, extensible, open-source commerce platform in **Rust**, with modern web UIs against a single API, without pretending the last twenty years of merchant requirements never happened?
 
 We think the answer is worth proving in public.
 
@@ -44,43 +49,43 @@ We are **not** building "PrestaShop in Rust" or "Magento with Ferris." We are bu
 
 ---
 
-## Stack: Rust + Angular + rangular
+## Stack: one API, two UIs
 
-### Rust backend (source of truth)
+### 1. Rust API (source of truth)
 
 Commerce domain logic belongs in Rust:
 
-- **Correctness:** money, tax, inventory, and promotions are easier to reason about with strong types and explicit error paths.
+- **Correctness:** money, tax, inventory, and promotions with strong types and explicit error paths.
 - **Performance:** catalog search, cart recalculation, and checkout under load without tuning PHP-FPM pools first.
-- **Operations:** single static binary or small container set, predictable memory, fewer moving parts on the server.
-- **Integrations:** payment providers, carriers, ERP, and webhooks as isolated crates/services with clear failure modes.
+- **Operations:** single static binary or small container set, predictable memory.
+- **Integrations:** payment providers, carriers, ERP, and webhooks as isolated crates/services.
 
 Target shape (subject to change when coding starts):
 
-- HTTP API (REST and/or GraphQL) with OpenAPI as the contract merchants and agencies can rely on.
+- HTTP API (REST and/or GraphQL) with OpenAPI as the shared contract.
 - PostgreSQL (or pluggable storage) for transactional data.
 - Background workers for emails, webhooks, index rebuilds, and imports.
 - Plugin/extension model via **WASM or stable Rust trait boundaries**, not monkey-patching core.
 
-### Angular storefront (ecosystem path)
+### 2. UI A: Angular (TypeScript)
 
-Many agencies and in-house teams already standardize on **Angular** for large admin and storefront SPAs. A first-class **Angular** client against the rustashop API keeps adoption friction low: familiar routing, forms, i18n, and hiring pool.
+Real **[Angular](https://angular.dev/)**: TypeScript, npm ecosystem, familiar SPA tooling.
 
-Use Angular where **TypeScript velocity and npm ecosystem** matter most (rich admin, third-party widgets, legacy team skills).
+Use this when the team already lives in Angular (agencies, large admin apps, third-party widgets, hiring pool).
 
-### rangular storefront (Rust-native path)
+### 3. UI B: rangular → Leptos (Rust / wasm)
 
-[**rangular**](https://github.com/Interchouette-ITC/rangular) is Angular-**shaped** templates (`.html`, `.scss`) with **Rust controllers**, compiled to **Leptos** in the browser (CSR/wasm). Same component habit as Angular; logic stays in Rust.
+**[rangular](https://github.com/Interchouette-ITC/rangular)** is a separate project: Angular-**like** templates (`.html`, `.scss`) with **Rust** hosts (`.rs`). Production builds lower to **[Leptos](https://leptos.dev/)** CSR/wasm in the browser.
 
-|                     | Angular client              | rangular client                                        |
-| ------------------- | --------------------------- | ------------------------------------------------------ |
-| Template authoring  | `.html` + `.ts`             | `.html` + `.rs`                                        |
-| Styles              | `.scss`                     | `.scss` (compiled in Rust via grass, no Node for Sass) |
-| Runtime             | TypeScript in browser       | Rust to wasm + Leptos DOM                              |
-| Best for            | Teams deep in Angular/npm   | Teams standardizing on Rust end-to-end                 |
-| Shared with backend | API types (OpenAPI codegen) | Domain types and validation patterns                   |
+Use this when you want one language from storefront widget to warehouse hook. Templates feel Angular-shaped; the runtime is **not** Angular.
 
-Both frontends talk to the **same Rust API**. Merchants pick a theme stack; the platform does not force one UI religion.
+|                 | UI A: Angular        | UI B: rangular                               |
+| --------------- | -------------------- | -------------------------------------------- |
+| Templates       | `.html`              | `.html` (Angular-like subset)                |
+| Logic           | TypeScript           | Rust                                         |
+| Styles          | `.scss`              | `.scss` (compiled in Rust; no Node for Sass) |
+| Browser runtime | Angular / TypeScript | Leptos / wasm                                |
+| Speaks to       | Same rustashop API   | Same rustashop API                           |
 
 Live rangular demo: [rangular.interchouette.net](https://rangular.interchouette.net)
 
@@ -94,16 +99,18 @@ Live rangular demo: [rangular.interchouette.net](https://rangular.interchouette.
                     │  (Rust: catalog, cart, checkout,    │
                     │   orders, payments, admin, jobs)    │
                     └──────────────┬──────────────────────┘
-                                   │
+                                   │  same OpenAPI contract
               ┌────────────────────┼────────────────────┐
               │                    │                    │
               ▼                    ▼                    ▼
      ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
-     │ Angular        │  │ rangular       │  │ Headless       │
-     │ storefront     │  │ storefront     │  │ clients        │
-     │ + admin SPA    │  │ (Leptos/wasm)  │  │ (mobile, POS)  │
+     │ UI A           │  │ UI B           │  │ Other clients  │
+     │ Angular        │  │ rangular       │  │ (mobile, POS,  │
+     │ (TypeScript)   │  │ → Leptos/wasm  │  │  headless)     │
      └────────────────┘  └────────────────┘  └────────────────┘
 ```
+
+Pick UI A **or** UI B for a given storefront. Leptos only appears on path B, as rangular's render engine.
 
 **Principles:**
 
@@ -127,7 +134,7 @@ _A structured look at necessity, not hype._
 
 - lower operational cost at scale,
 - stronger safety around money and inventory,
-- a UI story that spans **Angular shops** and **Rust-native wasm** via rangular,
+- **one Rust API** with a choice of UI: Angular (TypeScript) **or** rangular (Rust / Leptos),
 - and an extension model that survives major version upgrades.
 
 2027 is a realistic horizon for a **focused MVP** (catalog, cart, checkout, orders, basic admin), not for feature parity with twenty years of Magento modules.
@@ -144,11 +151,11 @@ _A structured look at necessity, not hype._
 
 ### Arguments **for** rebuilding in Rust (2027 target)
 
-1. **Total cost of ownership:** predictable memory and CPU, fewer PHP workers and opcode caches to tune, simpler container images.
+1. **Total cost of ownership:** predictable memory and CPU, fewer PHP workers to tune, simpler container images.
 2. **Correctness under concurrency:** reservations, flash sales, and inventory decrements need explicit concurrency design; Rust forces that conversation early.
-3. **Dual frontend strategy:** Angular for ecosystem reach; [rangular](https://github.com/Interchouette-ITC/rangular) for teams that want one language from checkout widget to warehouse hook.
+3. **Two UIs, one API:** Angular for TypeScript teams; [rangular](https://github.com/Interchouette-ITC/rangular) (+ Leptos) for Rust-native storefronts, without forking the commerce core.
 4. **Extension safety:** WASM sandboxes or narrow FFI beats arbitrary PHP includes in `override/` folders.
-5. **Long-term maintainability:** a young codebase with enforced lint gates and fixture-tested UI templates (rangular habit) vs. dragging forward 2005 patterns.
+5. **Long-term maintainability:** a young codebase with enforced lint gates vs. dragging forward 2005 patterns.
 
 ### Arguments **against** (honest)
 
@@ -160,13 +167,13 @@ _A structured look at necessity, not hype._
 
 ### Verdict for rustashop
 
-| Question                                                           | Answer                                                                                                            |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Does the world **need** another open-source commerce core in 2027? | **Only if** it is narrowly scoped, API-first, and operatively cheaper than legacy self-host.                      |
-| Is **Rust** the right backend bet?                                 | **Strong yes** for safety, ops, and long-running workers; **not magic** for product-market fit.                   |
-| Is **Angular + rangular** the right UI bet?                        | **Yes as a pair:** Angular covers adoption; rangular covers Rust-native UX without abandoning familiar templates. |
-| Should we chase Magento feature parity?                            | **No.** Ship catalog, cart, checkout, orders, payments, admin, and webhooks first.                                |
-| When to start coding?                                              | When this README's MVP scope has issues, milestones, and one payment provider chosen.                             |
+| Question                                                           | Answer                                                                                                                                              |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Does the world **need** another open-source commerce core in 2027? | **Only if** it is narrowly scoped, API-first, and operatively cheaper than legacy self-host.                                                        |
+| Is **Rust** the right backend bet?                                 | **Strong yes** for safety, ops, and long-running workers; **not magic** for product-market fit.                                                     |
+| UI story?                                                          | **One API, two clients:** Angular (TypeScript) **or** rangular (Angular-like templates, Rust logic, Leptos/wasm). Not a mixed Angular+Leptos stack. |
+| Should we chase Magento feature parity?                            | **No.** Ship catalog, cart, checkout, orders, payments, admin, and webhooks first.                                                                  |
+| When to start coding?                                              | When this README's MVP scope has issues, milestones, and one payment provider chosen.                                                               |
 
 **Bottom line:** rebuilding open-source commerce in Rust for 2027 is not a universal necessity, but it is a **credible opportunity** for self-hosted deployments, headless stacks, and teams that want to escape PHP legacy debt without leaving open source behind. **rustashop** exists to test that thesis in public.
 
@@ -180,7 +187,7 @@ When implementation begins, v0.1 should prove the full vertical slice:
 - [ ] Cart and session/checkout flow
 - [ ] One payment provider (Stripe or Mollie class)
 - [ ] Order persistence and basic admin (list, status, refund hook)
-- [ ] Storefront: one theme in **Angular** and one panel in **rangular** against the same API
+- [ ] Same API exercised by **both** clients: one Angular storefront **and** one rangular (→ Leptos) storefront
 - [ ] Docker compose for local and small production deploy
 - [ ] OpenAPI document published with every release
 
@@ -190,18 +197,18 @@ Explicitly **out of scope** for v0.1: multi-vendor marketplace, full promotion e
 
 ## Relationship to [rangular](https://github.com/Interchouette-ITC/rangular)
 
-**rangular** is a separate project: a versioned subset of Angular-shaped templates for Leptos. **rustashop** is a **consumer** and proof case: real product lists, filters, cart lines, and checkout steps authored as `.html` / `.scss` / `.rs` components, dogfooding rangular the way a production shop theme would.
+**rangular** is upstream UI tooling (Angular-like templates for Leptos). **rustashop** consumes it as **UI option B**: real catalog, cart, and checkout screens as `.html` / `.scss` / `.rs` components.
 
-Contributions to template language belong upstream in rangular; commerce domain belongs here.
+Template language changes belong in rangular. Commerce domain belongs here.
 
 ---
 
 ## Contributing
 
-The repository is empty on purpose: discussion, issues, and ADRs welcome before the first `cargo init`.
+The repository is intentionally light: discussion, issues, and ADRs welcome before the first `cargo init`.
 
-1. Open an issue for domain topics (tax, shipping, plugin model) or UI strategy (Angular vs rangular themes).
-2. Read the [rangular spec](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) if you care about the wasm storefront path.
+1. Open an issue for domain topics (tax, shipping, plugin model) or which UI path to dogfood first.
+2. Read the [rangular spec](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) for the wasm storefront path.
 3. Keep commits and docs in **English**; conventional commits when code lands.
 
 ---
@@ -214,13 +221,14 @@ To be decided before first release. Interchouette-ITC projects often use **Apach
 
 ## Links
 
-| Resource                         | URL                                            |
-| -------------------------------- | ---------------------------------------------- |
-| This repository                  | https://github.com/Interchouette-ITC/rustashop |
-| rangular (UI templates for Rust) | https://github.com/Interchouette-ITC/rangular  |
-| rangular live demo               | https://rangular.interchouette.net             |
-| Angular                          | https://angular.dev/                           |
+| Resource           | URL                                            |
+| ------------------ | ---------------------------------------------- |
+| This repository    | https://github.com/Interchouette-ITC/rustashop |
+| rangular           | https://github.com/Interchouette-ITC/rangular  |
+| rangular live demo | https://rangular.interchouette.net             |
+| Leptos             | https://leptos.dev/                            |
+| Angular            | https://angular.dev/                           |
 
 ---
 
-_rustashop: learn from PrestaShop, osCommerce, Magento, Sylius, and the rest; ship something merchants can host, developers can extend, and operators can sleep through._
+_rustashop: one Rust API; Angular or rangular on top; learn from PrestaShop, osCommerce, Magento, Sylius, and the rest._
