@@ -8,7 +8,9 @@ Public contributor docs (`docs/ARCHITECTURE.md`, `CONTRIBUTING.md`, …) still b
 
 | Doc | Topic |
 | --- | ----- |
-| [FOUNDATIONS.md](FOUNDATIONS.md) | Overall identity: contracts, three Wasm roles, realtime default, roadmap axes |
+| [FOUNDATIONS.md](FOUNDATIONS.md) | Overall identity: contracts, three Wasm roles, realtime default, AI-native, roadmap axes |
+| [AI-NATIVE.md](AI-NATIVE.md) | AI across API and UIs: discovery, agents, catalog, pricing, support, MCP |
+| [DOMAINS.md](DOMAINS.md) | Hostnames (`ai` / `io` / `dev` / `app` / redirects) and deploy surfaces |
 | [WASM-LAYERS.md](WASM-LAYERS.md) | Storefront Wasm vs plugin Component Model vs sandbox runtimes |
 | [REALTIME.md](REALTIME.md) | WebSocket-first live shop state (Meteor-like opinion, rustashop protocol) |
 | [EXTENSIONS.md](EXTENSIONS.md) | WIT plugin ABI, host capabilities, OpenAPI vs WIT |
@@ -27,5 +29,7 @@ GitHub epics (created with this foundation set):
 | [#31](https://github.com/Interchouette-ITC/rustashop/issues/31) | Realtime WebSocket-first live state |
 | [#34](https://github.com/Interchouette-ITC/rustashop/issues/34) | WIT Component Model extension ABI |
 | [#37](https://github.com/Interchouette-ITC/rustashop/issues/37) | Wasmer polyglot sandbox and agent execution |
+| [#43](https://github.com/Interchouette-ITC/rustashop/issues/43) | AI-native commerce (API + UIs + MCP) |
+| [#45](https://github.com/Interchouette-ITC/rustashop/issues/45) | Domains and `:dev` tip (`interchouette.net` / `.ai` / …) |
 
-Child tasks use labels `area:wasm`, `area:realtime`, and `area:extensions`. Filter the issues list by those labels for the full backlog.
+Child tasks use labels `area:wasm`, `area:realtime`, `area:extensions`, and `area:ai`. Filter the issues list by those labels for the full backlog.
