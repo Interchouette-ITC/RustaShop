@@ -1,0 +1,7 @@
+/target/
+**/*.rs.bk
+*.pdb
+.env
+.env.*
+!.env.example
+.github_credentials
