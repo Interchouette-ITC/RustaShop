@@ -207,6 +207,8 @@ When implementation begins, v0.1 should prove the full vertical slice:
 
 Explicitly **out of scope** for v0.1: multi-vendor marketplace, full promotion engine, native mobile apps, Magento import wizard.
 
+**Foundations beyond the slice** (Wasm layers, WebSocket-first live state, WIT extensions, Wasmer polyglot sandboxes, agent-ready admin) live in [`docs-dev/`](docs-dev/). They guide crate and API shape so those axes are not bolted on after MVP.
+
 ---
 
 ## Relationship to [rangular](https://github.com/Interchouette-ITC/rangular)
@@ -221,9 +223,10 @@ Template language changes belong in rangular. Commerce domain belongs here.
 
 The repository is intentionally light: discussion, issues, and ADRs welcome before the first `cargo init`.
 
-1. Open an issue for domain topics (tax, shipping, plugin model) or which UI path to dogfood first.
-2. Read the [rangular spec](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) for the wasm storefront path.
-3. Keep commits and docs in **English**; conventional commits when code lands.
+1. Read [`docs-dev/`](docs-dev/) for Wasm / realtime / extension / sandbox foundations.
+2. Open an issue for domain topics (tax, shipping, plugin model) or which UI path to dogfood first.
+3. Read the [rangular spec](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) for the storefront Wasm path (UI option B).
+4. Keep commits and docs in **English**; conventional commits when code lands.
 
 ---
 
@@ -238,6 +241,7 @@ To be decided before first release. Interchouette-ITC projects often use **Apach
 | Resource           | URL                                            |
 | ------------------ | ---------------------------------------------- |
 | This repository    | https://github.com/Interchouette-ITC/rustashop |
+| Foundations        | [`docs-dev/`](docs-dev/)                       |
 | rangular           | https://github.com/Interchouette-ITC/rangular  |
 | rangular live demo | https://rangular.interchouette.net             |
 | Leptos             | https://leptos.dev/                            |

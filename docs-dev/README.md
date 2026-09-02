@@ -1,0 +1,31 @@
+# Developer foundations (`docs-dev`)
+
+Internal orientation for rustashop before and during early implementation. These notes capture **product and technical identity**: how we want the system to feel and which axes we invest in next to the MVP vertical slice in the root [README](../README.md).
+
+Public contributor docs (`docs/ARCHITECTURE.md`, `CONTRIBUTING.md`, …) still belong under the existing docs epics once the Cargo tree exists. **`docs-dev` is the living foundation set** so roadmap debates are not trapped in chat.
+
+## Documents
+
+| Doc | Topic |
+| --- | ----- |
+| [FOUNDATIONS.md](FOUNDATIONS.md) | Overall identity: contracts, three Wasm roles, realtime default, roadmap axes |
+| [WASM-LAYERS.md](WASM-LAYERS.md) | Storefront Wasm vs plugin Component Model vs sandbox runtimes |
+| [REALTIME.md](REALTIME.md) | WebSocket-first live shop state (Meteor-like opinion, rustashop protocol) |
+| [EXTENSIONS.md](EXTENSIONS.md) | WIT plugin ABI, host capabilities, OpenAPI vs WIT |
+| [WASMER-SANDBOX.md](WASMER-SANDBOX.md) | Wasmer SDK: polyglot guests, agents, PHP legacy, playgrounds, connectors |
+
+## How this relates to the MVP
+
+The README MVP (catalog, cart, checkout, orders, both UIs, OpenAPI, compose) stays the **first proof**. Foundations here say what we **design toward** so early crate and API choices do not paint us into a pure REST monolith with plugins bolted on later.
+
+## Issues
+
+GitHub epics (created with this foundation set):
+
+| Epic | Focus |
+| --- | --- |
+| [#31](https://github.com/Interchouette-ITC/rustashop/issues/31) | Realtime WebSocket-first live state |
+| [#34](https://github.com/Interchouette-ITC/rustashop/issues/34) | WIT Component Model extension ABI |
+| [#37](https://github.com/Interchouette-ITC/rustashop/issues/37) | Wasmer polyglot sandbox and agent execution |
+
+Child tasks use labels `area:wasm`, `area:realtime`, and `area:extensions`. Filter the issues list by those labels for the full backlog.
