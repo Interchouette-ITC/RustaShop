@@ -1,8 +1,18 @@
 # **rustashop**
 
+<p align="center">
+  <img src="docs/brand/logo-banner-readme.png" alt="rustashop - Modern commerce. Rust powered." width="560" />
+</p>
+
+<p align="center">
+  <img src="docs/brand/icon-app-crab-256.png" alt="rustashop icon" width="96" />
+</p>
+
 **One Rust commerce API. Two UIs against it: Angular, or rangular.**
 
 We want a clean rewrite of what the PHP e-commerce world built over two decades: catalog, cart, checkout, orders, payments, shipping, tax, promotions, multi-store, and admin. Not a clone for nostalgia's sake, but a **2027-ready** stack that keeps the good ideas and drops the legacy weight.
+
+Brand masters: [`assets/`](assets/). Named sizes: [`docs/brand/`](docs/brand/).
 
 ## The idea in one breath
 
