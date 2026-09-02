@@ -1,0 +1,74 @@
+# rustashop foundations
+
+This document frames the **technical identity** of rustashop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the root README. It names the axes we want the product to grow into so architecture discussions stay durable.
+
+## Product identity (short)
+
+| Pillar | Opinion |
+| --- | --- |
+| **Core** | One Rust commerce kernel: catalog, cart, checkout, orders, money as integers, inventory, payments, webhooks |
+| **Clients** | One API, two UI options: Angular **or** rangular (Leptos/wasm). Same contract |
+| **Live state** | WebSocket (then optionally WebTransport) is first-class for shop and admin live updates; REST/OpenAPI for bootstrap, clear mutations, and inbound provider webhooks |
+| **Extensibility** | Stable interfaces: OpenAPI for UIs; WIT / Component Model for plugins; optional sandboxed polyglot scripts for merchants, migrations, and agents |
+| **Persistence** | A transactional store owned by the host kernel (Postgres on the current roadmap). Analytics engines, embedded scratch databases, and GraphQL (if added) are **not** the system of record |
+
+GraphQL and columnar/analytics tools may appear later as **API or reporting choices**. They are independent product questions from “where do orders live.”
+
+## Two contracts, one domain
+
+| Contract | Audience | Owns |
+| --- | --- | --- |
+| **OpenAPI** (+ HTTP) | Angular, rangular, external HTTP clients | Resources, auth stubs, idempotent checkout, webhooks ingress |
+| **WIT / Component Model** | Extension authors | Versioned hooks (pricing adjust, shipping quote, tax rule, …) with host-provided capabilities only |
+| **Realtime events** | Both UIs (and admin) | Typed push aligned with domain events (cart totals, stock, order status) |
+
+Guests (Wasm components or sandboxed runtimes) never open the database. The host authorizes and commits.
+
+## Three Wasm roles (keep them distinct)
+
+rustashop is **Wasm-oriented** the way Meteor was **realtime-oriented**: an opinion about defaults, not a claim that every byte runs inside one engine.
+
+| Role | Typical tech | Job |
+| --- | --- | --- |
+| **Storefront UI Wasm** | rangular → Leptos in the browser | Client rendering and UX for UI option B |
+| **Plugin Wasm** | Component Model + WIT; host such as wasmtime (and/or Wasmer where it fits the ABI) | Safe, versioned commerce extensions |
+| **Sandbox Wasm** | [Wasmer SDK](https://wasmer.io/posts/wasmer-local-sandboxes-for-ai-agents) local sandboxes | Untrusted or polyglot code: Python / Node / PHP packages, agent tools, demos, migration glue |
+
+Optional: a small interpreter-style engine (for example wasmi) for tiny embedded evaluators. That is a tactical choice, not the architecture center. Serious Component Model hosting today centers on mature CM hosts; Wasmer’s WASIX / package story is especially relevant for **sandbox and polyglot** lanes.
+
+Detail: [WASM-LAYERS.md](WASM-LAYERS.md), [EXTENSIONS.md](EXTENSIONS.md), [WASMER-SANDBOX.md](WASMER-SANDBOX.md).
+
+## Realtime as a first-class axis
+
+Meteor’s habit was: live sync is the default, not an afterthought. rustashop adopts the same *kind* of opinion for commerce state that changes during a session.
+
+- Push for cart/checkout session, inventory signals, order status, admin feeds.
+- Both UI stacks subscribe to the **same** push channel.
+- Server remains source of truth; optimistic UI may reconcile on events.
+- Plugins emit or observe live effects only through **host-mediated** events.
+
+Detail: [REALTIME.md](REALTIME.md).
+
+## Roadmap axes (alongside MVP)
+
+Ship the README vertical slice. In parallel (or immediately after the HTTP skeleton), design and stub these axes so they are not retrofit surprises:
+
+1. **Realtime gateway** - WebSocket surface + event schema next to OpenAPI.
+2. **Extension ABI v0** - one or two WIT hooks with a host harness and a fixture component.
+3. **Sandbox lane** - Wasmer-backed execution for scripts/agents with audit log (Angular admin drives it).
+4. **Polyglot acceptance** - PHP legacy adapters and, later, first-class connector stories (including native Rust↔Python options such as PyO3 for *in-process connectors* where sandboxing is the wrong tool).
+5. **Module isolation tests** - CI that loads a guest, denies DB, asserts capability boundaries.
+6. **Agent-empowered admin** - codegen and tool calls default to sandbox execution.
+
+These axes are product foundation, not a distraction from catalog/cart/checkout. Early crate layout (`api`, `domain`, `persist`, later `realtime`, `extensions`, `sandbox`) should leave room for them.
+
+## Explicit non-goals for early foundations
+
+- Making “everything runs in Wasmer” the definition of MVP.
+- Syncing the entire catalog over WebSocket as a CRDT experiment.
+- Replacing payment provider webhooks with WebSockets.
+- Letting sandboxed guests capture cards or commit inventory alone.
+
+## Related GitHub work
+
+Track delivery under epics labeled `area:wasm`, `area:realtime`, and `area:extensions`. Link new ADRs here when decisions harden.
