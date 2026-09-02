@@ -8,9 +8,11 @@ This document frames the **technical identity** of rustashop for a modern, Wasm-
 | --- | --- |
 | **Core** | One Rust commerce kernel: catalog, cart, checkout, orders, money as integers, inventory, payments, webhooks |
 | **Clients** | One API, two UI options: Angular **or** rangular (Leptos/wasm). Same contract |
+| **AI native** | Discovery, shopping agents, catalog assist, pricing/promos, support, MCP, and autonomous jobs are product surfaces on that API - not a side app ([AI-NATIVE.md](AI-NATIVE.md)) |
 | **Live state** | WebSocket (then optionally WebTransport) is first-class for shop and admin live updates; REST/OpenAPI for bootstrap, clear mutations, and inbound provider webhooks |
 | **Extensibility** | Stable interfaces: OpenAPI for UIs; WIT / Component Model for plugins; optional sandboxed polyglot scripts for merchants, migrations, and agents |
 | **Persistence** | A transactional store owned by the host kernel (Postgres on the current roadmap). Analytics engines, embedded scratch databases, and GraphQL (if added) are **not** the system of record |
+| **Surfaces** | Domains and deploy tips in [DOMAINS.md](DOMAINS.md) (`interchouette.net` tip, `.ai` / `.io` / `.dev` / `.app`, geo redirects) |
 
 GraphQL and columnar/analytics tools may appear later as **API or reporting choices**. They are independent product questions from “where do orders live.”
 
@@ -58,9 +60,10 @@ Ship the README vertical slice. In parallel (or immediately after the HTTP skele
 3. **Sandbox lane** - Wasmer-backed execution for scripts/agents with audit log (Angular admin drives it).
 4. **Polyglot acceptance** - PHP legacy adapters and, later, first-class connector stories (including native Rust↔Python options such as PyO3 for *in-process connectors* where sandboxing is the wrong tool).
 5. **Module isolation tests** - CI that loads a guest, denies DB, asserts capability boundaries.
-6. **Agent-empowered admin** - codegen and tool calls default to sandbox execution.
+6. **AI-native tools** - discovery, shopping/catalog/support agents, MCP, autonomous jobs on the same domain ([AI-NATIVE.md](AI-NATIVE.md)).
+7. **Deploy surfaces** - `:dev` tip then `.ai` / `.io` / `.dev` / `.app` ([DOMAINS.md](DOMAINS.md)).
 
-These axes are product foundation, not a distraction from catalog/cart/checkout. Early crate layout (`api`, `domain`, `persist`, later `realtime`, `extensions`, `sandbox`) should leave room for them.
+These axes are product foundation, not a distraction from catalog/cart/checkout. Early crate layout (`api`, `domain`, `persist`, later `realtime`, `extensions`, `sandbox`, `ai` / MCP) should leave room for them.
 
 ## Explicit non-goals for early foundations
 
