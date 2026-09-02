@@ -1,4 +1,4 @@
-# rustashop brand assets (`docs/brand`)
+# RustaShop brand assets (`docs/brand`)
 
 Public named copies and **resize-only** size declensions.
 
@@ -15,31 +15,31 @@ Processing rule: **copy + LANCZOS resize only**. No flood-fill, no alpha rewriti
 
 ## UUID → name map
 
-| `assets/` suffix | Master name |
-| ---------------- | ----------- |
-| `e94` | `logo-mascot` |
-| `e95` | `logo-wordmark` |
-| `e97` | `logo-wordmark-compact` |
-| `e03` | `logo-gear-stacked` |
-| `e05` | `logo-banner` |
-| `e06` | `logo-horizontal` |
-| `e98` | `logo-crab-lockup` |
-| `e99` | `logo-speed-lockup` |
-| `e01` | `mark-speed-bag` |
-| `e96` | `mark-speed-bag-alt` |
-| `e02` | `mark-bags-3d` |
-| `e04` | `mark-crab` |
-| `e07` | `mark-speed-bag-3d` |
-| `e08` | `icon-app-crab` |
-| `e09` | `icon-app-gear-lock` |
-| `e10` | `icon-app-speed-bag` |
-| `e11` | `icon-app-cart` |
-| `e12` | `icon-circle-bag` |
-| `e13` | `icon-circle-gear` |
-| `e14` | `icon-circle-crab` |
-| `e15` | `badge-stack` |
-| `e16` | `seal-gear` |
-| `e17` | `seal-crab` |
+| `assets/` suffix | Master name             |
+| ---------------- | ----------------------- |
+| `e94`            | `logo-mascot`           |
+| `e95`            | `logo-wordmark`         |
+| `e97`            | `logo-wordmark-compact` |
+| `e03`            | `logo-gear-stacked`     |
+| `e05`            | `logo-banner`           |
+| `e06`            | `logo-horizontal`       |
+| `e98`            | `logo-crab-lockup`      |
+| `e99`            | `logo-speed-lockup`     |
+| `e01`            | `mark-speed-bag`        |
+| `e96`            | `mark-speed-bag-alt`    |
+| `e02`            | `mark-bags-3d`          |
+| `e04`            | `mark-crab`             |
+| `e07`            | `mark-speed-bag-3d`     |
+| `e08`            | `icon-app-crab`         |
+| `e09`            | `icon-app-gear-lock`    |
+| `e10`            | `icon-app-speed-bag`    |
+| `e11`            | `icon-app-cart`         |
+| `e12`            | `icon-circle-bag`       |
+| `e13`            | `icon-circle-gear`      |
+| `e14`            | `icon-circle-crab`      |
+| `e15`            | `badge-stack`           |
+| `e16`            | `seal-gear`             |
+| `e17`            | `seal-crab`             |
 
 ## Suggested defaults
 

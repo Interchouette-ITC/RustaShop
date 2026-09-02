@@ -1,11 +1,11 @@
 # AI-native commerce
 
-AI is **not** a bolt-on chatbot for rustashop. It is a first-class product axis across the **Commerce API** and both UI clients (Angular and rangular). Agents, MCP, and autonomous commerce workflows share the same domain, auth, realtime bus, and sandbox rules as the rest of the kernel.
+AI is **not** a bolt-on chatbot for RustaShop. It is a first-class product axis across the **Commerce API** and both UI clients (Angular and rangular). Agents, MCP, and autonomous commerce workflows share the same domain, auth, realtime bus, and sandbox rules as the rest of the kernel.
 
 ## Product map
 
 ```text
-rustashop
+RustaShop
 │
 ├── Commerce API
 ├── AI product discovery
@@ -17,24 +17,25 @@ rustashop
 └── autonomous commerce agents
 ```
 
-| Capability | Native meaning |
-| --- | --- |
-| **Commerce API** | Source of truth for catalog, cart, checkout, orders, money, inventory |
-| **AI product discovery** | Search / recommend / “shop for me” over the live catalog contract |
-| **AI shopping agents** | Session agents that browse, compare, fill cart under customer intent |
-| **AI-assisted catalog** | Merchant/admin agents that draft products, media, attributes (human commit) |
-| **AI pricing / promotions** | Propose rules and experiments; host applies after policy checks |
-| **AI customer support** | Order-aware support with tools into the same API + realtime status |
-| **MCP integration** | Expose rustashop tools to external agents (and consume upstream MCP where useful) |
+| Capability                     | Native meaning                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **Commerce API**               | Source of truth for catalog, cart, checkout, orders, money, inventory                            |
+| **AI product discovery**       | Search / recommend / “shop for me” over the live catalog contract                                |
+| **AI shopping agents**         | Session agents that browse, compare, fill cart under customer intent                             |
+| **AI-assisted catalog**        | Merchant/admin agents that draft products, media, attributes (human commit)                      |
+| **AI pricing / promotions**    | Propose rules and experiments; host applies after policy checks                                  |
+| **AI customer support**        | Order-aware support with tools into the same API + realtime status                               |
+| **MCP integration**            | Expose RustaShop tools to external agents (and consume upstream MCP where useful)                |
 | **Autonomous commerce agents** | Longer-running jobs (restock alerts, repricing drafts, migration assists) behind audit + sandbox |
 
 ## Backend (native)
 
+- **Actix-web** hosts the commerce kernel: REST, OpenAPI, WebSocket gateway ([FOUNDATIONS.md](FOUNDATIONS.md)).
 - Domain services expose **stable tool surfaces** (not ad-hoc prompts over SQL).
 - Agent runs are **audited**; untrusted code/scripts go through the [Wasmer sandbox](WASMER-SANDBOX.md) lane.
 - Pricing / inventory **commits** stay host-mediated (same rule as WIT plugins).
 - Realtime gateway carries agent job progress and cart updates ([REALTIME.md](REALTIME.md)).
-- MCP server (when shipped) speaks the same capabilities the admin agent uses.
+- **Axum** hosts the MCP server and other narrow tool HTTP surfaces; it speaks the same capabilities the admin agent uses, backed by the kernel domain.
 
 ## Frontend (native)
 
@@ -44,18 +45,18 @@ rustashop
 
 ## Trust boundary
 
-| Trusted | Untrusted / mediated |
-| --- | --- |
-| First-party model calls inside the API with policy | Merchant-uploaded scripts (Wasmer) |
-| Official MCP tools with authz | Raw model output applied to money without review |
-| Human approve for catalog publish / capture | Autonomous capture or inventory write without guards |
+| Trusted                                            | Untrusted / mediated                                 |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| First-party model calls inside the API with policy | Merchant-uploaded scripts (Wasmer)                   |
+| Official MCP tools with authz                      | Raw model output applied to money without review     |
+| Human approve for catalog publish / capture        | Autonomous capture or inventory write without guards |
 
 ## Delivery slices (backlog)
 
 1. Tool schema for cart/catalog/order reads + draft writes
 2. Admin agent console (Angular) + job audit
 3. Storefront discovery / shopping-agent MVP
-4. MCP HTTP surface aligned with those tools
+4. MCP HTTP surface on **Axum**, tools aligned with kernel domain
 5. Autonomous job runner (sandbox + host commit)
 
 Track under the AI epic on GitHub (`area:ai`).

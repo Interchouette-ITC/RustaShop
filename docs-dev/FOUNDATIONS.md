@@ -1,40 +1,54 @@
-# rustashop foundations
+# RustaShop foundations
 
-This document frames the **technical identity** of rustashop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the root README. It names the axes we want the product to grow into so architecture discussions stay durable.
+This document frames the **technical identity** of RustaShop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the root README. It names the axes we want the product to grow into so architecture discussions stay durable.
 
 ## Product identity (short)
 
-| Pillar | Opinion |
-| --- | --- |
-| **Core** | One Rust commerce kernel: catalog, cart, checkout, orders, money as integers, inventory, payments, webhooks |
-| **Clients** | One API, two UI options: Angular **or** rangular (Leptos/wasm). Same contract |
-| **AI native** | Discovery, shopping agents, catalog assist, pricing/promos, support, MCP, and autonomous jobs are product surfaces on that API - not a side app ([AI-NATIVE.md](AI-NATIVE.md)) |
-| **Live state** | WebSocket (then optionally WebTransport) is first-class for shop and admin live updates; REST/OpenAPI for bootstrap, clear mutations, and inbound provider webhooks |
-| **Extensibility** | Stable interfaces: OpenAPI for UIs; WIT / Component Model for plugins; optional sandboxed polyglot scripts for merchants, migrations, and agents |
-| **Persistence** | A transactional store owned by the host kernel (Postgres on the current roadmap). Analytics engines, embedded scratch databases, and GraphQL (if added) are **not** the system of record |
-| **Surfaces** | Domains and deploy tips in [DOMAINS.md](DOMAINS.md) (`interchouette.net` tip, `.ai` / `.io` / `.dev` / `.app`, geo redirects) |
+| Pillar            | Opinion                                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core**          | One Rust commerce kernel: catalog, cart, checkout, orders, money as integers, inventory, payments, webhooks                                                                              |
+| **Clients**       | One API, two UI options: Angular **or** rangular (Leptos/wasm). Same contract                                                                                                            |
+| **AI native**     | Discovery, shopping agents, catalog assist, pricing/promos, support, MCP, and autonomous jobs are product surfaces on that API - not a side app ([AI-NATIVE.md](AI-NATIVE.md))           |
+| **Live state**    | WebSocket (then optionally WebTransport) is first-class for shop and admin live updates; REST/OpenAPI for bootstrap, clear mutations, and inbound provider webhooks                      |
+| **Extensibility** | Stable interfaces: OpenAPI for UIs; WIT / Component Model for plugins; optional sandboxed polyglot scripts for merchants, migrations, and agents                                         |
+| **Persistence**   | A transactional store owned by the host kernel (Postgres on the current roadmap). Analytics engines, embedded scratch databases, and GraphQL (if added) are **not** the system of record |
+| **Surfaces**      | Domains and deploy tips in [DOMAINS.md](DOMAINS.md) (`interchouette.net` tip, `.ai` / `.io` / `.dev` / `.app`, geo redirects)                                                            |
 
 GraphQL and columnar/analytics tools may appear later as **API or reporting choices**. They are independent product questions from “where do orders live.”
 
+## HTTP stack (house pattern)
+
+Sibling products use a **split stack**: a full **Actix-web** kernel for the product API, and a lighter **Axum** surface for MCP and agent tools. RustaShop follows the same cocktail.
+
+| Surface             | Framework                                               | Owns                                                                 |
+| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Commerce kernel** | **Actix-web** (+ OpenAPI via utoipa, WebSocket gateway) | Catalog, cart, checkout, orders, webhooks, admin REST, realtime push |
+| **MCP / tools**     | **Axum**                                                | Streamable HTTP MCP, first-party agent tools, narrow ops endpoints   |
+| **Runtime**         | **Tokio**                                               | Shared async runtime for both binaries/crates                        |
+
+The MCP layer **reuses domain capabilities** from the kernel (HTTP internal calls and/or shared `domain` crates). It does not reimplement catalog, cart, or checkout.
+
+Early crate layout: `domain`, `persist`, **`api`** (Actix), **`mcp`** (Axum), later `realtime`, `extensions`, `sandbox`.
+
 ## Two contracts, one domain
 
-| Contract | Audience | Owns |
-| --- | --- | --- |
-| **OpenAPI** (+ HTTP) | Angular, rangular, external HTTP clients | Resources, auth stubs, idempotent checkout, webhooks ingress |
-| **WIT / Component Model** | Extension authors | Versioned hooks (pricing adjust, shipping quote, tax rule, …) with host-provided capabilities only |
-| **Realtime events** | Both UIs (and admin) | Typed push aligned with domain events (cart totals, stock, order status) |
+| Contract                  | Audience                                 | Owns                                                                                               |
+| ------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **OpenAPI** (+ HTTP)      | Angular, rangular, external HTTP clients | Resources, auth stubs, idempotent checkout, webhooks ingress                                       |
+| **WIT / Component Model** | Extension authors                        | Versioned hooks (pricing adjust, shipping quote, tax rule, …) with host-provided capabilities only |
+| **Realtime events**       | Both UIs (and admin)                     | Typed push aligned with domain events (cart totals, stock, order status)                           |
 
 Guests (Wasm components or sandboxed runtimes) never open the database. The host authorizes and commits.
 
 ## Three Wasm roles (keep them distinct)
 
-rustashop is **Wasm-oriented** the way Meteor was **realtime-oriented**: an opinion about defaults, not a claim that every byte runs inside one engine.
+RustaShop is **Wasm-oriented** the way Meteor was **realtime-oriented**: an opinion about defaults, not a claim that every byte runs inside one engine.
 
-| Role | Typical tech | Job |
-| --- | --- | --- |
-| **Storefront UI Wasm** | rangular → Leptos in the browser | Client rendering and UX for UI option B |
-| **Plugin Wasm** | Component Model + WIT; host such as wasmtime (and/or Wasmer where it fits the ABI) | Safe, versioned commerce extensions |
-| **Sandbox Wasm** | [Wasmer SDK](https://wasmer.io/posts/wasmer-local-sandboxes-for-ai-agents) local sandboxes | Untrusted or polyglot code: Python / Node / PHP packages, agent tools, demos, migration glue |
+| Role                   | Typical tech                                                                               | Job                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| **Storefront UI Wasm** | rangular → Leptos in the browser                                                           | Client rendering and UX for UI option B                                                      |
+| **Plugin Wasm**        | Component Model + WIT; host such as wasmtime (and/or Wasmer where it fits the ABI)         | Safe, versioned commerce extensions                                                          |
+| **Sandbox Wasm**       | [Wasmer SDK](https://wasmer.io/posts/wasmer-local-sandboxes-for-ai-agents) local sandboxes | Untrusted or polyglot code: Python / Node / PHP packages, agent tools, demos, migration glue |
 
 Optional: a small interpreter-style engine (for example wasmi) for tiny embedded evaluators. That is a tactical choice, not the architecture center. Serious Component Model hosting today centers on mature CM hosts; Wasmer’s WASIX / package story is especially relevant for **sandbox and polyglot** lanes.
 
@@ -42,7 +56,7 @@ Detail: [WASM-LAYERS.md](WASM-LAYERS.md), [EXTENSIONS.md](EXTENSIONS.md), [WASME
 
 ## Realtime as a first-class axis
 
-Meteor’s habit was: live sync is the default, not an afterthought. rustashop adopts the same *kind* of opinion for commerce state that changes during a session.
+Meteor’s habit was: live sync is the default, not an afterthought. RustaShop adopts the same _kind_ of opinion for commerce state that changes during a session.
 
 - Push for cart/checkout session, inventory signals, order status, admin feeds.
 - Both UI stacks subscribe to the **same** push channel.
@@ -58,12 +72,12 @@ Ship the README vertical slice. In parallel (or immediately after the HTTP skele
 1. **Realtime gateway** - WebSocket surface + event schema next to OpenAPI.
 2. **Extension ABI v0** - one or two WIT hooks with a host harness and a fixture component.
 3. **Sandbox lane** - Wasmer-backed execution for scripts/agents with audit log (Angular admin drives it).
-4. **Polyglot acceptance** - PHP legacy adapters and, later, first-class connector stories (including native Rust↔Python options such as PyO3 for *in-process connectors* where sandboxing is the wrong tool).
+4. **Polyglot acceptance** - PHP legacy adapters and, later, first-class connector stories (including native Rust↔Python options such as PyO3 for _in-process connectors_ where sandboxing is the wrong tool).
 5. **Module isolation tests** - CI that loads a guest, denies DB, asserts capability boundaries.
 6. **AI-native tools** - discovery, shopping/catalog/support agents, MCP, autonomous jobs on the same domain ([AI-NATIVE.md](AI-NATIVE.md)).
 7. **Deploy surfaces** - `:dev` tip then `.ai` / `.io` / `.dev` / `.app` ([DOMAINS.md](DOMAINS.md)).
 
-These axes are product foundation, not a distraction from catalog/cart/checkout. Early crate layout (`api`, `domain`, `persist`, later `realtime`, `extensions`, `sandbox`, `ai` / MCP) should leave room for them.
+These axes are product foundation, not a distraction from catalog/cart/checkout. Early crate layout (`domain`, `persist`, **`api`** on Actix, **`mcp`** on Axum, later `realtime`, `extensions`, `sandbox`) should leave room for them.
 
 ## Explicit non-goals for early foundations
 
@@ -74,4 +88,4 @@ These axes are product foundation, not a distraction from catalog/cart/checkout.
 
 ## Related GitHub work
 
-Track delivery under epics labeled `area:wasm`, `area:realtime`, `area:extensions`, and `area:ai`. Link new ADRs here when decisions harden.
+Track delivery under epics labeled `area:wasm`, `area:realtime`, `area:extensions`, and `area:ai`. HTTP stack decision: [#47](https://github.com/Interchouette-ITC/RustaShop/issues/47). Link new ADRs here when decisions harden.

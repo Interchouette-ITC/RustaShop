@@ -1,7 +1,7 @@
-# **rustashop**
+# **RustaShop**
 
 <p align="center">
-  <img src="docs/brand/logo-mascot-readme.png" alt="rustashop mascot: Ferris in a shopping bag with Rust gear" width="320" />
+  <img src="docs/brand/logo-mascot-readme.png" alt="RustaShop mascot: Ferris in a shopping bag with Rust gear" width="320" />
 </p>
 
 <p align="center">
@@ -16,27 +16,28 @@ AI is built into the product map (discovery, shopping agents, catalog assist, pr
 
 ## What we are building
 
-| Piece | Role |
-| --- | --- |
-| **Commerce API** | Catalog, cart, checkout, orders, money (integers), inventory, payments, webhooks |
-| **UI A** | Angular storefront / admin |
-| **UI B** | rangular → Leptos storefront |
-| **Realtime** | WebSocket-first live cart, stock, orders |
-| **Extensions** | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents |
-| **AI** | Native tools and agents on the same API + MCP |
+| Piece            | Role                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| **Commerce API** | Catalog, cart, checkout, orders, money (integers), inventory, payments, webhooks            |
+| **HTTP stack**   | **Actix-web** kernel (REST, OpenAPI, WebSocket); **Axum** MCP / agent tools (house pattern) |
+| **UI A**         | Angular storefront / admin                                                                  |
+| **UI B**         | rangular → Leptos storefront                                                                |
+| **Realtime**     | WebSocket-first live cart, stock, orders                                                    |
+| **Extensions**   | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents                       |
+| **AI**           | Native tools and agents on the same API + MCP                                               |
 
-We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/rustashop/issues/29) and [`docs-dev/`](docs-dev/).
+We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/RustaShop/issues/29) and [`docs-dev/`](docs-dev/).
 
 ## Domains
 
-| Host | Role |
-| --- | --- |
-| `rustashop.interchouette.net` | First `:dev` image tip (Render service by operator) |
-| `rustashop.ai` | Primary marketing |
-| `rustashop.io` | Product-oriented |
-| `rustashop.dev` | Demo |
-| `rustashop.app` | Ionic app |
-| `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now |
+| Host                           | Role                                                |
+| ------------------------------ | --------------------------------------------------- |
+| `rustashop.interchouette.net`  | First `:dev` image tip (Render service by operator) |
+| `rustashop.ai`                 | Primary marketing                                   |
+| `rustashop.io`                 | Product-oriented                                    |
+| `rustashop.dev`                | Demo                                                |
+| `rustashop.app`                | Ionic app                                           |
+| `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now                            |
 
 Detail: [`docs-dev/DOMAINS.md`](docs-dev/DOMAINS.md).
 
@@ -59,7 +60,7 @@ Foundations for implementers (English):
 - [`docs-dev/FOUNDATIONS.md`](docs-dev/FOUNDATIONS.md) - Wasm, contracts, realtime
 - Brand masters: [`assets/`](assets/) · named sizes: [`docs/brand/`](docs/brand/)
 
-Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold ([#10](https://github.com/Interchouette-ITC/rustashop/issues/10)).
+Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold ([#10](https://github.com/Interchouette-ITC/RustaShop/issues/10)).
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
@@ -70,21 +71,23 @@ Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold (
 3. Commits and docs in **English**; conventional commits when code lands.
 
 <p align="center">
-  <img src="docs/brand/badge-stack-readme.png" alt="rustashop stack: Rust API, Angular, rangular" width="480" />
+  <img src="docs/brand/badge-stack-readme.png" alt="RustaShop stack: Rust API, Angular, rangular" width="480" />
 </p>
 
 ## Thanks
 
-**rustashop** will stand on excellent open-source projects and hosts:
+**RustaShop** will stand on excellent open-source projects and hosts:
 
-| Project | Role here |
-| --- | --- |
-| [Rust](https://www.rust-lang.org/) | Commerce API and workers |
-| [Angular](https://angular.dev/) | UI option A |
-| [rangular](https://github.com/Interchouette-ITC/rangular) / [Leptos](https://leptos.dev/) | UI option B (templates → wasm) |
-| [Tokio](https://tokio.rs/) / [Axum](https://github.com/tokio-rs/axum) (planned) | HTTP, WebSocket, async runtime |
-| [PostgreSQL](https://www.postgresql.org/) (planned) | System of record |
-| [Render](https://render.com/) | Hosting tip / demos (operator-owned services) |
+| Project                                                                                   | Role here                                          |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [Rust](https://www.rust-lang.org/)                                                        | Commerce API and workers                           |
+| [Actix Web](https://actix.rs/)                                                            | Main commerce HTTP API, OpenAPI, WebSocket gateway |
+| [Axum](https://github.com/tokio-rs/axum)                                                  | MCP and narrow agent/tool HTTP surfaces            |
+| [Angular](https://angular.dev/)                                                           | UI option A                                        |
+| [rangular](https://github.com/Interchouette-ITC/rangular) / [Leptos](https://leptos.dev/) | UI option B (templates → wasm)                     |
+| [Tokio](https://tokio.rs/) (planned)                                                      | Async runtime                                      |
+| [PostgreSQL](https://www.postgresql.org/) (planned)                                       | System of record                                   |
+| [Render](https://render.com/)                                                             | Hosting tip / demos (operator-owned services)      |
 
 Thank you to their maintainers and communities.
 

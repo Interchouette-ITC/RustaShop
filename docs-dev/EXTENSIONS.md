@@ -2,36 +2,36 @@
 
 ## Goal
 
-Give rustashop a **Meteor-level opinion on extensibility**: modules attach to **stable interfaces**, not by overriding core types. The Wasm Component Model and WIT are the preferred ABI for first-party and third-party commerce plugins.
+Give RustaShop a **Meteor-level opinion on extensibility**: modules attach to **stable interfaces**, not by overriding core types. The Wasm Component Model and WIT are the preferred ABI for first-party and third-party commerce plugins.
 
 Implement the ABI **early and scoped** (one or two hooks + harness), not “rewrite the monolith as components.”
 
 ## Host and guest
 
-| Side | Responsibility |
-| --- | --- |
+| Side                   | Responsibility                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | **Host (Rust kernel)** | Domain truth, persistence, payments capture, inventory commit, emitting realtime events, loading/verifying components |
-| **Guest (component)** | Pure or capability-limited logic: propose adjustments, quotes, classifications |
+| **Guest (component)**  | Pure or capability-limited logic: propose adjustments, quotes, classifications                                        |
 
 Guests **cannot** open the database or talk to payment providers except through host functions the WIT world imports.
 
 ## Example hook surface (v0 candidates)
 
-| Hook | Input (conceptual) | Output |
-| --- | --- | --- |
-| `pricing-adjust` | Cart snapshot (money as ints) | Line or order adjustments |
-| `shipping-quote` | Address + parcels | Quotes |
-| `tax-rule` | Taxable breakdown | Tax lines |
-| `payment-webhook-normalize` | Raw provider payload | Normalized domain event draft |
+| Hook                        | Input (conceptual)            | Output                        |
+| --------------------------- | ----------------------------- | ----------------------------- |
+| `pricing-adjust`            | Cart snapshot (money as ints) | Line or order adjustments     |
+| `shipping-quote`            | Address + parcels             | Quotes                        |
+| `tax-rule`                  | Taxable breakdown             | Tax lines                     |
+| `payment-webhook-normalize` | Raw provider payload          | Normalized domain event draft |
 
 Start with **one** hook (likely `pricing-adjust`) plus a fixture component in CI.
 
 ## OpenAPI vs WIT
 
-| | OpenAPI | WIT |
-| --- | --- | --- |
-| Consumers | UIs, HTTP integrators | Extension authors |
-| Stability | Semver with the HTTP API | Semver with the extension world |
+|           | OpenAPI                   | WIT                                             |
+| --------- | ------------------------- | ----------------------------------------------- |
+| Consumers | UIs, HTTP integrators     | Extension authors                               |
+| Stability | Semver with the HTTP API  | Semver with the extension world                 |
 | Evolution | Additive paths and fields | Additive functions / carefully versioned worlds |
 
 Both describe the **same domain**. They are two doors, not two products.
@@ -53,22 +53,22 @@ These tests are part of the extension epic acceptance, not a nice-to-have.
 
 ## Relationship to Wasmer sandboxes
 
-| Component Model plugin | Wasmer sandbox script |
-| --- | --- |
-| Signed/versioned commerce extension | Ad-hoc or merchant/agent code in Python/Node/PHP |
-| Tight WIT world | Broader runtime + stricter outer jail |
-| Ships with the shop’s extension list | Jobs, migrations, playgrounds, agent tools |
+| Component Model plugin               | Wasmer sandbox script                            |
+| ------------------------------------ | ------------------------------------------------ |
+| Signed/versioned commerce extension  | Ad-hoc or merchant/agent code in Python/Node/PHP |
+| Tight WIT world                      | Broader runtime + stricter outer jail            |
+| Ships with the shop’s extension list | Jobs, migrations, playgrounds, agent tools       |
 
-A future path may compile some sandboxed workflows *into* components; early on, keep the APIs separate so trust levels stay clear.
+A future path may compile some sandboxed workflows _into_ components; early on, keep the APIs separate so trust levels stay clear.
 
 ## Native connectors (PyO3 and friends)
 
 Some integrations want **in-process native bindings** (for example Rust host ↔ Python via PyO3) for low-latency connectors we ship ourselves. That is **not** the same as merchant-supplied Python in a sandbox:
 
-| | PyO3 (or similar) connector | Wasmer Python guest |
-| --- | --- | --- |
-| Author | rustashop / trusted partner | Merchant, agent, migrator |
-| Trust | First-party | Untrusted |
-| Use | Official connectors, shared memory paths | Scripts, experiments, legacy glue |
+|        | PyO3 (or similar) connector              | Wasmer Python guest               |
+| ------ | ---------------------------------------- | --------------------------------- |
+| Author | RustaShop / trusted partner              | Merchant, agent, migrator         |
+| Trust  | First-party                              | Untrusted                         |
+| Use    | Official connectors, shared memory paths | Scripts, experiments, legacy glue |
 
 Document connector work under extensions/integrations issues; enforce sandbox for anything executable that is not first-party.
