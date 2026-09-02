@@ -4,6 +4,3 @@
 .env
 .env.*
 !.env.example
-.github_credentials
-# Local reference checkouts of PHP commerce platforms (not part of the product tree)
-/PHP/
