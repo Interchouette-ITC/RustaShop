@@ -11,12 +11,15 @@ DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 
 .PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-reset
 
+SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
+SEAORM_FEATURES := --no-default-features --features persist-seaorm
+
 help:
 	@echo "RustaShop targets"
 	@echo ""
-	@echo "  make check      cargo check --workspace"
-	@echo "  make test       cargo test --workspace"
-	@echo "  make lint       fmt check + clippy (workspace)"
+	@echo "  make check      cargo check --workspace, then SeaORM features"
+	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
+	@echo "  make lint       fmt check + clippy (workspace + SeaORM features)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API (RUSTASHOP_BIND, default $(API_BIND))"
 	@echo "  make db-up      start Postgres via docker compose"
@@ -31,9 +34,11 @@ help:
 
 check:
 	cd $(ROOT) && $(CARGO) check --workspace
+	cd $(ROOT) && $(CARGO) check $(SEAORM_PACKAGES) $(SEAORM_FEATURES)
 
 test:
 	cd $(ROOT) && $(CARGO) test --workspace
+	cd $(ROOT) && $(CARGO) test $(SEAORM_PACKAGES) $(SEAORM_FEATURES)
 
 format:
 	cd $(ROOT) && $(CARGO) fmt
@@ -43,6 +48,7 @@ format-check:
 
 lint: format-check
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)
+	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
 run-api:
 	cd $(ROOT) && RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api

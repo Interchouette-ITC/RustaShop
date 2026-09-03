@@ -1,6 +1,6 @@
 [package]
 name = "rustashop-persist"
-description = "Persistence adapters (SQLx and SeaORM paths split in later issues)"
+description = "Persistence facade: compile-time SQLx or SeaORM backend"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,8 +8,12 @@ authors.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+default = ["persist-sqlx"]
+persist-sqlx = ["dep:rustashop-persist-sqlx"]
+persist-seaorm = ["dep:rustashop-persist-seaorm"]
+
 [dependencies]
-rustashop-domain = { workspace = true }
-serde = { workspace = true }
+rustashop-persist-sqlx = { workspace = true, optional = true }
+rustashop-persist-seaorm = { workspace = true, optional = true }
 thiserror = { workspace = true }
-tokio = { workspace = true }
