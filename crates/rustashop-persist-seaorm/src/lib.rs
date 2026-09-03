@@ -6,11 +6,14 @@ pub mod catalog;
 pub mod entities;
 pub mod migration;
 
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
 pub use catalog::SeaOrmCatalogRepository;
 pub use migration::Migrator;
+
+/// SQL used by [`seed_catalog`] and `make db-seed`.
+pub const CATALOG_SEED_SQL: &str = include_str!("../../../db/seeds/catalog.sql");
 
 /// Applies pending `SeaORM` migrations against the given connection.
 ///
@@ -19,6 +22,29 @@ pub use migration::Migrator;
 /// Returns [`sea_orm::DbErr`] when migration execution fails.
 pub async fn migrate(connection: &DatabaseConnection) -> Result<(), sea_orm::DbErr> {
     migration::Migrator::up(connection, None).await
+}
+
+/// Inserts the catalog seed rows (`ON CONFLICT DO NOTHING`).
+///
+/// # Errors
+///
+/// Returns [`sea_orm::DbErr`] when the script fails.
+pub async fn seed_catalog(connection: &DatabaseConnection) -> Result<(), sea_orm::DbErr> {
+    connection.execute_unprepared(CATALOG_SEED_SQL).await?;
+    Ok(())
+}
+
+/// Connects with `DATABASE_URL` and returns a catalog repository.
+///
+/// # Errors
+///
+/// Returns [`MigrateError`] when the URL is missing or the database is unreachable.
+pub async fn catalog_from_env() -> Result<SeaOrmCatalogRepository, MigrateError> {
+    let url = std::env::var("DATABASE_URL").map_err(|_| MigrateError::MissingDatabaseUrl)?;
+    let mut options = ConnectOptions::new(url);
+    options.max_connections(5);
+    let connection = Database::connect(options).await?;
+    Ok(SeaOrmCatalogRepository::new(connection))
 }
 
 /// Connects with `DATABASE_URL` and runs pending migrations.

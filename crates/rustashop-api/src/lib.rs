@@ -1,7 +1,15 @@
 //! Actix-web API surface.
 
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-use serde::{Deserialize, Serialize};
+mod error;
+mod health;
+mod openapi;
+mod products;
+
+use actix_web::{web, App, HttpServer};
+
+pub use health::{healthz, HealthResponse};
+pub use openapi::{openapi_json, ApiDoc};
+pub use products::{get_product, list_products, ProductListResponse, ProductResponse};
 
 /// Default bind address when `RUSTASHOP_BIND` is unset.
 pub const DEFAULT_BIND: &str = "127.0.0.1:8080";
@@ -9,49 +17,49 @@ pub const DEFAULT_BIND: &str = "127.0.0.1:8080";
 /// Environment variable for the API listen address.
 pub const BIND_ENV: &str = "RUSTASHOP_BIND";
 
-/// JSON body for `GET /healthz`.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct HealthResponse {
-    /// Liveness status.
-    pub status: String,
-}
-
 /// Returns the bind address from `RUSTASHOP_BIND` or [`DEFAULT_BIND`].
 #[must_use]
 pub fn bind_address() -> String {
     std::env::var(BIND_ENV).unwrap_or_else(|_| DEFAULT_BIND.to_owned())
 }
 
-/// `GET /healthz` handler.
-#[get("/healthz")]
-pub async fn healthz() -> impl Responder {
-    HttpResponse::Ok().json(HealthResponse {
-        status: "ok".to_owned(),
-    })
+/// Registers HTTP routes on `cfg`.
+pub fn routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(healthz)
+        .service(openapi_json)
+        .service(list_products)
+        .service(get_product);
 }
 
 /// Starts the Actix HTTP server on [`bind_address`].
 ///
 /// # Errors
 ///
-/// Returns an error when binding or serving fails.
+/// Returns an error when binding, connecting to the database, or serving fails.
 #[allow(clippy::future_not_send)]
 pub async fn run() -> std::io::Result<()> {
     let bind = bind_address();
-    HttpServer::new(|| App::new().service(healthz))
-        .bind(bind)?
-        .run()
+    let catalog = rustashop_persist::catalog_from_env()
         .await
+        .map_err(std::io::Error::other)?;
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(catalog.clone()))
+            .configure(routes)
+    })
+    .bind(bind)?
+    .run()
+    .await
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, App};
+    use actix_web::test;
 
     #[actix_web::test]
     async fn healthz_returns_ok_json() {
-        let app = test::init_service(App::new().service(healthz)).await;
+        let app = test::init_service(App::new().configure(routes)).await;
         let req = test::TestRequest::get().uri("/healthz").to_request();
         let resp = test::call_service(&app, req).await;
 
@@ -59,6 +67,18 @@ mod tests {
 
         let body: HealthResponse = test::read_body_json(resp).await;
         assert_eq!(body.status, "ok");
+    }
+
+    #[actix_web::test]
+    async fn openapi_json_lists_product_paths() {
+        let app = test::init_service(App::new().configure(routes)).await;
+        let req = test::TestRequest::get().uri("/openapi.json").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        let paths = body.get("paths").expect("paths");
+        assert!(paths.get("/v1/products").is_some());
+        assert!(paths.get("/healthz").is_some());
     }
 }
 
