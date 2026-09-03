@@ -1,0 +1,15 @@
+[package]
+name = "rustashop-persist"
+description = "Persistence adapters (SQLx and SeaORM paths split in later issues)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rustashop-domain = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }

@@ -1,0 +1,15 @@
+[package]
+name = "rustashop"
+description = "RustaShop application kernel (Serenade integration in #49)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rustashop-domain = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
