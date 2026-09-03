@@ -1,6 +1,10 @@
-//! `SQLx` persistence: versioned SQL migrations and hand-written queries.
+//! `SQLx` persistence: versioned SQL migrations, queries, and catalog repositories.
+
+pub mod catalog;
 
 use sqlx::postgres::PgPool;
+
+pub use catalog::SqlxCatalogRepository;
 
 /// Applies embedded `SQLx` migrations against the given pool.
 ///
