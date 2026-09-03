@@ -69,7 +69,7 @@ Host API against compose Postgres only: `make db-up && make db-migrate && make r
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - crates, HTTP split, request path
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - make targets, lint bar, PR habits
 - [`docs-dev/README.md`](docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
-- Brand masters: [`assets/`](assets/) · named sizes: [`docs/brand/`](docs/brand/)
+- Brand sizes: [`docs/brand/`](docs/brand/)
 
 Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/RustaShop/issues/49).
 
