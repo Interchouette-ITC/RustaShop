@@ -1,4 +1,12 @@
-//! Commerce domain layer. Persistence adapters live in `rustashop-persist`.
+//! Commerce domain types. Persistence adapters live outside this crate.
+//!
+//! Money uses integer minor units and an ISO currency code, matching Sylius order
+//! totals (`getTotal(): int`) rather than float cart math.
 
-/// Workspace placeholder until catalog types land in issue #15.
-pub const DOMAIN_CRATE: &str = "rustashop-domain";
+mod catalog;
+mod error;
+mod money;
+
+pub use catalog::{Category, Product, ProductVariant};
+pub use error::DomainError;
+pub use money::{Currency, Money};
