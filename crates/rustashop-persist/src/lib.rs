@@ -2,13 +2,18 @@
 //!
 //! Enable `SeaORM` with `--no-default-features --features persist-seaorm`. Enabling both
 //! features (easy to do if you add `persist-seaorm` without disabling the default) fails at
-//! compile time. Repository adapters register through [`PersistenceFactory`] once they exist.
+//! compile time.
 
 #[cfg(all(feature = "persist-sqlx", feature = "persist-seaorm"))]
 compile_error!("enable only one of persist-sqlx or persist-seaorm");
 
 #[cfg(not(any(feature = "persist-sqlx", feature = "persist-seaorm")))]
 compile_error!("enable persist-sqlx or persist-seaorm");
+
+#[cfg(feature = "persist-seaorm")]
+pub use rustashop_persist_seaorm::SeaOrmCatalogRepository as CatalogRepository;
+#[cfg(feature = "persist-sqlx")]
+pub use rustashop_persist_sqlx::SqlxCatalogRepository as CatalogRepository;
 
 /// Compile-time persistence backend selected by Cargo features.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -38,6 +43,15 @@ impl PersistenceFactory {
     pub async fn migrate_from_env(self) -> Result<(), MigrateError> {
         migrate_from_env().await
     }
+
+    /// Connects with `DATABASE_URL` and returns a catalog repository.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MigrateError`] when the URL is missing or the database is unreachable.
+    pub async fn catalog_from_env(self) -> Result<CatalogRepository, MigrateError> {
+        catalog_from_env().await
+    }
 }
 
 /// Returns the backend compiled into this crate.
@@ -66,6 +80,22 @@ pub async fn migrate_from_env() -> Result<(), MigrateError> {
     #[cfg(feature = "persist-seaorm")]
     {
         Ok(rustashop_persist_seaorm::migrate_from_env().await?)
+    }
+}
+
+/// Connects with `DATABASE_URL` and returns the compiled catalog repository.
+///
+/// # Errors
+///
+/// Returns [`MigrateError`] when the URL is missing or the database is unreachable.
+pub async fn catalog_from_env() -> Result<CatalogRepository, MigrateError> {
+    #[cfg(feature = "persist-sqlx")]
+    {
+        Ok(rustashop_persist_sqlx::catalog_from_env().await?)
+    }
+    #[cfg(feature = "persist-seaorm")]
+    {
+        Ok(rustashop_persist_seaorm::catalog_from_env().await?)
     }
 }
 

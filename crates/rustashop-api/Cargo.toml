@@ -1,6 +1,6 @@
 [package]
 name = "rustashop-api"
-description = "Actix-web commerce API (OpenAPI via utoipa in later slices)"
+description = "Actix-web commerce API (OpenAPI via utoipa)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,18 +14,33 @@ path = "src/main.rs"
 
 [features]
 default = ["persist-sqlx"]
-persist-sqlx = ["rustashop-persist/persist-sqlx"]
-persist-seaorm = ["rustashop-persist/persist-seaorm"]
+persist-sqlx = [
+    "rustashop-persist/persist-sqlx",
+    "dep:rustashop-persist-sqlx",
+    "dep:sqlx",
+]
+persist-seaorm = [
+    "rustashop-persist/persist-seaorm",
+    "dep:rustashop-persist-seaorm",
+    "dep:sea-orm",
+]
 
 [dependencies]
 actix-web = { workspace = true }
 rustashop = { workspace = true }
 rustashop-domain = { workspace = true }
 rustashop-persist = { workspace = true }
+rustashop-persist-sqlx = { workspace = true, optional = true }
+rustashop-persist-seaorm = { workspace = true, optional = true }
+sea-orm = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serenade-contracts = { workspace = true }
+sqlx = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
 
 [dev-dependencies]
 actix-web = { workspace = true }

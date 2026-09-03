@@ -9,7 +9,7 @@ DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-reset
+.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -27,6 +27,7 @@ help:
 	@echo "  make db-psql    psql shell (needs db-up)"
 	@echo "  make db-migrate run SQLx migrations (needs db-up, DATABASE_URL)"
 	@echo "  make db-migrate-seaorm run SeaORM migrations (needs db-up, DATABASE_URL)"
+	@echo "  make db-seed    load catalog seed (needs db-up, migrated schema)"
 	@echo "  make db-reset   drop public schema and re-run migrations"
 	@echo "  make clean      cargo clean"
 	@echo ""
@@ -51,7 +52,7 @@ lint: format-check
 	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
 run-api:
-	cd $(ROOT) && RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
+	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
 
 db-up:
 	cd $(ROOT) && docker compose up -d postgres
@@ -71,6 +72,9 @@ db-migrate:
 
 db-migrate-seaorm:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-seaorm --bin rustashop-seaorm-migrate
+
+db-seed:
+	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop < db/seeds/catalog.sql
 
 db-reset:
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
