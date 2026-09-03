@@ -17,5 +17,36 @@ services:
       retries: 10
       start_period: 10s
 
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: rustashop-api:local
+    container_name: rustashop-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: postgres://rustashop:rustashop@postgres:5432/rustashop
+    command: ["/app/rustashop-migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: rustashop-api:local
+    container_name: rustashop-api
+    environment:
+      DATABASE_URL: postgres://rustashop:rustashop@postgres:5432/rustashop
+      RUSTASHOP_BIND: 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   rustashop_pgdata:

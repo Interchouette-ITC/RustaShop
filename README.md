@@ -12,7 +12,7 @@ One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenA
 
 AI is built into the product map (discovery, shopping agents, catalog assist, pricing, support, MCP, autonomous agents), not glued on later. See [`docs-dev/AI-NATIVE.md`](docs-dev/AI-NATIVE.md).
 
-**Status:** vision, foundations, and brand. No production commerce code yet.
+**Status:** catalog read API, OpenAPI / Swagger UI, and local Postgres. Cart and checkout are not in yet.
 
 ## What we are building
 
@@ -49,6 +49,20 @@ Detail: [`docs-dev/DOMAINS.md`](docs-dev/DOMAINS.md).
 - [ ] Foundations wired so AI, realtime, and extensions are not retrofit surprises
 
 Out of v0.1: marketplace, full promotions engine, Magento import wizard.
+
+## Local stack
+
+Postgres plus the Actix API:
+
+```bash
+docker compose up --build
+curl http://127.0.0.1:8080/healthz
+curl http://127.0.0.1:8080/v1/products
+```
+
+Swagger UI is at `/swagger-ui/`. `make openapi` writes `openapi/openapi.json`.
+
+Host API against compose Postgres only: `make db-up && make db-migrate && make run-api`. Do not bind port `8080` twice.
 
 ## Docs
 
