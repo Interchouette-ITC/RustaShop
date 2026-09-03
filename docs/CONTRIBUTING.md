@@ -4,7 +4,7 @@ Thank you for improving RustaShop. This repo is the **commerce product**. Framew
 
 ## Before you open a PR
 
-1. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs-dev/`](docs-dev/).
+1. Read [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs-dev/`](../docs-dev/).
 2. Run:
 
 ```bash
@@ -57,8 +57,8 @@ cargo check -p rustashop-persist -p rustashop-api --no-default-features --featur
 
 ## Documentation
 
-- **Product architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- **Foundations** (Wasm, realtime, AI, domains): [`docs-dev/`](docs-dev/)
+- **Product architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- **Foundations** (Wasm, realtime, AI, domains): [`docs-dev/`](../docs-dev/)
 - **OpenAPI:** live at `/openapi.json` and `/swagger-ui/`; committed dump via `make openapi`
 - No plan jargon or host-absolute paths in shipped text
 

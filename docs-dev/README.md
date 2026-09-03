@@ -1,8 +1,8 @@
 # Developer foundations (`docs-dev`)
 
-Internal orientation for RustaShop before and during early implementation. These notes capture **product and technical identity**: how we want the system to feel and which axes we invest in next to the MVP vertical slice in the root [README](../README.md).
+Internal orientation for RustaShop before and during early implementation. These notes capture **product and technical identity**: how we want the system to feel and which axes we invest in next to the MVP vertical slice in the [README](../docs/README.md).
 
-Public contributor docs (`docs/ARCHITECTURE.md`, `CONTRIBUTING.md`, …) still belong under the existing docs epics once the Cargo tree exists. **`docs-dev` is the living foundation set** so roadmap debates are not trapped in chat.
+Public contributor docs (`docs/ARCHITECTURE.md`, `docs/CONTRIBUTING.md`, …) still belong under the existing docs epics once the Cargo tree exists. **`docs-dev` is the living foundation set** so roadmap debates are not trapped in chat.
 
 ## Documents
 

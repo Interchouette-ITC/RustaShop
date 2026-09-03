@@ -83,7 +83,7 @@ Wasm roles (UI wasm vs plugins vs sandbox) are spelled out in [`docs-dev/WASM-LA
 | Full stack | `docker compose up --build` (Postgres + migrate + API on `8080`) |
 | Host API | `make db-up && make db-migrate && make run-api` |
 
-Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Related
 
