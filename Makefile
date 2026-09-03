@@ -4,12 +4,14 @@ SHELL := /bin/bash
 ROOT := $(abspath .)
 CARGO ?= cargo
 CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery
+RUSTDOCFLAGS ?= -D warnings
 API_BIND ?= 127.0.0.1:8080
 DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
+OPENAPI_OUT ?= openapi/openapi.json
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset
+.PHONY: help check test lint format format-check doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -20,10 +22,14 @@ help:
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
 	@echo "  make lint       fmt check + clippy (workspace + SeaORM features)"
+	@echo "  make doc        rustdoc for all crates (-D warnings)"
+	@echo "  make doc-open   build docs and open in browser"
+	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
 	@echo "  make format     cargo fmt"
-	@echo "  make run-api    start Actix API (RUSTASHOP_BIND, default $(API_BIND))"
+	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
 	@echo "  make db-up      start Postgres via docker compose"
-	@echo "  make db-down    stop Postgres container"
+	@echo "  make db-down    stop the compose project (Postgres and API if started)"
+	@echo "  make stack-up   build and start Postgres + migrate + API"
 	@echo "  make db-psql    psql shell (needs db-up)"
 	@echo "  make db-migrate run SQLx migrations (needs db-up, DATABASE_URL)"
 	@echo "  make db-migrate-seaorm run SeaORM migrations (needs db-up, DATABASE_URL)"
@@ -51,8 +57,20 @@ lint: format-check
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)
 	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
+doc:
+	cd $(ROOT) && RUSTDOCFLAGS="$(RUSTDOCFLAGS)" $(CARGO) doc --workspace --no-deps
+
+doc-open: doc
+	cd $(ROOT) && RUSTDOCFLAGS="$(RUSTDOCFLAGS)" $(CARGO) doc --workspace --no-deps --open
+
+openapi:
+	cd $(ROOT) && $(CARGO) run -p rustashop-api --bin rustashop-openapi -- $(OPENAPI_OUT)
+
 run-api:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
+
+stack-up:
+	cd $(ROOT) && docker compose up --build -d
 
 db-up:
 	cd $(ROOT) && docker compose up -d postgres

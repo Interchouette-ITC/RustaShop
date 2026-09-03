@@ -12,6 +12,10 @@ rust-version.workspace = true
 name = "rustashop-api"
 path = "src/main.rs"
 
+[[bin]]
+name = "rustashop-openapi"
+path = "src/bin/openapi.rs"
+
 [features]
 default = ["persist-sqlx"]
 persist-sqlx = [
