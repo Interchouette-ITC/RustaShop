@@ -2,6 +2,8 @@ use rustashop_persist_sqlx::{migrate, SqlxCatalogRepository};
 use serenade_contracts::{CategoryRepository, PageRequest, ProductRepository};
 use sqlx::postgres::PgPoolOptions;
 
+const SCHEMA_LOCK: i64 = 874_512;
+
 #[tokio::test]
 async fn sqlx_catalog_lists_and_finds_seeded_rows() {
     let Ok(url) = std::env::var("DATABASE_URL") else {
@@ -13,16 +15,20 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
         .connect(&url)
         .await
         .expect("connect");
-    migrate(&pool).await.expect("migrate");
-    sqlx::query("SELECT pg_advisory_lock(874512)")
+    sqlx::query("SELECT pg_advisory_lock($1)")
+        .bind(SCHEMA_LOCK)
         .execute(&pool)
         .await
         .expect("lock");
-    sqlx::query("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+    sqlx::query("DROP SCHEMA public CASCADE")
         .execute(&pool)
         .await
-        .expect("reset schema");
-    migrate(&pool).await.expect("migrate after reset");
+        .expect("drop schema");
+    sqlx::query("CREATE SCHEMA public")
+        .execute(&pool)
+        .await
+        .expect("create schema");
+    migrate(&pool).await.expect("migrate");
     sqlx::query(
         "INSERT INTO category (id, slug, name) VALUES ('11111111-1111-1111-1111-111111111111', 'apparel', 'Apparel')",
     )
@@ -37,7 +43,7 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
     .await
     .expect("seed product");
 
-    let repo = SqlxCatalogRepository::new(pool);
+    let repo = SqlxCatalogRepository::new(pool.clone());
     let product = ProductRepository::find_by_slug(&repo, "hoodie")
         .await
         .expect("slug")
@@ -62,4 +68,10 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
         .await
         .expect("children");
     assert_eq!(children.len(), 1);
+
+    sqlx::query("SELECT pg_advisory_unlock($1)")
+        .bind(SCHEMA_LOCK)
+        .execute(&pool)
+        .await
+        .expect("unlock");
 }
