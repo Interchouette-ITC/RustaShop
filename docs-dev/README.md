@@ -11,6 +11,7 @@ Public contributor docs (`docs/ARCHITECTURE.md`, `CONTRIBUTING.md`, …) still b
 | [FOUNDATIONS.md](FOUNDATIONS.md)       | Overall identity: contracts, three Wasm roles, realtime default, AI-native, roadmap axes |
 | [AI-NATIVE.md](AI-NATIVE.md)           | AI across API and UIs: discovery, agents, catalog, pricing, support, MCP                 |
 | [DOMAINS.md](DOMAINS.md)               | Hostnames (`ai` / `io` / `dev` / `app` / redirects) and deploy surfaces                  |
+| [UI-RENDERERS.md](UI-RENDERERS.md)     | Angular + rangular dual track; Leptos web vs GPUI native hosts                           |
 | [WASM-LAYERS.md](WASM-LAYERS.md)       | Storefront Wasm vs plugin Component Model vs sandbox runtimes                            |
 | [REALTIME.md](REALTIME.md)             | WebSocket-first live shop state (Meteor-like opinion, RustaShop protocol)                |
 | [EXTENSIONS.md](EXTENSIONS.md)         | WIT plugin ABI, host capabilities, OpenAPI vs WIT                                        |
