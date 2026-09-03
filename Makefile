@@ -8,7 +8,7 @@ API_BIND ?= 127.0.0.1:8080
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check run-api clean
+.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait
 
 help:
 	@echo "RustaShop targets"
@@ -18,6 +18,9 @@ help:
 	@echo "  make lint       fmt check + clippy (workspace)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API (RUSTASHOP_BIND, default $(API_BIND))"
+	@echo "  make db-up      start Postgres via docker compose"
+	@echo "  make db-down    stop Postgres container"
+	@echo "  make db-psql    psql shell (needs db-up)"
 	@echo "  make clean      cargo clean"
 	@echo ""
 	@echo "Overrides: API_BIND=$(API_BIND)"
@@ -39,6 +42,19 @@ lint: format-check
 
 run-api:
 	cd $(ROOT) && RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
+
+db-up:
+	cd $(ROOT) && docker compose up -d postgres
+	@$(MAKE) db-wait
+
+db-down:
+	cd $(ROOT) && docker compose down
+
+db-wait:
+	@cd $(ROOT) && docker compose exec -T postgres sh -c 'until pg_isready -U rustashop -d rustashop; do sleep 1; done'
+
+db-psql:
+	cd $(ROOT) && docker compose exec postgres psql -U rustashop -d rustashop
 
 clean:
 	cd $(ROOT) && $(CARGO) clean
