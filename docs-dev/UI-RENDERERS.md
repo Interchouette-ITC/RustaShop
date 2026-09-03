@@ -79,11 +79,24 @@ Angular remains **UI option A**: mature ecosystem, separate repo under `clients/
 
 ## Dependencies and order
 
+Upstream rangular work splits into **two blockers** with different blast radius:
+
+| Upstream | Blocks | Does not block |
+| --- | --- | --- |
+| [rangular #22](https://github.com/Interchouette-ITC/rangular/issues/22) (forms / validators) | rangular **checkout**, **admin CRUD**, multi-field UX on **any** renderer (Leptos or GPUI) | API; Angular track; rangular **browse-only** (catalog list/detail, add-to-cart buttons) |
+| [rangular #37](https://github.com/Interchouette-ITC/rangular/issues/37) (GPUI backend) | rangular **native** host only | rangular web (Leptos); Angular; API |
+
+**#22 blocks more RustaShop than #37** if the MVP includes checkout or admin on track B. v0.1 only has `required` / banana `[(prop)]` — enough for a seed field, not commerce forms ([rangular #22](https://github.com/Interchouette-ITC/rangular/issues/22)).
+
+Suggested order:
+
 1. **Commerce API** MVP on Serenade + Actix (#2, #49, #47)
-2. **rangular** web path stable (Leptos CSR) — upstream
-3. **rangular GPUI renderer** — new epic upstream (blocks native track)
-4. RustaShop **shared commerce components** (templates + services) targeting web first, then native when GPUI backend exists
-5. Angular clients in parallel where team capacity allows
+2. **rangular #22** (at least Host helpers + control state) — before rangular checkout/admin
+3. **rangular web** browse + cart (Leptos CSR) on API stub
+4. **rangular #37** (GPUI) — native admin/desktop
+5. **Angular** clients in parallel (forms ship with Angular; not blocked by #22)
+
+If checkout must ship early on track B, **#22 before #37**. If native GPUI is the priority, **#37** can run in parallel with #22 (forms must land on both backends eventually).
 
 ## Non-goals (early)
 
