@@ -1,5 +1,6 @@
 //! `SeaORM` persistence: entities and migrations mirroring the `SQLx` schema.
 
+pub mod cart;
 pub mod catalog;
 pub mod entities;
 pub mod migration;

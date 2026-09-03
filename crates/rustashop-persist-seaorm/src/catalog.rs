@@ -10,7 +10,7 @@ use crate::entities::{category, product};
 /// `SeaORM` catalog read adapter.
 #[derive(Clone, Debug)]
 pub struct SeaOrmCatalogRepository {
-    db: DatabaseConnection,
+    pub(crate) db: DatabaseConnection,
 }
 
 impl SeaOrmCatalogRepository {

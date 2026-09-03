@@ -104,6 +104,23 @@ impl Money {
         Ok(Self::new(amount_minor, self.currency.clone()))
     }
 
+    /// Multiplies the minor-unit amount by a positive quantity.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DomainError::InvalidQuantity`] when `quantity` is not positive,
+    /// or [`DomainError::Overflow`] when the product does not fit in `i64`.
+    pub fn checked_mul_qty(&self, quantity: i32) -> Result<Self, DomainError> {
+        if quantity <= 0 {
+            return Err(DomainError::InvalidQuantity(quantity));
+        }
+        let amount_minor = self
+            .amount_minor
+            .checked_mul(i64::from(quantity))
+            .ok_or(DomainError::Overflow)?;
+        Ok(Self::new(amount_minor, self.currency.clone()))
+    }
+
     fn ensure_same_currency(&self, other: &Self) -> Result<(), DomainError> {
         if self.currency == other.currency {
             Ok(())
@@ -160,6 +177,21 @@ mod tests {
         assert_eq!(left.checked_add(&right), Err(DomainError::Overflow));
         assert_eq!(
             Money::new(i64::MIN, Currency::new("EUR").unwrap()).checked_sub(&right),
+            Err(DomainError::Overflow)
+        );
+    }
+
+    #[test]
+    fn mul_qty_rejects_zero_and_overflow() {
+        let eur = Currency::new("EUR").unwrap();
+        let money = Money::new(100, eur.clone());
+        assert_eq!(money.checked_mul_qty(3).unwrap().amount_minor, 300);
+        assert_eq!(
+            money.checked_mul_qty(0),
+            Err(DomainError::InvalidQuantity(0))
+        );
+        assert_eq!(
+            Money::new(i64::MAX, eur).checked_mul_qty(2),
             Err(DomainError::Overflow)
         );
     }

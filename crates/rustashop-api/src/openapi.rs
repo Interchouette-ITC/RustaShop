@@ -4,6 +4,10 @@ use actix_web::{get, HttpResponse, Responder};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+use crate::carts::{
+    AddCartLineRequest, CartLineResponse, CartResponse, CreateCartRequest, MoneyResponse,
+    UpdateCartLineRequest,
+};
 use crate::error::ErrorBody;
 use crate::health::HealthResponse;
 use crate::products::{ProductListResponse, ProductResponse};
@@ -15,9 +19,25 @@ use crate::products::{ProductListResponse, ProductResponse};
         crate::health::healthz,
         crate::products::list_products,
         crate::products::get_product,
+        crate::carts::create_cart,
+        crate::carts::get_cart,
+        crate::carts::add_cart_line,
+        crate::carts::update_cart_line,
+        crate::carts::delete_cart_line,
         openapi_json
     ),
-    components(schemas(HealthResponse, ProductResponse, ProductListResponse, ErrorBody))
+    components(schemas(
+        HealthResponse,
+        ProductResponse,
+        ProductListResponse,
+        CartResponse,
+        CartLineResponse,
+        MoneyResponse,
+        CreateCartRequest,
+        AddCartLineRequest,
+        UpdateCartLineRequest,
+        ErrorBody
+    ))
 )]
 pub struct ApiDoc;
 

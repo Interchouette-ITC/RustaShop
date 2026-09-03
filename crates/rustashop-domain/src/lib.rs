@@ -3,10 +3,12 @@
 //! Money uses integer minor units and an ISO currency code, matching Sylius order
 //! totals (`getTotal(): int`) rather than float cart math.
 
+mod cart;
 mod catalog;
 mod error;
 mod money;
 
+pub use cart::{Cart, CartLine};
 pub use catalog::{Category, Product, ProductVariant};
 pub use error::DomainError;
 pub use money::{Currency, Money};

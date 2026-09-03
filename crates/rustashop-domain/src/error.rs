@@ -17,4 +17,10 @@ pub enum DomainError {
     /// Checked arithmetic overflowed `i64`.
     #[error("money amount overflow")]
     Overflow,
+    /// Quantity must be a positive integer.
+    #[error("invalid quantity `{0}`")]
+    InvalidQuantity(i32),
+    /// Cart line id is not present on the cart.
+    #[error("cart line not found `{0}`")]
+    LineNotFound(String),
 }
