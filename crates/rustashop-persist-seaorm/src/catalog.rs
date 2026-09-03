@@ -6,6 +6,7 @@ use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOr
 use serenade_contracts::{CategoryRepository, PageRequest, PersistenceError, ProductRepository};
 
 use crate::entities::{category, product};
+use crate::param::ensure_param;
 
 /// `SeaORM` catalog read adapter.
 #[derive(Clone, Debug)]
@@ -28,6 +29,7 @@ fn internal(error: &DbErr) -> PersistenceError {
 }
 
 fn parse_uuid(id: &str) -> Result<Uuid, PersistenceError> {
+    let id = ensure_param(id)?;
     Uuid::parse_str(id).map_err(|_| PersistenceError::InvalidInput {
         message: format!("invalid id `{id}`"),
     })
@@ -68,6 +70,7 @@ impl ProductRepository for SeaOrmCatalogRepository {
     }
 
     async fn find_by_slug(&self, slug: &str) -> Result<Option<Self::Product>, Self::Error> {
+        let slug = ensure_param(slug)?;
         let row = product::Entity::find()
             .filter(product::Column::Slug.eq(slug))
             .one(&self.db)
@@ -108,6 +111,7 @@ impl CategoryRepository for SeaOrmCatalogRepository {
         slug: &str,
         parent_id: Option<&Self::Id>,
     ) -> Result<Option<Self::Category>, Self::Error> {
+        let slug = ensure_param(slug)?;
         let mut query = category::Entity::find().filter(category::Column::Slug.eq(slug));
         query = match parent_id {
             Some(id) => query.filter(category::Column::ParentId.eq(parse_uuid(id)?)),

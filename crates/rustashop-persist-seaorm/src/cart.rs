@@ -9,6 +9,7 @@ use sea_orm::{
 use serenade_contracts::{CartRepository, PersistenceError};
 
 use crate::entities::{cart, cart_line, product, product_variant};
+use crate::param::ensure_param;
 use crate::SeaOrmCatalogRepository;
 use uuid::Uuid;
 
@@ -19,6 +20,7 @@ fn internal(error: &DbErr) -> PersistenceError {
 }
 
 fn parse_uuid(id: &str) -> Result<Uuid, PersistenceError> {
+    let id = ensure_param(id)?;
     Uuid::parse_str(id).map_err(|_| PersistenceError::InvalidInput {
         message: format!("invalid id `{id}`"),
     })
@@ -85,12 +87,13 @@ impl SeaOrmCatalogRepository {
     ///
     /// Returns [`PersistenceError`] when the insert fails or the currency is invalid.
     pub async fn create_cart(&self, currency: &Currency) -> Result<Cart, PersistenceError> {
+        let currency_code = ensure_param(currency.as_str())?;
         let now = chrono_now();
         let model = cart::ActiveModel {
             id: Set(Uuid::new_v4()),
             customer_id: Set(None),
             token: Set(Uuid::new_v4().to_string()),
-            currency: Set(currency.as_str().to_owned()),
+            currency: Set(currency_code.to_owned()),
             status: Set(CartStatus::Open.as_str().to_owned()),
             created_at: Set(now),
             updated_at: Set(now),
@@ -178,8 +181,8 @@ impl SeaOrmCatalogRepository {
             Some(id) => Some(parse_uuid(id)?),
             None => None,
         });
-        active.currency = Set(cart.currency.as_str().to_owned());
-        active.status = Set(cart.status.as_str().to_owned());
+        active.currency = Set(ensure_param(cart.currency.as_str())?.to_owned());
+        active.status = Set(ensure_param(cart.status.as_str())?.to_owned());
         active.updated_at = Set(chrono_now());
         active
             .update(&txn)
@@ -205,9 +208,9 @@ impl SeaOrmCatalogRepository {
                 variant_id: Set(parse_uuid(&line.variant_id)?),
                 quantity: Set(line.quantity),
                 unit_price_minor: Set(line.unit_price.amount_minor),
-                currency: Set(line.unit_price.currency.as_str().to_owned()),
-                product_name: Set(line.product_name.clone()),
-                variant_sku: Set(line.variant_sku.clone()),
+                currency: Set(ensure_param(line.unit_price.currency.as_str())?.to_owned()),
+                product_name: Set(ensure_param(&line.product_name)?.to_owned()),
+                variant_sku: Set(ensure_param(&line.variant_sku)?.to_owned()),
                 created_at: Set(now),
                 updated_at: Set(now),
             }
@@ -230,6 +233,7 @@ impl CartRepository for SeaOrmCatalogRepository {
     type Cart = Cart;
 
     async fn find_by_token(&self, token: &str) -> Result<Option<Self::Cart>, Self::Error> {
+        let token = ensure_param(token)?;
         let model = cart::Entity::find()
             .filter(cart::Column::Token.eq(token))
             .one(&self.db)

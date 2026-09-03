@@ -12,6 +12,7 @@ use serenade_contracts::PersistenceError;
 
 use crate::cart::cart_from_models;
 use crate::entities::{cart, cart_line, commerce_order, order_line};
+use crate::param::{ensure_param, ensure_param_opt};
 use crate::SeaOrmCatalogRepository;
 use uuid::Uuid;
 
@@ -22,6 +23,7 @@ fn internal(error: &DbErr) -> PersistenceError {
 }
 
 fn parse_uuid(id: &str) -> Result<Uuid, PersistenceError> {
+    let id = ensure_param(id)?;
     Uuid::parse_str(id).map_err(|_| PersistenceError::InvalidInput {
         message: format!("invalid id `{id}`"),
     })
@@ -86,6 +88,8 @@ impl SeaOrmCatalogRepository {
         cart_id: &str,
         idempotency_key: Option<&str>,
     ) -> Result<Order, PersistenceError> {
+        let cart_id = ensure_param(cart_id)?;
+        let idempotency_key = ensure_param_opt(idempotency_key)?;
         if let Some(key) = idempotency_key {
             if let Some(existing) = find_order_by_key(&self.db, key).await? {
                 return Ok(existing);
@@ -174,7 +178,7 @@ async fn checkout_in_txn<C: ConnectionTrait>(
         }),
         cart_id: Set(Some(uuid)),
         state: Set("placed".to_owned()),
-        currency: Set(cart.currency.as_str().to_owned()),
+        currency: Set(ensure_param(cart.currency.as_str())?.to_owned()),
         items_total_minor: Set(items_total.amount_minor),
         total_minor: Set(items_total.amount_minor),
         idempotency_key: Set(idempotency_key.map(ToOwned::to_owned)),
@@ -217,9 +221,9 @@ async fn insert_order_lines<C: ConnectionTrait>(
             quantity: Set(line.quantity),
             unit_price_minor: Set(line.unit_price.amount_minor),
             line_total_minor: Set(line_total.amount_minor),
-            currency: Set(line.unit_price.currency.as_str().to_owned()),
-            product_name: Set(line.product_name.clone()),
-            variant_sku: Set(line.variant_sku.clone()),
+            currency: Set(ensure_param(line.unit_price.currency.as_str())?.to_owned()),
+            product_name: Set(ensure_param(&line.product_name)?.to_owned()),
+            variant_sku: Set(ensure_param(&line.variant_sku)?.to_owned()),
             created_at: Set(now),
             updated_at: Set(now),
         }
@@ -255,6 +259,7 @@ async fn find_order_by_key<C: ConnectionTrait>(
     db: &C,
     key: &str,
 ) -> Result<Option<Order>, PersistenceError> {
+    let key = ensure_param(key)?;
     let model = commerce_order::Entity::find()
         .filter(commerce_order::Column::IdempotencyKey.eq(key))
         .one(db)

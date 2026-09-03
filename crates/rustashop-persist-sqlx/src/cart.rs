@@ -5,6 +5,7 @@ use serenade_contracts::{CartRepository, PersistenceError};
 use sqlx::postgres::PgPool;
 use sqlx::{FromRow, Postgres, Transaction};
 
+use crate::param::{ensure_param, ensure_param_opt};
 use crate::SqlxCatalogRepository;
 
 #[derive(Debug, FromRow)]
@@ -89,12 +90,13 @@ impl SqlxCatalogRepository {
     ///
     /// Returns [`PersistenceError`] when the insert fails or the currency is invalid.
     pub async fn create_cart(&self, currency: &Currency) -> Result<Cart, PersistenceError> {
+        let currency_code = ensure_param(currency.as_str())?;
         let row = sqlx::query_as::<_, CartRow>(
             "INSERT INTO cart (token, currency)
              VALUES (gen_random_uuid()::text, $1)
              RETURNING id::text AS id, customer_id::text AS customer_id, token, currency, status",
         )
-        .bind(currency.as_str())
+        .bind(currency_code)
         .fetch_one(&self.pool)
         .await
         .map_err(|error| internal(&error))?;
@@ -107,6 +109,7 @@ impl SqlxCatalogRepository {
     ///
     /// Returns [`PersistenceError`] on query failure.
     pub async fn find_cart_by_id(&self, id: &str) -> Result<Option<Cart>, PersistenceError> {
+        let id = ensure_param(id)?;
         let row = sqlx::query_as::<_, CartRow>(
             "SELECT id::text AS id, customer_id::text AS customer_id, token, currency, status
              FROM cart WHERE id = $1::uuid",
@@ -131,6 +134,7 @@ impl SqlxCatalogRepository {
         &self,
         variant_id: &str,
     ) -> Result<Option<(ProductVariant, String)>, PersistenceError> {
+        let variant_id = ensure_param(variant_id)?;
         let row = sqlx::query_as::<_, VariantJoinRow>(
             "SELECT pv.id::text AS id, pv.product_id::text AS product_id, pv.sku, pv.name,
                     pv.price_minor, pv.currency, pv.stock_quantity, p.name AS product_name
@@ -172,6 +176,7 @@ impl SqlxCatalogRepository {
 }
 
 async fn load_lines(pool: &PgPool, cart_id: &str) -> Result<Vec<CartLineRow>, PersistenceError> {
+    let cart_id = ensure_param(cart_id)?;
     sqlx::query_as::<_, CartLineRow>(
         "SELECT id::text AS id, cart_id::text AS cart_id, variant_id::text AS variant_id,
                 quantity, unit_price_minor, currency, product_name, variant_sku
@@ -187,14 +192,18 @@ async fn save_cart_tx(
     tx: &mut Transaction<'_, Postgres>,
     cart: &Cart,
 ) -> Result<(), PersistenceError> {
+    let cart_id = ensure_param(&cart.id)?;
+    let customer_id = ensure_param_opt(cart.customer_id.as_deref())?;
+    let currency = ensure_param(cart.currency.as_str())?;
+    let status = ensure_param(cart.status.as_str())?;
     let updated = sqlx::query(
         "UPDATE cart SET customer_id = $2::uuid, currency = $3, status = $4, updated_at = NOW()
          WHERE id = $1::uuid",
     )
-    .bind(&cart.id)
-    .bind(cart.customer_id.as_deref())
-    .bind(cart.currency.as_str())
-    .bind(cart.status.as_str())
+    .bind(cart_id)
+    .bind(customer_id)
+    .bind(currency)
+    .bind(status)
     .execute(&mut **tx)
     .await
     .map_err(|error| internal(&error))?;
@@ -205,7 +214,7 @@ async fn save_cart_tx(
         });
     }
     sqlx::query("DELETE FROM cart_line WHERE cart_id = $1::uuid")
-        .bind(&cart.id)
+        .bind(cart_id)
         .execute(&mut **tx)
         .await
         .map_err(|error| internal(&error))?;
@@ -213,8 +222,12 @@ async fn save_cart_tx(
         let line_id = if line.id.is_empty() {
             None
         } else {
-            Some(line.id.as_str())
+            Some(ensure_param(line.id.as_str())?)
         };
+        let variant_id = ensure_param(&line.variant_id)?;
+        let line_currency = ensure_param(line.unit_price.currency.as_str())?;
+        let product_name = ensure_param(&line.product_name)?;
+        let variant_sku = ensure_param(&line.variant_sku)?;
         sqlx::query(
             "INSERT INTO cart_line (
                 id, cart_id, variant_id, quantity, unit_price_minor, currency,
@@ -224,13 +237,13 @@ async fn save_cart_tx(
              )",
         )
         .bind(line_id)
-        .bind(&cart.id)
-        .bind(&line.variant_id)
+        .bind(cart_id)
+        .bind(variant_id)
         .bind(line.quantity)
         .bind(line.unit_price.amount_minor)
-        .bind(line.unit_price.currency.as_str())
-        .bind(&line.product_name)
-        .bind(&line.variant_sku)
+        .bind(line_currency)
+        .bind(product_name)
+        .bind(variant_sku)
         .execute(&mut **tx)
         .await
         .map_err(|error| internal(&error))?;
@@ -244,6 +257,7 @@ impl CartRepository for SqlxCatalogRepository {
     type Cart = Cart;
 
     async fn find_by_token(&self, token: &str) -> Result<Option<Self::Cart>, Self::Error> {
+        let token = ensure_param(token)?;
         let row = sqlx::query_as::<_, CartRow>(
             "SELECT id::text AS id, customer_id::text AS customer_id, token, currency, status
              FROM cart WHERE token = $1",
@@ -264,6 +278,7 @@ impl CartRepository for SqlxCatalogRepository {
     }
 
     async fn delete(&self, id: &Self::Id) -> Result<(), Self::Error> {
+        let id = ensure_param(id)?;
         sqlx::query("DELETE FROM cart WHERE id = $1::uuid")
             .bind(id)
             .execute(&self.pool)
