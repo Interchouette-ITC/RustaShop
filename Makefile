@@ -5,10 +5,11 @@ ROOT := $(abspath .)
 CARGO ?= cargo
 CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery
 API_BIND ?= 127.0.0.1:8080
+DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait
+.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-reset
 
 help:
 	@echo "RustaShop targets"
@@ -21,6 +22,8 @@ help:
 	@echo "  make db-up      start Postgres via docker compose"
 	@echo "  make db-down    stop Postgres container"
 	@echo "  make db-psql    psql shell (needs db-up)"
+	@echo "  make db-migrate run SQLx migrations (needs db-up, DATABASE_URL)"
+	@echo "  make db-reset   drop public schema and re-run migrations"
 	@echo "  make clean      cargo clean"
 	@echo ""
 	@echo "Overrides: API_BIND=$(API_BIND)"
@@ -55,6 +58,13 @@ db-wait:
 
 db-psql:
 	cd $(ROOT) && docker compose exec postgres psql -U rustashop -d rustashop
+
+db-migrate:
+	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-sqlx --bin rustashop-migrate
+
+db-reset:
+	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+	@$(MAKE) db-migrate
 
 clean:
 	cd $(ROOT) && $(CARGO) clean

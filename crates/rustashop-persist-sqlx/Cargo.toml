@@ -1,0 +1,23 @@
+[package]
+name = "rustashop-persist-sqlx"
+description = "SQLx migrations and queries (no ORM path)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "rustashop-migrate"
+path = "src/bin/migrate.rs"
+
+[dependencies]
+rustashop-domain = { workspace = true }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+sqlx = { workspace = true }
+tokio = { workspace = true }
