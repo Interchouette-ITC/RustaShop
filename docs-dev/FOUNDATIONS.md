@@ -1,6 +1,6 @@
 # RustaShop foundations
 
-This document frames the **technical identity** of RustaShop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the root README. It names the axes we want the product to grow into so architecture discussions stay durable.
+This document frames the **technical identity** of RustaShop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the product README (`docs/README.md`). It names the axes we want the product to grow into so architecture discussions stay durable.
 
 ## Product identity (short)
 
