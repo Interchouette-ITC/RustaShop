@@ -3,7 +3,8 @@
 //! Client-supplied SQL fragments are disabled unless `RUSTASHOP_ALLOW_RAW_SQL`
 //! is explicitly enabled. Parameterized queries remain the only normal path.
 
-use serenade_contracts::{reject_unsafe_sql_param, PersistenceError};
+use crate::param::ensure_param;
+use serenade_contracts::PersistenceError;
 use sqlx::postgres::PgPool;
 
 /// Env var that enables raw client SQL fragments (default: off).
@@ -47,7 +48,7 @@ pub fn assert_raw_sql_allowed() -> Result<(), PersistenceError> {
 /// Flag off, NUL in `sql`, or driver failure.
 pub async fn execute_fragment(pool: &PgPool, sql: &str) -> Result<(), PersistenceError> {
     assert_raw_sql_allowed()?;
-    reject_unsafe_sql_param(sql)?;
+    ensure_param(sql)?;
     eprintln!("WARNING: {ALLOW_RAW_SQL_ENV} enabled; executing raw SQL fragment");
     sqlx::query(sql)
         .execute(pool)

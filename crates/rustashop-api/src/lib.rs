@@ -6,6 +6,7 @@ mod error;
 mod health;
 mod openapi;
 mod products;
+mod request_param;
 
 use actix_web::{web, App, HttpServer};
 

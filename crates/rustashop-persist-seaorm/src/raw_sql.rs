@@ -3,8 +3,9 @@
 //! Client-supplied SQL fragments are disabled unless `RUSTASHOP_ALLOW_RAW_SQL`
 //! is explicitly enabled.
 
+use crate::param::ensure_param;
 use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
-use serenade_contracts::{reject_unsafe_sql_param, PersistenceError};
+use serenade_contracts::PersistenceError;
 
 /// Env var that enables raw client SQL fragments (default: off).
 pub const ALLOW_RAW_SQL_ENV: &str = "RUSTASHOP_ALLOW_RAW_SQL";
@@ -47,7 +48,7 @@ pub async fn execute_fragment(
     sql: &str,
 ) -> Result<(), PersistenceError> {
     assert_raw_sql_allowed()?;
-    reject_unsafe_sql_param(sql)?;
+    ensure_param(sql)?;
     eprintln!("WARNING: {ALLOW_RAW_SQL_ENV} enabled; executing raw SQL fragment");
     connection
         .execute(Statement::from_string(

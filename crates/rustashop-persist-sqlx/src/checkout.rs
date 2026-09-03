@@ -5,7 +5,6 @@ use serenade_contracts::PersistenceError;
 use sqlx::postgres::PgPool;
 use sqlx::{FromRow, Postgres, Transaction};
 
-use crate::param::{ensure_param, ensure_param_opt};
 use crate::SqlxCatalogRepository;
 
 #[derive(Debug, FromRow)]
@@ -152,8 +151,6 @@ impl SqlxCatalogRepository {
         cart_id: &str,
         idempotency_key: Option<&str>,
     ) -> Result<Order, PersistenceError> {
-        let cart_id = ensure_param(cart_id)?;
-        let idempotency_key = ensure_param_opt(idempotency_key)?;
         if let Some(key) = idempotency_key {
             if let Some(existing) = find_order_by_key(&self.pool, key).await? {
                 return Ok(existing);
@@ -280,17 +277,12 @@ async fn insert_order_lines(
     order_id: &str,
     cart: &Cart,
 ) -> Result<(), PersistenceError> {
-    let order_id = ensure_param(order_id)?;
     for line in &cart.lines {
         let line_total = line
             .line_total()
             .map_err(|error| PersistenceError::InvalidInput {
                 message: error.to_string(),
             })?;
-        let variant_id = ensure_param(&line.variant_id)?;
-        let currency = ensure_param(line.unit_price.currency.as_str())?;
-        let product_name = ensure_param(&line.product_name)?;
-        let variant_sku = ensure_param(&line.variant_sku)?;
         sqlx::query(
             "INSERT INTO order_line (
                 order_id, variant_id, quantity, unit_price_minor, line_total_minor,
@@ -298,13 +290,13 @@ async fn insert_order_lines(
              ) VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8)",
         )
         .bind(order_id)
-        .bind(variant_id)
+        .bind(&line.variant_id)
         .bind(line.quantity)
         .bind(line.unit_price.amount_minor)
         .bind(line_total.amount_minor)
-        .bind(currency)
-        .bind(product_name)
-        .bind(variant_sku)
+        .bind(line.unit_price.currency.as_str())
+        .bind(&line.product_name)
+        .bind(&line.variant_sku)
         .execute(&mut **tx)
         .await
         .map_err(|error| internal(&error))?;
@@ -313,7 +305,6 @@ async fn insert_order_lines(
 }
 
 async fn find_order_by_key(pool: &PgPool, key: &str) -> Result<Option<Order>, PersistenceError> {
-    let key = ensure_param(key)?;
     let row = sqlx::query_as::<_, OrderRow>(
         r#"SELECT id::text AS id, number, customer_id::text AS customer_id,
                   cart_id::text AS cart_id, state, currency,
@@ -335,7 +326,6 @@ async fn find_order_by_key_tx(
     tx: &mut Transaction<'_, Postgres>,
     key: &str,
 ) -> Result<Option<Order>, PersistenceError> {
-    let key = ensure_param(key)?;
     let row = sqlx::query_as::<_, OrderRow>(
         r#"SELECT id::text AS id, number, customer_id::text AS customer_id,
                   cart_id::text AS cart_id, state, currency,

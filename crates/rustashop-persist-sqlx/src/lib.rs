@@ -3,13 +3,13 @@
 pub mod cart;
 pub mod catalog;
 pub mod checkout;
+pub mod param;
 pub mod raw_sql;
-
-mod param;
 
 use sqlx::postgres::PgPool;
 
 pub use catalog::SqlxCatalogRepository;
+pub use param::{ensure_param, ensure_param_opt};
 pub use raw_sql::{assert_raw_sql_allowed, execute_fragment, raw_sql_allowed, ALLOW_RAW_SQL_ENV};
 
 /// SQL used by [`seed_catalog`] and `make db-seed`.

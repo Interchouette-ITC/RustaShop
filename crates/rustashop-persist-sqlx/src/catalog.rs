@@ -5,8 +5,6 @@ use serenade_contracts::{CategoryRepository, PageRequest, PersistenceError, Prod
 use sqlx::postgres::PgPool;
 use sqlx::FromRow;
 
-use crate::param::{ensure_param, ensure_param_opt};
-
 /// `SQLx` catalog read adapter.
 #[derive(Clone, Debug)]
 pub struct SqlxCatalogRepository {
@@ -75,7 +73,6 @@ impl ProductRepository for SqlxCatalogRepository {
     type Product = Product;
 
     async fn find_by_id(&self, id: &Self::Id) -> Result<Option<Self::Product>, Self::Error> {
-        let id = ensure_param(id)?;
         let row = sqlx::query_as::<_, ProductRow>(
             "SELECT id::text AS id, category_id::text AS category_id, slug, name, description, enabled
              FROM product WHERE id = $1::uuid",
@@ -88,7 +85,6 @@ impl ProductRepository for SqlxCatalogRepository {
     }
 
     async fn find_by_slug(&self, slug: &str) -> Result<Option<Self::Product>, Self::Error> {
-        let slug = ensure_param(slug)?;
         let row = sqlx::query_as::<_, ProductRow>(
             "SELECT id::text AS id, category_id::text AS category_id, slug, name, description, enabled
              FROM product WHERE slug = $1",
@@ -120,7 +116,6 @@ impl CategoryRepository for SqlxCatalogRepository {
     type Category = Category;
 
     async fn find_by_id(&self, id: &Self::Id) -> Result<Option<Self::Category>, Self::Error> {
-        let id = ensure_param(id)?;
         let row = sqlx::query_as::<_, CategoryRow>(
             "SELECT id::text AS id, parent_id::text AS parent_id, slug, name
              FROM category WHERE id = $1::uuid",
@@ -137,8 +132,6 @@ impl CategoryRepository for SqlxCatalogRepository {
         slug: &str,
         parent_id: Option<&Self::Id>,
     ) -> Result<Option<Self::Category>, Self::Error> {
-        let slug = ensure_param(slug)?;
-        let parent_id = ensure_param_opt(parent_id)?;
         let row = sqlx::query_as::<_, CategoryRow>(
             "SELECT id::text AS id, parent_id::text AS parent_id, slug, name
              FROM category
@@ -157,7 +150,6 @@ impl CategoryRepository for SqlxCatalogRepository {
         parent_id: Option<&Self::Id>,
         page: PageRequest,
     ) -> Result<Vec<Self::Category>, Self::Error> {
-        let parent_id = ensure_param_opt(parent_id)?;
         let rows = sqlx::query_as::<_, CategoryRow>(
             "SELECT id::text AS id, parent_id::text AS parent_id, slug, name
              FROM category

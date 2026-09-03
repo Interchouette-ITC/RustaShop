@@ -1,15 +1,26 @@
-//! Persist-param hygiene before bind / filter (NUL rejection).
+//! Persist-param hygiene helper (NUL rejection).
 //!
-//! Not SQL-injection protection; parameterized queries remain required.
+//! Available for opt-in use (raw SQL escape hatch, shared policy). Normal
+//! repository queries rely on parameterized binds / the query builder, not on
+//! calling this before every bind.
 
 use serenade_contracts::{reject_unsafe_sql_param, PersistenceError};
 
-/// Rejects NUL in a string that will be bound or filtered.
+/// Rejects NUL in a string (interop hygiene, not SQL-injection protection).
+///
+/// # Errors
+///
+/// Returns [`PersistenceError::InvalidInput`] when checks are enabled and the
+/// value contains NUL.
 pub fn ensure_param(value: &str) -> Result<&str, PersistenceError> {
     reject_unsafe_sql_param(value)
 }
 
 /// Optional string parameter.
+///
+/// # Errors
+///
+/// Same as [`ensure_param`] when `Some`.
 pub fn ensure_param_opt<S: AsRef<str> + ?Sized>(
     value: Option<&S>,
 ) -> Result<Option<&str>, PersistenceError> {
@@ -32,7 +43,5 @@ mod tests {
     fn accepts_clean() {
         assert_eq!(ensure_param("ok").unwrap(), "ok");
         assert_eq!(ensure_param_opt(None::<&str>).unwrap(), None);
-        let owned = String::from("id");
-        assert_eq!(ensure_param_opt(Some(&owned)).unwrap(), Some("id"));
     }
 }

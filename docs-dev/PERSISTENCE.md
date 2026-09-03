@@ -1,10 +1,17 @@
 # Persistence SQL safety
 
-Adapters in `rustashop-persist-sqlx` and `rustashop-persist-seaorm` use **parameterized** queries (SQLx binds) or the SeaORM query builder. String concatenation must not build SQL from request or domain data.
+Adapters in `rustashop-persist-sqlx` and `rustashop-persist-seaorm` use **parameterized** queries (SQLx binds) or the SeaORM query builder. That is what stops SQL injection. String concatenation must not build SQL from request or domain data.
 
-## Persist-param hygiene
+## Layers (Symfony-style)
 
-Before bind or filter, string inputs (ids, slugs, tokens, currency codes, product names copied into lines, idempotency keys) pass through `param::ensure_param`, which rejects **NUL** (`\0`) via the shared contracts helper. That is input hygiene, not a substitute for binds.
+| Layer | Responsibility |
+| --- | --- |
+| **HTTP / request** (`rustashop-api` `request_param`) | Once at the edge: reject NUL in path, body, and header strings that come from the client |
+| **Persistence adapters** | Binds / query builder only; no per-bind `ensure_param` spray |
+| **`param::ensure_param`** | Shared helper kept for opt-in use (notably raw SQL fragments); same policy as contracts |
+| **`RUSTASHOP_ALLOW_RAW_SQL`** | Gate for any client-supplied SQL text (default off) |
+
+`ensure_param` is **not** a second injection firewall. Injection is prevented by never concatenating user data into SQL. The helper is input hygiene (NUL / interop), callable from a single upper layer or from the raw-SQL escape hatch.
 
 ## Raw client SQL
 
@@ -15,7 +22,7 @@ There is no public HTTP handler that accepts a client SQL string. Internal escap
 | Env | `RUSTASHOP_ALLOW_RAW_SQL` (default unset / off) |
 | Entry | `raw_sql::execute_fragment` in each persist crate |
 | Flag off | `PersistenceError::InvalidInput` |
-| Flag on | Loud stderr warning, then execute (still reject NUL) |
+| Flag on | Loud stderr warning, then execute (still runs `ensure_param`) |
 
 Static migrations and catalog seed scripts stay outside that gate.
 
