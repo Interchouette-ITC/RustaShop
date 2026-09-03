@@ -1,16 +1,16 @@
 # **RustaShop**
 
 <p align="center">
-  <img src="docs/brand/logo-mascot-readme.png" alt="RustaShop mascot: Ferris in a shopping bag with Rust gear" width="320" />
+  <img src="brand/logo-mascot-readme.png" alt="RustaShop mascot: Ferris in a shopping bag with Rust gear" width="320" />
 </p>
 
 <p align="center">
   <strong>Modern commerce. Rust powered. AI native.</strong>
 </p>
 
-One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI and realtime contracts. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`docs-dev/UI-RENDERERS.md`](docs-dev/UI-RENDERERS.md).
+One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI and realtime contracts. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`../docs-dev/UI-RENDERERS.md`](../docs-dev/UI-RENDERERS.md).
 
-AI is built into the product map (discovery, shopping agents, catalog assist, pricing, support, MCP, autonomous agents), not glued on later. See [`docs-dev/AI-NATIVE.md`](docs-dev/AI-NATIVE.md).
+AI is built into the product map (discovery, shopping agents, catalog assist, pricing, support, MCP, autonomous agents), not glued on later. See [`../docs-dev/AI-NATIVE.md`](../docs-dev/AI-NATIVE.md).
 
 **Status:** catalog read API, OpenAPI / Swagger UI, and local Postgres. Cart and checkout are not in yet.
 
@@ -26,7 +26,7 @@ AI is built into the product map (discovery, shopping agents, catalog assist, pr
 | **Extensions**   | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents                       |
 | **AI**           | Native tools and agents on the same API + MCP                                               |
 
-We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/RustaShop/issues/29) and [`docs-dev/`](docs-dev/).
+We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/RustaShop/issues/29) and [`../docs-dev/`](../docs-dev/).
 
 ## Domains
 
@@ -39,7 +39,7 @@ We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without clo
 | `rustashop.app`                | Ionic app                                           |
 | `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now                            |
 
-Detail: [`docs-dev/DOMAINS.md`](docs-dev/DOMAINS.md).
+Detail: [`../docs-dev/DOMAINS.md`](../docs-dev/DOMAINS.md).
 
 ## MVP slice
 
@@ -66,10 +66,10 @@ Host API against compose Postgres only: `make db-up && make db-migrate && make r
 
 ## Docs
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - crates, HTTP split, request path
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) - crates, HTTP split, request path
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - make targets, lint bar, PR habits
-- [`docs-dev/README.md`](docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
-- Brand sizes: [`docs/brand/`](docs/brand/)
+- [`../docs-dev/README.md`](../docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
+- Brand sizes: [`brand/`](brand/)
 
 Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/RustaShop/issues/49).
 
@@ -77,13 +77,13 @@ Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wir
 
 ## Contributing
 
-1. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs-dev/`](docs-dev/).
+1. Read [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`../docs-dev/`](../docs-dev/).
 2. Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) (`make lint`, `make test`).
 3. Open issues for domain or AI/tool surface debates.
 4. Commits and docs in **English**; conventional commits when code lands.
 
 <p align="center">
-  <img src="docs/brand/badge-stack-readme.png" alt="RustaShop stack: Rust API, Angular, rangular" width="480" />
+  <img src="brand/badge-stack-readme.png" alt="RustaShop stack: Rust API, Angular, rangular" width="480" />
 </p>
 
 ## Thanks
