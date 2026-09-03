@@ -1,3 +1,5 @@
+//! Runs `SeaORM` migrations using `DATABASE_URL`.
+
 use rustashop_persist_seaorm::migrate_from_env;
 
 #[tokio::main]

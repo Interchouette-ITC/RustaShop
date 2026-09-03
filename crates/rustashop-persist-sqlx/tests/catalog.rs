@@ -1,3 +1,5 @@
+//! Integration tests for the `SQLx` catalog repository.
+
 use rustashop_persist_sqlx::{migrate, SqlxCatalogRepository};
 use serenade_contracts::{CategoryRepository, PageRequest, ProductRepository};
 use sqlx::postgres::PgPoolOptions;

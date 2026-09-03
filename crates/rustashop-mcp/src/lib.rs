@@ -1,4 +1,7 @@
-//! Axum MCP and agent tools. Full server lands in a later slice.
+//! Axum MCP and agent HTTP tools.
+//!
+//! This crate is a workspace member and crate name marker only. No MCP routes
+//! or tool handlers are registered yet.
 
-/// Workspace placeholder until the MCP HTTP surface is implemented.
+/// Crate name marker for workspace and diagnostics checks.
 pub const MCP_CRATE: &str = "rustashop-mcp";

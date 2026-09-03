@@ -25,6 +25,18 @@ pub enum PersistenceBackend {
 }
 
 /// Resolves the compile-time persistence backend for composition roots.
+///
+/// # Examples
+///
+/// ```
+/// use rustashop_persist::{PersistenceBackend, PersistenceFactory};
+///
+/// let backend = PersistenceFactory.backend();
+/// assert!(matches!(
+///     backend,
+///     PersistenceBackend::Sqlx | PersistenceBackend::Seaorm
+/// ));
+/// ```
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PersistenceFactory;
 

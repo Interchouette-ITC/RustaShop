@@ -1,9 +1,9 @@
-//! `RustaShop` application kernel.
+//! `RustaShop` application kernel crate.
 //!
-//! Serenade path dependency lands in issue #49. Until then this crate holds the
-//! composition root placeholder.
+//! Exposes a diagnostics marker until the Serenade application lifecycle is
+//! wired into this package. Domain and HTTP crates do not depend on that wiring.
 
-/// Marker until the Serenade kernel is wired as a path or git dependency.
+/// Diagnostics marker for kernel integration status.
 pub const SERENADE_KERNEL_PENDING: &str = "serenade-pending";
 
 /// Returns the kernel integration status for health and diagnostics surfaces.

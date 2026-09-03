@@ -1,7 +1,5 @@
 //! `SeaORM` persistence: entities and migrations mirroring the `SQLx` schema.
 
-#![warn(missing_docs)]
-
 pub mod catalog;
 pub mod entities;
 pub mod migration;
