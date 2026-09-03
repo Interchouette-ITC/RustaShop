@@ -66,23 +66,21 @@ Host API against compose Postgres only: `make db-up && make db-migrate && make r
 
 ## Docs
 
-Foundations for implementers (English):
-
-- [`docs-dev/README.md`](docs-dev/README.md) - index
-- [`docs-dev/AI-NATIVE.md`](docs-dev/AI-NATIVE.md) - AI across API and UIs
-- [`docs-dev/DOMAINS.md`](docs-dev/DOMAINS.md) - hostnames and deploy surfaces
-- [`docs-dev/FOUNDATIONS.md`](docs-dev/FOUNDATIONS.md) - Wasm, contracts, realtime
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - crates, HTTP split, request path
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) - make targets, lint bar, PR habits
+- [`docs-dev/README.md`](docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
 - Brand masters: [`assets/`](assets/) · named sizes: [`docs/brand/`](docs/brand/)
 
-Public `docs/ARCHITECTURE.md` / `CONTRIBUTING.md` come with the Cargo scaffold ([#10](https://github.com/Interchouette-ITC/RustaShop/issues/10)).
+Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/RustaShop/issues/49).
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
 ## Contributing
 
-1. Read [`docs-dev/`](docs-dev/).
-2. Open issues for domain or AI/tool surface debates.
-3. Commits and docs in **English**; conventional commits when code lands.
+1. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs-dev/`](docs-dev/).
+2. Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) (`make lint`, `make test`).
+3. Open issues for domain or AI/tool surface debates.
+4. Commits and docs in **English**; conventional commits when code lands.
 
 <p align="center">
   <img src="docs/brand/badge-stack-readme.png" alt="RustaShop stack: Rust API, Angular, rangular" width="480" />
