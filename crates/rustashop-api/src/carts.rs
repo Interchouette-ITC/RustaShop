@@ -68,6 +68,8 @@ pub struct CartResponse {
     pub customer_id: Option<String>,
     /// Session token.
     pub token: String,
+    /// Cart status (`open` or `checked_out`).
+    pub status: String,
     /// Cart currency.
     pub currency: String,
     /// Cart lines.
@@ -106,6 +108,7 @@ impl CartResponse {
             id: cart.id,
             customer_id: cart.customer_id,
             token: cart.token,
+            status: cart.status.as_str().to_owned(),
             currency: cart.currency.as_str().to_owned(),
             lines,
             items_total: MoneyResponse {

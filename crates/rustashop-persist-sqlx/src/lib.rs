@@ -2,6 +2,7 @@
 
 pub mod cart;
 pub mod catalog;
+pub mod checkout;
 
 use sqlx::postgres::PgPool;
 

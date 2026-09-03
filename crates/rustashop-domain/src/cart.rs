@@ -4,6 +4,40 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Currency, DomainError, Money, ProductVariant};
 
+/// Lifecycle of a shopping cart.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CartStatus {
+    /// Cart still accepts line mutations.
+    Open,
+    /// Cart was converted to an order.
+    CheckedOut,
+}
+
+impl CartStatus {
+    /// Wire value stored in Postgres.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Open => "open",
+            Self::CheckedOut => "checked_out",
+        }
+    }
+
+    /// Parses a stored status string.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DomainError::InvalidCartStatus`] when `raw` is not a known status.
+    pub fn parse(raw: &str) -> Result<Self, DomainError> {
+        match raw {
+            "open" => Ok(Self::Open),
+            "checked_out" => Ok(Self::CheckedOut),
+            other => Err(DomainError::InvalidCartStatus(other.to_owned())),
+        }
+    }
+}
+
 /// Line on a shopping cart with price and label snapshots.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CartLine {
@@ -105,6 +139,8 @@ pub struct Cart {
     pub token: String,
     /// Cart currency; all lines must match.
     pub currency: Currency,
+    /// Whether the cart is still open for mutation.
+    pub status: CartStatus,
     /// Cart lines.
     pub lines: Vec<CartLine>,
 }
@@ -119,7 +155,7 @@ impl Cart {
     /// # Examples
     ///
     /// ```
-    /// use rustashop_domain::{Cart, CartLine, Currency, Money};
+    /// use rustashop_domain::{Cart, CartLine, CartStatus, Currency, Money};
     ///
     /// let eur = Currency::new("EUR").expect("valid");
     /// let cart = Cart {
@@ -127,6 +163,7 @@ impl Cart {
     ///     customer_id: None,
     ///     token: "tok".into(),
     ///     currency: eur.clone(),
+    ///     status: CartStatus::Open,
     ///     lines: vec![CartLine {
     ///         id: "l1".into(),
     ///         cart_id: "c1".into(),
@@ -211,6 +248,26 @@ impl Cart {
         self.lines.remove(index);
         Ok(())
     }
+
+    /// Rejects checkout when the cart has no lines or is already checked out.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DomainError::EmptyCart`] or [`DomainError::CartAlreadyCheckedOut`].
+    pub fn ensure_checkoutable(&self) -> Result<(), DomainError> {
+        if self.status == CartStatus::CheckedOut {
+            return Err(DomainError::CartAlreadyCheckedOut);
+        }
+        if self.lines.is_empty() {
+            return Err(DomainError::EmptyCart);
+        }
+        Ok(())
+    }
+
+    /// Marks the cart as converted to an order.
+    pub fn mark_checked_out(&mut self) {
+        self.status = CartStatus::CheckedOut;
+    }
 }
 
 const fn ensure_positive_quantity(quantity: i32) -> Result<(), DomainError> {
@@ -232,6 +289,7 @@ mod tests {
             customer_id: None,
             token: "tok".to_owned(),
             currency: Currency::new("EUR").unwrap(),
+            status: CartStatus::Open,
             lines: Vec::new(),
         }
     }

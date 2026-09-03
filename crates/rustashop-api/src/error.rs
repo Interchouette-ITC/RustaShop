@@ -19,6 +19,9 @@ pub enum ApiError {
     /// Requested aggregate is missing.
     #[error("not found")]
     NotFound,
+    /// Unique constraint or already-checked-out cart.
+    #[error("conflict")]
+    Conflict,
     /// Request body or domain rule rejected.
     #[error("{0}")]
     Unprocessable(String),
@@ -32,7 +35,8 @@ impl ApiError {
         match error {
             PersistenceError::NotFound { .. } => Self::NotFound,
             PersistenceError::InvalidInput { message } => Self::Unprocessable(message.clone()),
-            PersistenceError::Conflict { .. } | PersistenceError::Internal { .. } => Self::Internal,
+            PersistenceError::Conflict { .. } => Self::Conflict,
+            PersistenceError::Internal { .. } => Self::Internal,
         }
     }
 
@@ -41,7 +45,10 @@ impl ApiError {
             DomainError::InvalidCurrency(_)
             | DomainError::CurrencyMismatch { .. }
             | DomainError::InvalidQuantity(_)
-            | DomainError::Overflow => Self::Unprocessable(error.to_string()),
+            | DomainError::Overflow
+            | DomainError::EmptyCart
+            | DomainError::InvalidCartStatus(_) => Self::Unprocessable(error.to_string()),
+            DomainError::CartAlreadyCheckedOut => Self::Conflict,
             DomainError::LineNotFound(_) => Self::NotFound,
         }
     }
@@ -51,6 +58,7 @@ impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
+            Self::Conflict => StatusCode::CONFLICT,
             Self::Unprocessable(_) => StatusCode::UNPROCESSABLE_ENTITY,
             Self::Internal => StatusCode::INTERNAL_SERVER_ERROR,
         }

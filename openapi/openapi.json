@@ -311,6 +311,81 @@
         }
       }
     },
+    "/v1/checkout": {
+      "post": {
+        "tags": [
+          "crate::checkout"
+        ],
+        "summary": "Converts a cart into a placed order.",
+        "operationId": "place_order",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Replay token",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Order placed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cart already checked out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Empty cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/products": {
       "get": {
         "tags": [
@@ -476,6 +551,7 @@
         "required": [
           "id",
           "token",
+          "status",
           "currency",
           "lines",
           "items_total"
@@ -507,9 +583,26 @@
             },
             "description": "Cart lines."
           },
+          "status": {
+            "type": "string",
+            "description": "Cart status (`open` or `checked_out`)."
+          },
           "token": {
             "type": "string",
             "description": "Session token."
+          }
+        }
+      },
+      "CheckoutRequest": {
+        "type": "object",
+        "description": "Body for `POST /v1/checkout`.",
+        "required": [
+          "cart_id"
+        ],
+        "properties": {
+          "cart_id": {
+            "type": "string",
+            "description": "Cart to convert into an order."
           }
         }
       },
@@ -568,6 +661,110 @@
           "currency": {
             "type": "string",
             "description": "ISO currency code."
+          }
+        }
+      },
+      "OrderLineResponse": {
+        "type": "object",
+        "description": "Order line JSON.",
+        "required": [
+          "id",
+          "quantity",
+          "unit_price",
+          "line_total",
+          "product_name",
+          "variant_sku"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Line id."
+          },
+          "line_total": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Snapshotted line total."
+          },
+          "product_name": {
+            "type": "string",
+            "description": "Snapshotted product name."
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Quantity."
+          },
+          "unit_price": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Snapshotted unit price."
+          },
+          "variant_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Variant id when still known."
+          },
+          "variant_sku": {
+            "type": "string",
+            "description": "Snapshotted SKU."
+          }
+        }
+      },
+      "OrderResponse": {
+        "type": "object",
+        "description": "Order JSON returned by checkout.",
+        "required": [
+          "id",
+          "number",
+          "state",
+          "payment_status",
+          "currency",
+          "items_total",
+          "total",
+          "lines"
+        ],
+        "properties": {
+          "cart_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Source cart id."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Order currency."
+          },
+          "id": {
+            "type": "string",
+            "description": "Order id."
+          },
+          "items_total": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Sum of line totals."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponse"
+            },
+            "description": "Order lines."
+          },
+          "number": {
+            "type": "string",
+            "description": "Human-readable number."
+          },
+          "payment_status": {
+            "type": "string",
+            "description": "Payment stub (`pending` until a PSP is wired)."
+          },
+          "state": {
+            "type": "string",
+            "description": "Fulfillment state."
+          },
+          "total": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Payable total."
           }
         }
       },

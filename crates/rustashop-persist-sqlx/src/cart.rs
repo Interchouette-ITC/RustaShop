@@ -1,6 +1,6 @@
 //! `SQLx` cart repository and line mutations.
 
-use rustashop_domain::{Cart, CartLine, Currency, Money, ProductVariant};
+use rustashop_domain::{Cart, CartLine, CartStatus, Currency, Money, ProductVariant};
 use serenade_contracts::{CartRepository, PersistenceError};
 use sqlx::postgres::PgPool;
 use sqlx::{FromRow, Postgres, Transaction};
@@ -13,6 +13,7 @@ struct CartRow {
     customer_id: Option<String>,
     token: String,
     currency: String,
+    status: String,
 }
 
 #[derive(Debug, FromRow)]
@@ -74,6 +75,9 @@ fn cart_from_rows(row: CartRow, lines: Vec<CartLineRow>) -> Result<Cart, Persist
         customer_id: row.customer_id,
         token: row.token,
         currency,
+        status: CartStatus::parse(&row.status).map_err(|error| PersistenceError::InvalidInput {
+            message: error.to_string(),
+        })?,
         lines: cart_lines,
     })
 }
@@ -88,7 +92,7 @@ impl SqlxCatalogRepository {
         let row = sqlx::query_as::<_, CartRow>(
             "INSERT INTO cart (token, currency)
              VALUES (gen_random_uuid()::text, $1)
-             RETURNING id::text AS id, customer_id::text AS customer_id, token, currency",
+             RETURNING id::text AS id, customer_id::text AS customer_id, token, currency, status",
         )
         .bind(currency.as_str())
         .fetch_one(&self.pool)
@@ -104,7 +108,7 @@ impl SqlxCatalogRepository {
     /// Returns [`PersistenceError`] on query failure.
     pub async fn find_cart_by_id(&self, id: &str) -> Result<Option<Cart>, PersistenceError> {
         let row = sqlx::query_as::<_, CartRow>(
-            "SELECT id::text AS id, customer_id::text AS customer_id, token, currency
+            "SELECT id::text AS id, customer_id::text AS customer_id, token, currency, status
              FROM cart WHERE id = $1::uuid",
         )
         .bind(id)
@@ -184,12 +188,13 @@ async fn save_cart_tx(
     cart: &Cart,
 ) -> Result<(), PersistenceError> {
     let updated = sqlx::query(
-        "UPDATE cart SET customer_id = $2::uuid, currency = $3, updated_at = NOW()
+        "UPDATE cart SET customer_id = $2::uuid, currency = $3, status = $4, updated_at = NOW()
          WHERE id = $1::uuid",
     )
     .bind(&cart.id)
     .bind(cart.customer_id.as_deref())
     .bind(cart.currency.as_str())
+    .bind(cart.status.as_str())
     .execute(&mut **tx)
     .await
     .map_err(|error| internal(&error))?;
@@ -240,7 +245,7 @@ impl CartRepository for SqlxCatalogRepository {
 
     async fn find_by_token(&self, token: &str) -> Result<Option<Self::Cart>, Self::Error> {
         let row = sqlx::query_as::<_, CartRow>(
-            "SELECT id::text AS id, customer_id::text AS customer_id, token, currency
+            "SELECT id::text AS id, customer_id::text AS customer_id, token, currency, status
              FROM cart WHERE token = $1",
         )
         .bind(token)

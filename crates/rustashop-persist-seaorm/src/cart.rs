@@ -1,6 +1,6 @@
 //! `SeaORM` cart repository and line mutations.
 
-use rustashop_domain::{Cart, CartLine, Currency, Money, ProductVariant};
+use rustashop_domain::{Cart, CartLine, CartStatus, Currency, Money, ProductVariant};
 use sea_orm::entity::prelude::*;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QueryOrder, Set,
@@ -31,7 +31,7 @@ fn money(amount_minor: i64, currency: &str) -> Result<Money, PersistenceError> {
     Ok(Money::new(amount_minor, currency))
 }
 
-fn cart_from_models(
+pub(crate) fn cart_from_models(
     model: cart::Model,
     lines: Vec<cart_line::Model>,
 ) -> Result<Cart, PersistenceError> {
@@ -56,6 +56,11 @@ fn cart_from_models(
         customer_id: model.customer_id.map(|id| id.to_string()),
         token: model.token,
         currency,
+        status: CartStatus::parse(&model.status).map_err(|error| {
+            PersistenceError::InvalidInput {
+                message: error.to_string(),
+            }
+        })?,
         lines: cart_lines,
     })
 }
@@ -86,6 +91,7 @@ impl SeaOrmCatalogRepository {
             customer_id: Set(None),
             token: Set(Uuid::new_v4().to_string()),
             currency: Set(currency.as_str().to_owned()),
+            status: Set(CartStatus::Open.as_str().to_owned()),
             created_at: Set(now),
             updated_at: Set(now),
         }
@@ -173,6 +179,7 @@ impl SeaOrmCatalogRepository {
             None => None,
         });
         active.currency = Set(cart.currency.as_str().to_owned());
+        active.status = Set(cart.status.as_str().to_owned());
         active.updated_at = Set(chrono_now());
         active
             .update(&txn)

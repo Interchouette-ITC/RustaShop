@@ -10,6 +10,7 @@ pub struct Model {
     pub customer_id: Option<Uuid>,
     pub token: String,
     pub currency: String,
+    pub status: String,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }
