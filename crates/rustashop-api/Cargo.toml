@@ -12,6 +12,11 @@ rust-version.workspace = true
 name = "rustashop-api"
 path = "src/main.rs"
 
+[features]
+default = ["persist-sqlx"]
+persist-sqlx = ["rustashop-persist/persist-sqlx"]
+persist-seaorm = ["rustashop-persist/persist-seaorm"]
+
 [dependencies]
 actix-web = { workspace = true }
 rustashop = { workspace = true }

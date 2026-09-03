@@ -1737,10 +1737,9 @@ dependencies = [
 name = "rustashop-persist"
 version = "0.1.0"
 dependencies = [
- "rustashop-domain",
- "serde",
+ "rustashop-persist-seaorm",
+ "rustashop-persist-sqlx",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
