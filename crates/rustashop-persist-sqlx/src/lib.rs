@@ -1,5 +1,6 @@
 //! `SQLx` persistence: versioned SQL migrations, queries, and catalog repositories.
 
+pub mod cart;
 pub mod catalog;
 
 use sqlx::postgres::PgPool;

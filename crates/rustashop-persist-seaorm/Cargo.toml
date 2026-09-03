@@ -13,12 +13,14 @@ name = "rustashop-seaorm-migrate"
 path = "src/bin/migrate.rs"
 
 [dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 rustashop-domain = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
 serenade-contracts = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
 sea-orm = { workspace = true }

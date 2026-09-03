@@ -46,6 +46,271 @@
         }
       }
     },
+    "/v1/carts": {
+      "post": {
+        "tags": [
+          "crate::carts"
+        ],
+        "summary": "Creates an empty cart.",
+        "operationId": "create_cart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Cart created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid currency",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/carts/{id}": {
+      "get": {
+        "tags": [
+          "crate::carts"
+        ],
+        "summary": "Returns one cart by id.",
+        "operationId": "get_cart",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Cart id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/carts/{id}/lines": {
+      "post": {
+        "tags": [
+          "crate::carts"
+        ],
+        "summary": "Adds a line (merges quantity when the variant is already present).",
+        "operationId": "add_cart_line",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Cart id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCartLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Cart after add",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown cart or variant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid quantity or currency",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/carts/{id}/lines/{line_id}": {
+      "delete": {
+        "tags": [
+          "crate::carts"
+        ],
+        "summary": "Removes a line.",
+        "operationId": "delete_cart_line",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Cart id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "description": "Line id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart after delete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown cart or line",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "crate::carts"
+        ],
+        "summary": "Updates a line quantity.",
+        "operationId": "update_cart_line",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Cart id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "description": "Line id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCartLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Cart after update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown cart or line",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid quantity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/products": {
       "get": {
         "tags": [
@@ -142,6 +407,125 @@
   },
   "components": {
     "schemas": {
+      "AddCartLineRequest": {
+        "type": "object",
+        "description": "Body for `POST /v1/carts/{id}/lines`.",
+        "required": [
+          "variant_id",
+          "quantity"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Quantity greater than zero."
+          },
+          "variant_id": {
+            "type": "string",
+            "description": "Variant to add."
+          }
+        }
+      },
+      "CartLineResponse": {
+        "type": "object",
+        "description": "Cart line JSON.",
+        "required": [
+          "id",
+          "variant_id",
+          "quantity",
+          "unit_price",
+          "line_total",
+          "product_name",
+          "variant_sku"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Line id."
+          },
+          "line_total": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Line total (`unit_price × quantity`)."
+          },
+          "product_name": {
+            "type": "string",
+            "description": "Snapshotted product name."
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Quantity."
+          },
+          "unit_price": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Snapshotted unit price."
+          },
+          "variant_id": {
+            "type": "string",
+            "description": "Variant id."
+          },
+          "variant_sku": {
+            "type": "string",
+            "description": "Snapshotted SKU."
+          }
+        }
+      },
+      "CartResponse": {
+        "type": "object",
+        "description": "Cart JSON including recalculated totals.",
+        "required": [
+          "id",
+          "token",
+          "currency",
+          "lines",
+          "items_total"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "Cart currency."
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional customer id."
+          },
+          "id": {
+            "type": "string",
+            "description": "Cart id."
+          },
+          "items_total": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Sum of line totals."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartLineResponse"
+            },
+            "description": "Cart lines."
+          },
+          "token": {
+            "type": "string",
+            "description": "Session token."
+          }
+        }
+      },
+      "CreateCartRequest": {
+        "type": "object",
+        "description": "Body for `POST /v1/carts`.",
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO currency for the cart (default `EUR`)."
+          }
+        }
+      },
       "ErrorBody": {
         "type": "object",
         "description": "JSON error body.",
@@ -165,6 +549,25 @@
           "status": {
             "type": "string",
             "description": "Liveness status."
+          }
+        }
+      },
+      "MoneyResponse": {
+        "type": "object",
+        "description": "Money JSON for cart responses.",
+        "required": [
+          "amount_minor",
+          "currency"
+        ],
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount in minor units."
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO currency code."
           }
         }
       },
@@ -223,6 +626,20 @@
           "slug": {
             "type": "string",
             "description": "Unique URL slug."
+          }
+        }
+      },
+      "UpdateCartLineRequest": {
+        "type": "object",
+        "description": "Body for `PATCH /v1/carts/{id}/lines/{line_id}`.",
+        "required": [
+          "quantity"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Replacement quantity greater than zero."
           }
         }
       }

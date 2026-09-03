@@ -8,7 +8,7 @@ use sqlx::FromRow;
 /// `SQLx` catalog read adapter.
 #[derive(Clone, Debug)]
 pub struct SqlxCatalogRepository {
-    pool: PgPool,
+    pub(crate) pool: PgPool,
 }
 
 impl SqlxCatalogRepository {
