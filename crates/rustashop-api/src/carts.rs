@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::error::{ApiError, ErrorBody};
+use crate::request_param::{ensure_request_param, ensure_request_param_opt};
 
 /// Body for `POST /v1/carts`.
 #[derive(Debug, Deserialize, ToSchema)]
@@ -143,7 +144,7 @@ pub async fn create_cart(
     store: web::Data<CatalogRepository>,
     body: web::Json<CreateCartRequest>,
 ) -> Result<HttpResponse, ApiError> {
-    let code = body.currency.as_deref().unwrap_or("EUR");
+    let code = ensure_request_param_opt(body.currency.as_deref())?.unwrap_or("EUR");
     let currency = Currency::new(code).map_err(|error| ApiError::from_domain(&error))?;
     let cart = store
         .create_cart(&currency)
@@ -168,6 +169,7 @@ pub async fn get_cart(
     path: web::Path<String>,
 ) -> Result<HttpResponse, ApiError> {
     let id = path.into_inner();
+    ensure_request_param(&id)?;
     let body = reload_cart(store.get_ref(), &id).await?;
     Ok(HttpResponse::Ok().json(body))
 }
@@ -191,6 +193,8 @@ pub async fn add_cart_line(
     body: web::Json<AddCartLineRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let cart_id = path.into_inner();
+    ensure_request_param(&cart_id)?;
+    ensure_request_param(&body.variant_id)?;
     let mut cart = store
         .find_cart_by_id(&cart_id)
         .await
@@ -241,6 +245,8 @@ pub async fn update_cart_line(
     body: web::Json<UpdateCartLineRequest>,
 ) -> Result<HttpResponse, ApiError> {
     let (cart_id, line_id) = path.into_inner();
+    ensure_request_param(&cart_id)?;
+    ensure_request_param(&line_id)?;
     let mut cart = store
         .find_cart_by_id(&cart_id)
         .await
@@ -275,6 +281,8 @@ pub async fn delete_cart_line(
     path: web::Path<(String, String)>,
 ) -> Result<HttpResponse, ApiError> {
     let (cart_id, line_id) = path.into_inner();
+    ensure_request_param(&cart_id)?;
+    ensure_request_param(&line_id)?;
     let mut cart = store
         .find_cart_by_id(&cart_id)
         .await

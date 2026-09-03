@@ -8,6 +8,7 @@ use serenade_contracts::{PageRequest, ProductRepository};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::error::{ApiError, ErrorBody};
+use crate::request_param::ensure_request_param;
 
 const DEFAULT_LIMIT: u32 = 20;
 const MAX_LIMIT: u32 = 100;
@@ -100,6 +101,7 @@ pub async fn get_product(
     path: web::Path<String>,
 ) -> Result<HttpResponse, ApiError> {
     let id = path.into_inner();
+    ensure_request_param(&id)?;
     let product = ProductRepository::find_by_id(catalog.get_ref(), &id)
         .await
         .map_err(|error| ApiError::from_persist(&error))?;

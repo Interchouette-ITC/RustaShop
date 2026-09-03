@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 
 use crate::carts::MoneyResponse;
 use crate::error::{ApiError, ErrorBody};
+use crate::request_param::{ensure_request_param, ensure_request_param_opt};
 
 /// Body for `POST /v1/checkout`.
 #[derive(Debug, Deserialize, ToSchema)]
@@ -141,8 +142,10 @@ pub async fn place_order(
     key: IdempotencyKey,
     body: web::Json<CheckoutRequest>,
 ) -> Result<HttpResponse, ApiError> {
+    ensure_request_param(&body.cart_id)?;
+    let key = ensure_request_param_opt(key.0.as_deref())?;
     let order = store
-        .checkout_cart(&body.cart_id, key.0.as_deref())
+        .checkout_cart(&body.cart_id, key)
         .await
         .map_err(|error| ApiError::from_persist(&error))?;
     Ok(HttpResponse::Created().json(OrderResponse::from(order)))

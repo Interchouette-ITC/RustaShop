@@ -9,6 +9,7 @@ Public contributor docs (`docs/ARCHITECTURE.md`, `docs/CONTRIBUTING.md`, …) st
 | Doc                                    | Topic                                                                                    |
 | -------------------------------------- | ---------------------------------------------------------------------------------------- |
 | [FOUNDATIONS.md](FOUNDATIONS.md)       | Overall identity: contracts, three Wasm roles, realtime default, AI-native, roadmap axes |
+| [PERSISTENCE.md](PERSISTENCE.md)       | Parameterized queries, persist-param NUL hygiene, raw SQL gate                           |
 | [AI-NATIVE.md](AI-NATIVE.md)           | AI across API and UIs: discovery, agents, catalog, pricing, support, MCP                 |
 | [DOMAINS.md](DOMAINS.md)               | Hostnames (`ai` / `io` / `dev` / `app` / redirects) and deploy surfaces                  |
 | [UI-RENDERERS.md](UI-RENDERERS.md)     | Angular + rangular dual track; Leptos web vs GPUI native hosts                           |

@@ -5,12 +5,16 @@ pub mod catalog;
 pub mod checkout;
 pub mod entities;
 pub mod migration;
+pub mod param;
+pub mod raw_sql;
 
 use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
 pub use catalog::SeaOrmCatalogRepository;
 pub use migration::Migrator;
+pub use param::{ensure_param, ensure_param_opt};
+pub use raw_sql::{assert_raw_sql_allowed, execute_fragment, raw_sql_allowed, ALLOW_RAW_SQL_ENV};
 
 /// SQL used by [`seed_catalog`] and `make db-seed`.
 pub const CATALOG_SEED_SQL: &str = include_str!("../../../db/seeds/catalog.sql");
