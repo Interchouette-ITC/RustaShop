@@ -21,8 +21,8 @@ help:
 	@echo ""
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
-	@echo "  make lint       fmt check + SQL safety + clippy (workspace + SeaORM features)"
-	@echo "  make check-sql-safety  deny format!-built SQL in persist crates"
+	@echo "  make lint       fmt check + SQL safety test + clippy (workspace + SeaORM features)"
+	@echo "  make check-sql-safety  cargo test: deny format!-built SQL in persist crates"
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
@@ -55,7 +55,7 @@ format-check:
 	cd $(ROOT) && $(CARGO) fmt --check
 
 check-sql-safety:
-	cd $(ROOT) && bash scripts/check-sql-safety.sh
+	cd $(ROOT) && $(CARGO) test -p rustashop-persist-sqlx --test sql_safety
 
 lint: format-check check-sql-safety
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)

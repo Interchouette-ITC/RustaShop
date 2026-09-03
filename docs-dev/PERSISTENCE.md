@@ -28,4 +28,4 @@ Static migrations and catalog seed scripts stay outside that gate.
 
 ## Lint
 
-`make check-sql-safety` (also run from `make lint`) fails if persist crate sources use `format!(…)` with SQL keywords to build statements.
+`make check-sql-safety` runs `cargo test -p rustashop-persist-sqlx --test sql_safety` (also from `make lint`). It fails if persist crate sources use `format!(…)` with SQL keywords to build statements.
