@@ -1,3 +1,5 @@
+//! Integration tests for catalog product HTTP routes.
+
 use actix_web::{test, web, App};
 use rustashop_api::{routes, ProductListResponse, ProductResponse};
 use rustashop_persist::CatalogRepository;

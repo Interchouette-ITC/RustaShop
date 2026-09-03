@@ -17,3 +17,6 @@ persist-seaorm = ["dep:rustashop-persist-seaorm"]
 rustashop-persist-sqlx = { workspace = true, optional = true }
 rustashop-persist-seaorm = { workspace = true, optional = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

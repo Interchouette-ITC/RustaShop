@@ -1,3 +1,5 @@
+//! Actix HTTP server entry point.
+
 use rustashop_api::run;
 
 #[tokio::main]

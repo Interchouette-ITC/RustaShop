@@ -34,9 +34,16 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
 
 /// Starts the Actix HTTP server on [`bind_address`].
 ///
+/// Loads the catalog repository from `DATABASE_URL` via
+/// [`rustashop_persist::catalog_from_env`], then serves HTTP until shutdown.
+///
 /// # Errors
 ///
-/// Returns an error when binding, connecting to the database, or serving fails.
+/// Returns [`std::io::Error`] when:
+/// - `DATABASE_URL` is missing or the database is unreachable
+///   ([`rustashop_persist::MigrateError`] mapped via `std::io::Error::other`)
+/// - binding [`bind_address`] fails
+/// - the server accept loop fails
 #[allow(clippy::future_not_send)]
 pub async fn run() -> std::io::Result<()> {
     let bind = bind_address();

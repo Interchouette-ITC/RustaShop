@@ -1,3 +1,5 @@
+//! Runs embedded `SQLx` migrations using `DATABASE_URL`.
+
 use rustashop_persist_sqlx::migrate_from_env;
 
 #[tokio::main]

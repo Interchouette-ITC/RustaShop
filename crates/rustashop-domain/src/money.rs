@@ -5,6 +5,16 @@ use serde::{Deserialize, Serialize};
 use crate::DomainError;
 
 /// ISO 4217 alphabetic currency code (exactly three ASCII letters).
+///
+/// # Examples
+///
+/// ```
+/// use rustashop_domain::Currency;
+///
+/// let eur = Currency::new("eur").expect("valid");
+/// assert_eq!(eur.as_str(), "EUR");
+/// assert!(Currency::new("eu").is_err());
+/// ```
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Currency(String);
 
@@ -37,6 +47,17 @@ impl std::fmt::Display for Currency {
 }
 
 /// Money amount in minor units for a single currency.
+///
+/// # Examples
+///
+/// ```
+/// use rustashop_domain::{Currency, Money};
+///
+/// let eur = Currency::new("EUR").expect("valid");
+/// let left = Money::new(199, eur.clone());
+/// let right = Money::new(50, eur);
+/// assert_eq!(left.checked_add(&right).expect("add").amount_minor, 249);
+/// ```
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Money {
     /// Amount in the currency's minor unit (for example cents).

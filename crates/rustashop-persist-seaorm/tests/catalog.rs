@@ -1,3 +1,5 @@
+//! Integration tests for the `SeaORM` catalog repository.
+
 use rustashop_persist_seaorm::{migrate, SeaOrmCatalogRepository};
 use sea_orm::{ConnectOptions, ConnectionTrait, Database};
 use serenade_contracts::{CategoryRepository, PageRequest, ProductRepository};
