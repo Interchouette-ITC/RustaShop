@@ -1,0 +1,27 @@
+[workspace]
+members = [
+    "crates/rustashop",
+    "crates/rustashop-domain",
+    "crates/rustashop-persist",
+    "crates/rustashop-api",
+    "crates/rustashop-mcp",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+version = "0.1.0"
+authors = ["Interchouette"]
+repository = "https://github.com/Interchouette-ITC/RustaShop"
+rust-version = "1.75"
+
+[workspace.dependencies]
+rustashop = { path = "crates/rustashop", version = "0.1.0" }
+rustashop-domain = { path = "crates/rustashop-domain", version = "0.1.0" }
+rustashop-persist = { path = "crates/rustashop-persist", version = "0.1.0" }
+rustashop-api = { path = "crates/rustashop-api", version = "0.1.0" }
+rustashop-mcp = { path = "crates/rustashop-mcp", version = "0.1.0" }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
