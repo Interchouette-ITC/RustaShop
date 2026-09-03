@@ -1,4 +1,4 @@
-//! Persistence adapters. `SQLx` and `SeaORM` implementations arrive in issues #14 and #53.
+//! Persistence adapters. `SQLx` and `SeaORM` implementations live in sibling crates.
 
 /// Workspace placeholder until migrations and repository traits are wired.
 pub const PERSIST_CRATE: &str = "rustashop-persist";
