@@ -8,7 +8,7 @@
   <strong>Modern commerce. Rust powered. AI native.</strong>
 </p>
 
-One **Rust** commerce API. Two UIs against it: **[Angular](https://angular.dev/)** or **[rangular](https://github.com/Interchouette-ITC/rangular)** (Leptos/wasm). Same OpenAPI and realtime contracts.
+One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI and realtime contracts. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`docs-dev/UI-RENDERERS.md`](docs-dev/UI-RENDERERS.md).
 
 AI is built into the product map (discovery, shopping agents, catalog assist, pricing, support, MCP, autonomous agents), not glued on later. See [`docs-dev/AI-NATIVE.md`](docs-dev/AI-NATIVE.md).
 
@@ -20,8 +20,8 @@ AI is built into the product map (discovery, shopping agents, catalog assist, pr
 | ---------------- | ------------------------------------------------------------------------------------------- |
 | **Commerce API** | Catalog, cart, checkout, orders, money (integers), inventory, payments, webhooks            |
 | **HTTP stack**   | **Actix-web** kernel (REST, OpenAPI, WebSocket); **Axum** MCP / agent tools (house pattern) |
-| **UI A**         | Angular storefront / admin                                                                  |
-| **UI B**         | rangular → Leptos storefront                                                                |
+| **UI A**         | Angular storefront / admin (TypeScript)                                                     |
+| **UI B**         | rangular: **Leptos** web renderer + **GPUI** native renderer (same authoring model)         |
 | **Realtime**     | WebSocket-first live cart, stock, orders                                                    |
 | **Extensions**   | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents                       |
 | **AI**           | Native tools and agents on the same API + MCP                                               |
