@@ -1,17 +1,19 @@
-# RustaShop brand assets (`docs/brand`)
+# Serenade brand assets (`docs/brand`)
 
 Public named copies and **resize-only** size declensions.
 
 ## Source of truth
 
-Masters live under [`assets/`](../../assets/) (UUID filenames). **Do not delete or mutate `assets/`.**
+Masters live under local `assets/` (UUID filenames). That directory is
+**gitignored** and must stay on disk as the crop master set. **Do not delete or
+mutate `assets/`.**
 
 This folder holds:
 
 1. Byte-identical renamed masters (`logo-banner.png`, …)
 2. Width/size variants (`-readme`, `-desktop`, `-mobile`, `-256`, `-128`, `-64`, favicons)
 
-Processing rule: **copy + LANCZOS resize only**. No flood-fill, no alpha rewriting, no “make transparent” scripts.
+Processing rule: **copy + LANCZOS resize only**. No flood-fill, no alpha rewriting, no "make transparent" scripts.
 
 ## UUID → name map
 
