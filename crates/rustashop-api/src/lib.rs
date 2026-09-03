@@ -1,6 +1,7 @@
 //! Actix-web API surface.
 
 mod carts;
+mod checkout;
 mod error;
 mod health;
 mod openapi;
@@ -12,6 +13,7 @@ pub use carts::{
     add_cart_line, create_cart, delete_cart_line, get_cart, update_cart_line, CartLineResponse,
     CartResponse, MoneyResponse,
 };
+pub use checkout::{place_order, OrderLineResponse, OrderResponse};
 pub use health::{healthz, HealthResponse};
 pub use openapi::{openapi_json, swagger_ui, ApiDoc};
 pub use products::{get_product, list_products, ProductListResponse, ProductResponse};
@@ -39,7 +41,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         .service(get_cart)
         .service(add_cart_line)
         .service(update_cart_line)
-        .service(delete_cart_line);
+        .service(delete_cart_line)
+        .service(place_order);
 }
 
 /// Starts the Actix HTTP server on [`bind_address`].
@@ -105,6 +108,7 @@ mod tests {
         let paths = body.get("paths").expect("paths");
         assert!(paths.get("/v1/products").is_some());
         assert!(paths.get("/v1/carts").is_some());
+        assert!(paths.get("/v1/checkout").is_some());
         assert!(paths.get("/healthz").is_some());
     }
 }

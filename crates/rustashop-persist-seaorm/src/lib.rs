@@ -2,6 +2,7 @@
 
 pub mod cart;
 pub mod catalog;
+pub mod checkout;
 pub mod entities;
 pub mod migration;
 

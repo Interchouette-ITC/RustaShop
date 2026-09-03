@@ -8,6 +8,7 @@ use crate::carts::{
     AddCartLineRequest, CartLineResponse, CartResponse, CreateCartRequest, MoneyResponse,
     UpdateCartLineRequest,
 };
+use crate::checkout::{CheckoutRequest, OrderLineResponse, OrderResponse};
 use crate::error::ErrorBody;
 use crate::health::HealthResponse;
 use crate::products::{ProductListResponse, ProductResponse};
@@ -24,6 +25,7 @@ use crate::products::{ProductListResponse, ProductResponse};
         crate::carts::add_cart_line,
         crate::carts::update_cart_line,
         crate::carts::delete_cart_line,
+        crate::checkout::place_order,
         openapi_json
     ),
     components(schemas(
@@ -36,6 +38,9 @@ use crate::products::{ProductListResponse, ProductResponse};
         CreateCartRequest,
         AddCartLineRequest,
         UpdateCartLineRequest,
+        CheckoutRequest,
+        OrderResponse,
+        OrderLineResponse,
         ErrorBody
     ))
 )]

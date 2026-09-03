@@ -23,4 +23,13 @@ pub enum DomainError {
     /// Cart line id is not present on the cart.
     #[error("cart line not found `{0}`")]
     LineNotFound(String),
+    /// Checkout requires at least one line.
+    #[error("cart is empty")]
+    EmptyCart,
+    /// Cart was already converted to an order.
+    #[error("cart already checked out")]
+    CartAlreadyCheckedOut,
+    /// Stored cart status is not `open` or `checked_out`.
+    #[error("invalid cart status `{0}`")]
+    InvalidCartStatus(String),
 }

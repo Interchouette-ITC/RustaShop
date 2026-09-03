@@ -7,8 +7,10 @@ mod cart;
 mod catalog;
 mod error;
 mod money;
+mod order;
 
-pub use cart::{Cart, CartLine};
+pub use cart::{Cart, CartLine, CartStatus};
 pub use catalog::{Category, Product, ProductVariant};
 pub use error::DomainError;
 pub use money::{Currency, Money};
+pub use order::{Order, OrderLine, PAYMENT_STATUS_PENDING};
