@@ -8,7 +8,7 @@ mod products;
 use actix_web::{web, App, HttpServer};
 
 pub use health::{healthz, HealthResponse};
-pub use openapi::{openapi_json, ApiDoc};
+pub use openapi::{openapi_json, swagger_ui, ApiDoc};
 pub use products::{get_product, list_products, ProductListResponse, ProductResponse};
 
 /// Default bind address when `RUSTASHOP_BIND` is unset.
@@ -27,6 +27,7 @@ pub fn bind_address() -> String {
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(healthz)
         .service(openapi_json)
+        .service(swagger_ui())
         .service(list_products)
         .service(get_product);
 }
@@ -67,6 +68,14 @@ mod tests {
 
         let body: HealthResponse = test::read_body_json(resp).await;
         assert_eq!(body.status, "ok");
+    }
+
+    #[actix_web::test]
+    async fn swagger_ui_serves_html() {
+        let app = test::init_service(App::new().configure(routes)).await;
+        let req = test::TestRequest::get().uri("/swagger-ui/").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
     }
 
     #[actix_web::test]

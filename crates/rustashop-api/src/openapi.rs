@@ -1,7 +1,8 @@
-//! `OpenAPI` document for the Actix API.
+//! `OpenAPI` document and Swagger UI for the Actix API.
 
 use actix_web::{get, HttpResponse, Responder};
 use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::error::ErrorBody;
 use crate::health::HealthResponse;
@@ -29,4 +30,10 @@ pub struct ApiDoc;
 #[get("/openapi.json")]
 pub async fn openapi_json() -> impl Responder {
     HttpResponse::Ok().json(ApiDoc::openapi())
+}
+
+/// Swagger UI at `/swagger-ui/`, pointed at [`openapi_json`].
+#[must_use]
+pub fn swagger_ui() -> SwaggerUi {
+    SwaggerUi::new("/swagger-ui/{_:.*}").url("/openapi.json", ApiDoc::openapi())
 }
