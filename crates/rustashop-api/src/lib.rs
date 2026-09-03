@@ -61,3 +61,14 @@ mod tests {
         assert_eq!(body.status, "ok");
     }
 }
+
+#[cfg(test)]
+mod domain_smoke {
+    #[test]
+    fn money_compiles_in_api_crate() {
+        let currency = rustashop_domain::Currency::new("EUR").expect("EUR");
+        let money = rustashop_domain::Money::new(2500, currency);
+        assert_eq!(money.amount_minor, 2500);
+        assert_eq!(money.currency.as_str(), "EUR");
+    }
+}
