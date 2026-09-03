@@ -8,10 +8,19 @@ authors.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[[bin]]
+name = "rustashop-api"
+path = "src/main.rs"
+
 [dependencies]
+actix-web = { workspace = true }
 rustashop = { workspace = true }
 rustashop-domain = { workspace = true }
 rustashop-persist = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+
+[dev-dependencies]
+actix-web = { workspace = true }
