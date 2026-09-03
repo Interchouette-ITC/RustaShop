@@ -1,13 +1,13 @@
 //! Domain error types.
 
-/// Failure in money or catalog value objects.
+/// Failure in money or cart domain rules.
 #[derive(Debug, thiserror::Error, Clone, PartialEq, Eq)]
 pub enum DomainError {
     /// Currency code is not a three-letter ISO alphabetic code.
-    #[error("invalid currency code `{0}`")]
+    #[error("invalid currency code `{0}` (expected three ASCII letters)")]
     InvalidCurrency(String),
     /// Arithmetic mixed two different currencies.
-    #[error("currency mismatch: {left} vs {right}")]
+    #[error("currency mismatch: cannot combine `{left}` and `{right}`")]
     CurrencyMismatch {
         /// Left-hand currency code.
         left: String,
@@ -15,21 +15,21 @@ pub enum DomainError {
         right: String,
     },
     /// Checked arithmetic overflowed `i64`.
-    #[error("money amount overflow")]
+    #[error("money amount overflowed i64 minor units")]
     Overflow,
     /// Quantity must be a positive integer.
-    #[error("invalid quantity `{0}`")]
+    #[error("invalid quantity `{0}` (must be a positive integer)")]
     InvalidQuantity(i32),
     /// Cart line id is not present on the cart.
-    #[error("cart line not found `{0}`")]
+    #[error("cart line `{0}` was not found")]
     LineNotFound(String),
     /// Checkout requires at least one line.
-    #[error("cart is empty")]
+    #[error("cart is empty; add at least one line before checkout")]
     EmptyCart,
     /// Cart was already converted to an order.
-    #[error("cart already checked out")]
+    #[error("cart was already checked out")]
     CartAlreadyCheckedOut,
     /// Stored cart status is not `open` or `checked_out`.
-    #[error("invalid cart status `{0}`")]
+    #[error("invalid cart status `{0}` (expected `open` or `checked_out`)")]
     InvalidCartStatus(String),
 }
