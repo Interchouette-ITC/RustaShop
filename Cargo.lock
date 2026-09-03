@@ -1747,8 +1747,10 @@ dependencies = [
 name = "rustashop-persist-seaorm"
 version = "0.1.0"
 dependencies = [
+ "rustashop-domain",
  "sea-orm",
  "sea-orm-migration",
+ "serenade-contracts",
  "thiserror",
  "tokio",
 ]
@@ -1758,6 +1760,7 @@ name = "rustashop-persist-sqlx"
 version = "0.1.0"
 dependencies = [
  "rustashop-domain",
+ "serenade-contracts",
  "sqlx",
  "thiserror",
  "tokio",
@@ -2029,6 +2032,15 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serenade-contracts"
+version = "0.1.0"
+source = "git+https://github.com/Interchouette-ITC/Serenade.git?branch=dev#ca039bab0cbab883561e2885594f456e60a89a79"
+dependencies = [
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

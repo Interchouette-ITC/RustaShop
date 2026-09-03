@@ -13,8 +13,10 @@ name = "rustashop-seaorm-migrate"
 path = "src/bin/migrate.rs"
 
 [dependencies]
+rustashop-domain = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+serenade-contracts = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 

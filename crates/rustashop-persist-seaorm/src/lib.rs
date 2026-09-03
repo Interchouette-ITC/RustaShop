@@ -2,12 +2,14 @@
 
 #![warn(missing_docs)]
 
+pub mod catalog;
 pub mod entities;
 pub mod migration;
 
 use sea_orm::{Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
+pub use catalog::SeaOrmCatalogRepository;
 pub use migration::Migrator;
 
 /// Applies pending `SeaORM` migrations against the given connection.
