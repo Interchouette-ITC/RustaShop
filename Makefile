@@ -9,7 +9,7 @@ DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-reset
+.PHONY: help check test lint format format-check run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-reset
 
 help:
 	@echo "RustaShop targets"
@@ -23,6 +23,7 @@ help:
 	@echo "  make db-down    stop Postgres container"
 	@echo "  make db-psql    psql shell (needs db-up)"
 	@echo "  make db-migrate run SQLx migrations (needs db-up, DATABASE_URL)"
+	@echo "  make db-migrate-seaorm run SeaORM migrations (needs db-up, DATABASE_URL)"
 	@echo "  make db-reset   drop public schema and re-run migrations"
 	@echo "  make clean      cargo clean"
 	@echo ""
@@ -61,6 +62,9 @@ db-psql:
 
 db-migrate:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-sqlx --bin rustashop-migrate
+
+db-migrate-seaorm:
+	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-seaorm --bin rustashop-seaorm-migrate
 
 db-reset:
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
