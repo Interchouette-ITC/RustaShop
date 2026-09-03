@@ -6,11 +6,13 @@ use rustashop_domain::DomainError;
 use serde::Serialize;
 use serenade_contracts::PersistenceError;
 
-/// JSON error body.
+/// JSON error body (message + stable machine code).
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ErrorBody {
-    /// Machine-readable error.
+    /// Human-readable error message.
     pub error: String,
+    /// Stable machine-readable code (`not_found`, `conflict`, …).
+    pub code: &'static str,
 }
 
 /// Handler failure mapped to an HTTP status.
@@ -25,12 +27,23 @@ pub enum ApiError {
     /// Request body or domain rule rejected.
     #[error("{0}")]
     Unprocessable(String),
-    /// Persistence or unexpected failure.
+    /// Persistence or unexpected failure (no internal details in Display).
     #[error("internal error")]
     Internal,
 }
 
 impl ApiError {
+    /// Stable code for clients and `OpenAPI` docs.
+    #[must_use]
+    pub const fn code(&self) -> &'static str {
+        match self {
+            Self::NotFound => "not_found",
+            Self::Conflict => "conflict",
+            Self::Unprocessable(_) => "unprocessable",
+            Self::Internal => "internal",
+        }
+    }
+
     pub(crate) fn from_persist(error: &PersistenceError) -> Self {
         match error {
             PersistenceError::NotFound { .. } => Self::NotFound,
@@ -67,6 +80,7 @@ impl ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code()).json(ErrorBody {
             error: self.to_string(),
+            code: self.code(),
         })
     }
 }

@@ -46,6 +46,22 @@ impl std::fmt::Display for Currency {
     }
 }
 
+/// Formats as `{major}.{frac:02} {currency}` assuming two decimal minor units
+/// (cents). Matches EUR/USD-style currencies used by the storefront MVP.
+impl std::fmt::Display for Money {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let negative = self.amount_minor < 0;
+        let abs = self.amount_minor.unsigned_abs();
+        let major = abs / 100;
+        let frac = abs % 100;
+        if negative {
+            write!(f, "-{major}.{frac:02} {}", self.currency)
+        } else {
+            write!(f, "{major}.{frac:02} {}", self.currency)
+        }
+    }
+}
+
 /// Money amount in minor units for a single currency.
 ///
 /// # Examples
@@ -194,5 +210,14 @@ mod tests {
             Money::new(i64::MAX, eur).checked_mul_qty(2),
             Err(DomainError::Overflow)
         );
+    }
+
+    #[test]
+    fn money_display_uses_two_decimal_minor_units() {
+        let eur = Currency::new("EUR").unwrap();
+        assert_eq!(Money::new(199, eur.clone()).to_string(), "1.99 EUR");
+        assert_eq!(Money::new(50, eur.clone()).to_string(), "0.50 EUR");
+        assert_eq!(Money::new(0, eur.clone()).to_string(), "0.00 EUR");
+        assert_eq!(Money::new(-125, eur).to_string(), "-1.25 EUR");
     }
 }
