@@ -1,6 +1,6 @@
 //! Application kernel package for rustashop.
 //!
-//! Boots a Serenade [`App`](serenade_kernel::App) with [`FrameworkBundle`] and
+//! Boots a Serenade [`App`] with [`FrameworkBundle`] and
 //! [`RustashopBundle`], then builds the DI container from `config/packages`.
 
 mod bundle;
