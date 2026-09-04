@@ -97,6 +97,28 @@ mod tests {
         assert!(config.authorize_bearer(Some("secret")).is_ok());
     }
 
+    #[test]
+    fn from_env_reads_preferred_then_alt() {
+        // SAFETY: test isolates admin token env keys.
+        unsafe {
+            std::env::remove_var(ADMIN_TOKEN_ENV);
+            std::env::remove_var(ADMIN_TOKEN_ENV_ALT);
+        }
+        assert!(!AdminAuthConfig::from_env().is_configured());
+        unsafe {
+            std::env::set_var(ADMIN_TOKEN_ENV_ALT, "alt-secret");
+        }
+        assert_eq!(AdminAuthConfig::from_env().token, "alt-secret");
+        unsafe {
+            std::env::set_var(ADMIN_TOKEN_ENV, "preferred");
+        }
+        assert_eq!(AdminAuthConfig::from_env().token, "preferred");
+        unsafe {
+            std::env::remove_var(ADMIN_TOKEN_ENV);
+            std::env::remove_var(ADMIN_TOKEN_ENV_ALT);
+        }
+    }
+
     #[rstest::rstest]
     #[case::unset(AdminAuthConfig::from_token(""), Some("x"))]
     #[case::missing(AdminAuthConfig::from_token("secret"), None)]

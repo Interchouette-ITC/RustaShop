@@ -129,7 +129,32 @@ mod tests {
     #[case::reserved_products("products")]
     #[case::path_traversal("../x")]
     #[case::slash("a/b")]
+    #[case::bad_start("-nope")]
     fn rejects_invalid_segment(#[case] raw: &str) {
         assert!(AdminApiPrefix::parse(raw).is_err());
+    }
+
+    #[test]
+    fn rejects_overlong_segment() {
+        assert!(AdminApiPrefix::parse(&"a".repeat(65)).is_err());
+    }
+
+    #[test]
+    fn from_env_defaults_to_admin() {
+        // SAFETY: test isolates admin prefix env.
+        unsafe {
+            std::env::remove_var(ADMIN_API_PREFIX_ENV);
+        }
+        assert_eq!(
+            AdminApiPrefix::from_env().as_str(),
+            DEFAULT_ADMIN_API_PREFIX
+        );
+        unsafe {
+            std::env::set_var(ADMIN_API_PREFIX_ENV, "bk-fromenv1");
+        }
+        assert_eq!(AdminApiPrefix::from_env().as_str(), "bk-fromenv1");
+        unsafe {
+            std::env::remove_var(ADMIN_API_PREFIX_ENV);
+        }
     }
 }

@@ -378,4 +378,64 @@ mod tests {
             Err(DomainError::LineNotFound(_))
         ));
     }
+
+    #[test]
+    fn status_round_trip_and_parse_error() {
+        assert_eq!(CartStatus::Open.as_str(), "open");
+        assert_eq!(CartStatus::CheckedOut.as_str(), "checked_out");
+        assert_eq!(CartStatus::parse("open").unwrap(), CartStatus::Open);
+        assert_eq!(
+            CartStatus::parse("checked_out").unwrap(),
+            CartStatus::CheckedOut
+        );
+        assert!(matches!(
+            CartStatus::parse("nope"),
+            Err(DomainError::InvalidCartStatus(_))
+        ));
+    }
+
+    #[test]
+    fn upsert_rejects_currency_mismatch() {
+        let mut cart = eur_cart();
+        let line = CartLine {
+            id: "l1".to_owned(),
+            cart_id: cart.id.clone(),
+            variant_id: "v1".to_owned(),
+            quantity: 1,
+            unit_price: Money::new(100, Currency::new("USD").unwrap()),
+            product_name: "X".to_owned(),
+            variant_sku: "X".to_owned(),
+        };
+        assert!(matches!(
+            cart.upsert_line(line),
+            Err(DomainError::CurrencyMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn ensure_checkoutable_and_mark_checked_out() {
+        let mut cart = eur_cart();
+        assert!(matches!(
+            cart.ensure_checkoutable(),
+            Err(DomainError::EmptyCart)
+        ));
+        cart.upsert_line(
+            CartLine::from_variant(
+                "l1".to_owned(),
+                cart.id.clone(),
+                &hoodie_variant(),
+                "Hoodie".to_owned(),
+                1,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        cart.ensure_checkoutable().unwrap();
+        cart.mark_checked_out();
+        assert_eq!(cart.status, CartStatus::CheckedOut);
+        assert!(matches!(
+            cart.ensure_checkoutable(),
+            Err(DomainError::CartAlreadyCheckedOut)
+        ));
+    }
 }

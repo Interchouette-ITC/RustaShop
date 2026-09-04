@@ -80,4 +80,26 @@ mod tests {
         }
         assert!(!raw_sql_allowed());
     }
+
+    #[tokio::test]
+    async fn execute_fragment_when_allowed() {
+        let Ok(url) = std::env::var("DATABASE_URL") else {
+            eprintln!("skip: DATABASE_URL is not set");
+            return;
+        };
+        unsafe {
+            std::env::set_var(ALLOW_RAW_SQL_ENV, "1");
+        }
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&url)
+            .await
+            .expect("connect");
+        execute_fragment(&pool, "SELECT 1").await.expect("execute");
+        assert!(execute_fragment(&pool, "SELECT 1\0").await.is_err());
+        unsafe {
+            std::env::remove_var(ALLOW_RAW_SQL_ENV);
+        }
+        assert!(execute_fragment(&pool, "SELECT 1").await.is_err());
+    }
 }

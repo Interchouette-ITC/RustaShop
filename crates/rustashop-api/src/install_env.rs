@@ -10,6 +10,10 @@ use crate::install_fs::shop_root;
 /// Env path override (defaults to `{root}/.env`).
 pub const ENV_FILE_ENV: &str = "RUSTASHOP_ENV_FILE";
 
+/// Serializes tests that mutate process env for install root / env file.
+#[cfg(test)]
+pub static INSTALL_PROCESS_ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// Result of a successful install write.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InstallWriteResult {
@@ -183,9 +187,7 @@ fn upsert_key(contents: &str, key: &str, value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
+    use std::fs;
 
     #[test]
     fn upsert_replaces_and_appends() {
@@ -199,7 +201,7 @@ mod tests {
 
     #[test]
     fn write_requires_wipe_when_prefix_set() {
-        let _guard = ENV_LOCK.lock().expect("lock");
+        let _guard = INSTALL_PROCESS_ENV_LOCK.lock().expect("lock");
         let dir = std::env::temp_dir().join(format!("rustashop-env-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).expect("mkdir");
@@ -223,6 +225,40 @@ mod tests {
         assert_eq!(ok.admin_prefix, "newfolderok1");
         let body = fs::read_to_string(&env_path).expect("read");
         assert!(body.contains("RUSTASHOP_ADMIN_API_PREFIX=newfolderok1"));
+        unsafe {
+            std::env::remove_var(crate::install_fs::ROOT_ENV);
+        }
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn read_env_skips_comments_and_blank_lines() {
+        let contents = "# comment\n\nFOO=1\nBAR=\"quoted\"\nnotakey\n";
+        assert_eq!(read_env_value(contents, "FOO").as_deref(), Some("1"));
+        assert_eq!(read_env_value(contents, "BAR").as_deref(), Some("quoted"));
+        assert_eq!(read_env_value(contents, "missing"), None);
+    }
+
+    #[test]
+    fn random_opaque_segment_is_alphanumeric() {
+        let segment = random_opaque_segment();
+        assert_eq!(segment.len(), 20);
+        assert!(segment.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn write_generates_prefix_when_unset() {
+        let _guard = INSTALL_PROCESS_ENV_LOCK.lock().expect("lock");
+        let dir = std::env::temp_dir().join(format!("rustashop-env-gen-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("mkdir");
+        unsafe {
+            std::env::set_var(crate::install_fs::ROOT_ENV, &dir);
+            std::env::remove_var(ENV_FILE_ENV);
+        }
+        let ok = run_install_write(&InstallWriteOptions::default()).expect("write");
+        assert_eq!(ok.admin_prefix.len(), 20);
+        assert!(existing_prefix_needs_wipe(&dir));
         unsafe {
             std::env::remove_var(crate::install_fs::ROOT_ENV);
         }

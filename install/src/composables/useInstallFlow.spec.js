@@ -86,4 +86,46 @@ describe('useInstallFlow', () => {
       expect.objectContaining({ method: 'POST' }),
     );
   });
+
+  it('records loadStatus fetch failures', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('status down')),
+    );
+
+    const flow = useInstallFlow();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(flow.error.value).toContain('status down');
+    expect(flow.status.value).toBeNull();
+  });
+
+  it('surfaces complete HTTP and network errors', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ available: true, wipe_required: false }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Conflict',
+        json: async () => ({ message: 'wipe required' }),
+      })
+      .mockRejectedValueOnce(new Error('network boom'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const flow = useInstallFlow();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    await flow.complete();
+    expect(flow.error.value).toBe('wipe required');
+    expect(flow.busy.value).toBe(false);
+
+    await flow.complete();
+    expect(flow.error.value).toContain('network boom');
+    expect(flow.busy.value).toBe(false);
+  });
 });

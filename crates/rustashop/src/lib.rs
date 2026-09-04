@@ -165,23 +165,72 @@ mod tests {
     use super::*;
     use serenade_bundle::FRAMEWORK_BUNDLE;
     use std::fs;
+    use std::sync::Mutex;
+
+    static APP_ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn boot_kernel_registers_framework_and_rustashop() {
+        let _guard = APP_ENV_LOCK.lock().expect("lock");
+        // SAFETY: clear leftover APP_ENV from other tests in this process.
+        unsafe {
+            std::env::remove_var(APP_ENV);
+        }
         let dir = tempfile_dir("boot");
         ensure_default_packages(&dir).expect("packages");
         let kernel = boot_kernel(&dir).expect("boot");
         assert_eq!(kernel.phase(), KernelPhase::Booted);
+        assert_eq!(kernel.environment().as_str(), "dev");
         let names = kernel.bundle_names();
         assert!(names.contains(&FRAMEWORK_BUNDLE));
         assert!(names.contains(&RUSTASHOP_BUNDLE));
+        assert!(kernel.config().parameters().contains_key("rustashop.name"));
+        assert!(kernel
+            .container()
+            .parameters()
+            .get("rustashop.name")
+            .is_ok());
+        assert_eq!(packages_dir(&dir), dir.join(PACKAGES_DIR));
         assert_eq!(kernel_status(), SERENADE_KERNEL_BOOTED);
         kernel.shutdown().expect("shutdown");
     }
 
+    #[test]
+    fn ensure_default_packages_is_idempotent() {
+        let dir = tempfile_dir("packages");
+        ensure_default_packages(&dir).expect("first");
+        ensure_default_packages(&dir).expect("second");
+        assert!(packages_dir(&dir).join("framework.toml").is_file());
+        assert!(packages_dir(&dir).join("rustashop.toml").is_file());
+    }
+
+    #[test]
+    fn boot_kernel_rejects_empty_app_env() {
+        let _guard = APP_ENV_LOCK.lock().expect("lock");
+        let dir = tempfile_dir("bad-env");
+        ensure_default_packages(&dir).expect("packages");
+        // SAFETY: test-local APP_ENV override.
+        unsafe {
+            std::env::set_var(APP_ENV, "   ");
+        }
+        let result = boot_kernel(&dir);
+        let Err(err) = result else {
+            panic!("empty APP_ENV must fail boot");
+        };
+        assert_ne!(err.to_string(), "");
+        unsafe {
+            std::env::remove_var(APP_ENV);
+        }
+    }
+
     fn tempfile_dir(label: &str) -> PathBuf {
-        let dir =
-            std::env::temp_dir().join(format!("rustashop-kernel-{label}-{}", std::process::id()));
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static N: AtomicU64 = AtomicU64::new(0);
+        let dir = std::env::temp_dir().join(format!(
+            "rustashop-kernel-{label}-{}-{}",
+            std::process::id(),
+            N.fetch_add(1, Ordering::Relaxed)
+        ));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).expect("tmpdir");
         dir
