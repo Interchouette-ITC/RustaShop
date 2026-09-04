@@ -8,8 +8,9 @@ RUSTDOCFLAGS ?= -D warnings
 API_BIND ?= 127.0.0.1:8080
 DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
-SHOP_ANGULAR_DIR := clients/angular-shop
+SHOP_ANGULAR_DIR := apps/shop-angular
 SHOP_ANGULAR_PORT ?= 4242
+SHOP_LEPTOS_DIR := apps/shop-leptos-rangular
 # Set FORCE=1 to re-run npm install even when node_modules exists.
 FORCE ?= 0
 
@@ -84,7 +85,7 @@ shop-angular:
 	@API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^#http://#;s#^http://http://#http://#')}; \
 	echo "shop proxy → $$API_PROXY (override with RUSTASHOP_API_PROXY=... if $(API_BIND) is not RustaShop)"; \
 	if ! curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
-		echo "warning: $${API_PROXY}/healthz failed — start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
+		echo "warning: $${API_PROXY}/healthz failed - start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
 	fi
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
@@ -96,11 +97,11 @@ shop-angular:
 			npm start -- --port $(SHOP_ANGULAR_PORT) --base-href "$$BASE_HREF"
 
 shop-leptos-rangular:
-	@echo "clients/leptos-rangular-shop is not scaffolded yet (see GitHub #23)"
+	@echo "apps/shop-leptos-rangular is not scaffolded yet (see GitHub #23)"
 	@exit 1
 
 run-api:
-	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
+	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api --bin rustashop-api
 
 stack-up:
 	cd $(ROOT) && docker compose up --build -d
