@@ -21,15 +21,15 @@ AI is on the product map (discovery, shopping agents, catalog assist, pricing, s
 
 ## What you get today
 
-| Piece | Role |
-| --- | --- |
-| **Commerce API** | Actix-web: products, carts, checkout → orders; money as integers |
-| **OpenAPI** | utoipa + Swagger UI at `/swagger-ui/`; `make openapi` writes `openapi/openapi.json` |
-| **Persistence** | Postgres; SQLx default, SeaORM feature path; Docker compose |
-| **Templates** | `templates/default/` - shared HTML/SCSS for both shops |
-| **UI A** | `shops/angular` - Angular storefront (catalog, cart, checkout) |
-| **UI B** | `shops/leptos-rangular` - Leptos + rangular (catalog, product, cart) |
-| **Framework** | [Serenade](https://github.com/Interchouette-ITC/Serenade) contracts / kernel wire ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)) |
+| Piece            | Role                                                                                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Commerce API** | Actix-web: products, carts, checkout → orders; money as integers                                                                                    |
+| **OpenAPI**      | utoipa + Swagger UI at `/swagger-ui/`; `make openapi` writes `openapi/openapi.json`                                                                 |
+| **Persistence**  | Postgres; SQLx default, SeaORM feature path; Docker compose                                                                                         |
+| **Templates**    | `templates/default/` - shared HTML/SCSS for both shops                                                                                              |
+| **UI A**         | `shops/angular` - Angular storefront (catalog, cart, checkout)                                                                                      |
+| **UI B**         | `shops/leptos-rangular` - Leptos + rangular (catalog, product, cart)                                                                                |
+| **Framework**    | [Serenade](https://github.com/Interchouette-ITC/Serenade) contracts / kernel wire ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)) |
 
 Still building toward: one payment provider, orders + basic admin, WebSocket live surfaces, MCP / agent tools (Axum).
 
@@ -72,25 +72,25 @@ make test
 
 ## Domains
 
-| Host | Role |
-| --- | --- |
-| `rustashop.interchouette.net` | First `:dev` image tip (operator-owned) |
-| `rustashop.ai` | Primary marketing |
-| `rustashop.io` | Product-oriented |
-| `rustashop.dev` | Demo |
-| `rustashop.app` | Ionic app |
-| `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now |
+| Host                           | Role                                    |
+| ------------------------------ | --------------------------------------- |
+| `rustashop.interchouette.net`  | First `:dev` image tip (operator-owned) |
+| `rustashop.ai`                 | Primary marketing                       |
+| `rustashop.io`                 | Product-oriented                        |
+| `rustashop.dev`                | Demo                                    |
+| `rustashop.app`                | Ionic app                               |
+| `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now                |
 
 Detail: [`../docs-dev/DOMAINS.md`](../docs-dev/DOMAINS.md).
 
 ## Docs
 
-| Doc | Topic |
-| --- | --- |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Crates, HTTP split, request path |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Make targets, lint bar, PR habits |
+| Doc                                              | Topic                                     |
+| ------------------------------------------------ | ----------------------------------------- |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md)             | Crates, HTTP split, request path          |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)             | Make targets, lint bar, PR habits         |
 | [`../docs-dev/README.md`](../docs-dev/README.md) | Foundations (Wasm, realtime, AI, domains) |
-| [`brand/`](brand/) | Brand assets |
+| [`brand/`](brand/)                               | Brand assets                              |
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
@@ -110,13 +110,18 @@ Detail: [`../docs-dev/DOMAINS.md`](../docs-dev/DOMAINS.md).
 
 | Project | Role here |
 | --- | --- |
-| [Rust](https://www.rust-lang.org/) | Commerce API and workers |
-| [Actix Web](https://actix.rs/) | Main commerce HTTP API, OpenAPI |
-| [Axum](https://github.com/tokio-rs/axum) | MCP / agent HTTP surfaces (planned) |
-| [Angular](https://angular.dev/) | UI option A |
-| [rangular](https://github.com/Interchouette-ITC/rangular) / [Leptos](https://leptos.dev/) | UI option B |
+| [Rust](https://www.rust-lang.org/) | Commerce API, workers, and Wasm shop host |
 | [Tokio](https://tokio.rs/) | Async runtime |
+| [Actix Web](https://actix.rs/) | Commerce HTTP API, OpenAPI, Swagger UI |
+| [utoipa](https://github.com/juhaku/utoipa) | OpenAPI types and `/swagger-ui/` |
+| [SQLx](https://github.com/launchbadge/sqlx) | Default Postgres persistence (no ORM) |
+| [SeaORM](https://www.sea-ql.org/SeaORM/) | Alternate ORM persistence path |
 | [PostgreSQL](https://www.postgresql.org/) | System of record |
+| [Angular](https://angular.dev/) | UI track A storefront |
+| [Leptos](https://leptos.dev/) | UI track B web renderer (CSR / Trunk) |
+| [rangular](https://github.com/Interchouette-ITC/rangular) | Shared Angular-shaped templates → Leptos |
+| [Serenade](https://github.com/Interchouette-ITC/Serenade) | Application framework / contracts |
+| [Axum](https://github.com/tokio-rs/axum) | MCP / agent HTTP surfaces (next) |
 | [Render](https://render.com/) | Hosting tip / demos (operator-owned) |
 
 Thank you to their maintainers and communities.
