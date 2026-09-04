@@ -13,7 +13,7 @@ use crate::products::{ProductListResponse, ProductResponse};
 const DEFAULT_LIMIT: u32 = 20;
 const MAX_LIMIT: u32 = 100;
 
-/// Query string for `GET /v1/admin/products`.
+/// Query string for admin product list.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListAdminProductsQuery {
     /// Maximum rows (capped).
@@ -22,10 +22,10 @@ pub struct ListAdminProductsQuery {
     pub offset: Option<u32>,
 }
 
-/// `GET /v1/admin/products` - list products including disabled (bearer required).
+/// `GET /v1/{admin_api_prefix}/products` - list products including disabled (bearer required).
 #[utoipa::path(
     get,
-    path = "/v1/admin/products",
+    path = "/v1/{admin_api_prefix}/products",
     params(ListAdminProductsQuery),
     security(("admin_bearer" = [])),
     responses(
@@ -33,7 +33,7 @@ pub struct ListAdminProductsQuery {
         (status = 401, description = "Missing or invalid bearer", body = ErrorBody)
     )
 )]
-#[get("/v1/admin/products")]
+#[get("/products")]
 pub async fn list_admin_products(
     bearer: AdminBearer,
     auth: web::Data<AdminAuthConfig>,
