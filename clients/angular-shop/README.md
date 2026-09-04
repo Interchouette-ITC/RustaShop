@@ -1,6 +1,32 @@
-# Angular shop (UI track A) — `@rustashop/shop-angular` 0.1.0
+# Angular shop (UI track A) - `@rustashop/shop-angular` 0.1.0
 
-Customer **shop** SPA for RustaShop. Same Commerce API as the Leptos+rangular shop.
+Customer **shop** SPA for RustaShop against the Commerce API.
+
+## CSS / JS ownership
+
+Front-end styling and shop JS live in **this package** (npm dependencies + `src/styles/`).
+
+| Concern                | Owner                                                         |
+| ---------------------- | ------------------------------------------------------------- |
+| Bootstrap CSS (themed) | Angular shop (`bootstrap` npm + `src/styles/_bootstrap.scss`) |
+| Brand tokens           | Angular shop (`src/styles/_tokens.scss`)                      |
+| Interactive UI         | Angular components (no Bootstrap JS CDN)                      |
+| Commerce API           | CSS-agnostic; no shop CSS/JS ownership                        |
+
+No CDN tags in `index.html`. The SPA owns its CSS/JS bundles (same role as a Webpack Encore-style frontend package).
+
+## Layout (Nx-ready folders + path aliases)
+
+```text
+src/app/
+  api/           # OpenAPI types + domain HTTP clients → @rustashop/shop-api
+                 #   models.ts, api-client.ts, catalog|cart|checkout|health.api.ts
+  core/          # CatalogStore, CartStore, CheckoutService (signals)
+  shared/        # shell, pipes, ui (ProductCard) → @rustashop/shop-shared
+  features/      # catalog, cart, checkout pages (lazy routes)
+```
+
+No Nx yet: path aliases (`tsconfig.json`) mirror future libs. Pages stay thin and bind store signals.
 
 ## Prerequisites
 

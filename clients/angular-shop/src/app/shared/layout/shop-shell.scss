@@ -1,0 +1,62 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell__bar {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.shell__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.75rem;
+}
+
+.shell__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--rs-ink);
+}
+
+.shell__mark {
+  display: block;
+  border-radius: 0.25rem;
+}
+
+.shell__name {
+  font-family: var(--rs-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+}
+
+.shell__nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.shell__nav a {
+  color: var(--rs-muted);
+  font-weight: 600;
+}
+
+.shell__nav a.active,
+.shell__nav a:hover {
+  color: var(--rs-rust-dark);
+  text-decoration: none;
+}
+
+.shell__main {
+  flex: 1;
+}
+
+.shell__foot {
+  background: transparent;
+}

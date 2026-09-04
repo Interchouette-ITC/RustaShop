@@ -17,7 +17,10 @@ pub use carts::{
 pub use checkout::{place_order, OrderLineResponse, OrderResponse};
 pub use health::{healthz, HealthResponse};
 pub use openapi::{openapi_json, swagger_ui, ApiDoc};
-pub use products::{get_product, list_products, ProductListResponse, ProductResponse};
+pub use products::{
+    get_product, list_products, ProductDetailResponse, ProductListResponse, ProductResponse,
+    ProductVariantResponse,
+};
 
 /// Default bind address when `RUSTASHOP_BIND` is unset.
 pub const DEFAULT_BIND: &str = "127.0.0.1:8080";

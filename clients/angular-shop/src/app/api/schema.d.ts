@@ -148,7 +148,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Returns one product by id. */
+        /** Returns one product by id, with variants. */
         get: operations["get_product"];
         put?: never;
         post?: never;
@@ -219,9 +219,11 @@ export interface components {
             /** @description ISO currency for the cart (default `EUR`). */
             currency?: string | null;
         };
-        /** @description JSON error body. */
+        /** @description JSON error body (message + stable machine code). */
         ErrorBody: {
-            /** @description Machine-readable error. */
+            /** @description Stable machine-readable code (`not_found`, `conflict`, …). */
+            code: string;
+            /** @description Human-readable error message. */
             error: string;
         };
         /** @description JSON body for `GET /healthz`. */
@@ -280,12 +282,29 @@ export interface components {
             /** @description Payable total. */
             total: components["schemas"]["MoneyResponse"];
         };
+        /** @description Product detail including purchasable variants. */
+        ProductDetailResponse: {
+            /** @description Optional category id. */
+            category_id?: string | null;
+            /** @description Optional long description. */
+            description?: string | null;
+            /** @description Whether the product is offered for sale. */
+            enabled: boolean;
+            /** @description Stable identifier. */
+            id: string;
+            /** @description Display name. */
+            name: string;
+            /** @description Unique URL slug. */
+            slug: string;
+            /** @description Purchasable SKUs for this product. */
+            variants: components["schemas"]["ProductVariantResponse"][];
+        };
         /** @description List payload for `GET /v1/products`. */
         ProductListResponse: {
             /** @description Page of products. */
             items: components["schemas"]["ProductResponse"][];
         };
-        /** @description Product JSON returned by catalog routes. */
+        /** @description Product JSON returned by list routes (no variants). */
         ProductResponse: {
             /** @description Optional category id. */
             category_id?: string | null;
@@ -299,6 +318,24 @@ export interface components {
             name: string;
             /** @description Unique URL slug. */
             slug: string;
+        };
+        /** @description Variant JSON nested under product detail. */
+        ProductVariantResponse: {
+            /** @description Stable identifier. */
+            id: string;
+            /** @description Optional variant label. */
+            name?: string | null;
+            /** @description Unit price. */
+            price: components["schemas"]["MoneyResponse"];
+            /** @description Parent product id. */
+            product_id: string;
+            /** @description Unique stock-keeping unit. */
+            sku: string;
+            /**
+             * Format: int32
+             * @description Available stock quantity.
+             */
+            stock_quantity: number;
         };
         /** @description Body for `PATCH /v1/carts/{id}/lines/{line_id}`. */
         UpdateCartLineRequest: {
@@ -637,13 +674,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Product */
+            /** @description Product with variants */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductResponse"];
+                    "application/json": components["schemas"]["ProductDetailResponse"];
                 };
             };
             /** @description Unknown id */

@@ -17,6 +17,57 @@ impl SqlxCatalogRepository {
     pub const fn new(pool: PgPool) -> Self {
         Self { pool }
     }
+
+    /// Lists purchasable variants for a product (SKU order).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PersistenceError`] on query failure.
+    pub async fn list_variants_for_product(
+        &self,
+        product_id: &str,
+    ) -> Result<Vec<rustashop_domain::ProductVariant>, PersistenceError> {
+        #[derive(Debug, FromRow)]
+        struct VariantRow {
+            id: String,
+            product_id: String,
+            sku: String,
+            name: Option<String>,
+            price_minor: i64,
+            currency: String,
+            stock_quantity: i32,
+        }
+
+        let rows = sqlx::query_as::<_, VariantRow>(
+            "SELECT id::text AS id, product_id::text AS product_id, sku, name,
+                    price_minor, currency, stock_quantity
+             FROM product_variant
+             WHERE product_id = $1::uuid
+             ORDER BY sku",
+        )
+        .bind(product_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|error| internal(&error))?;
+
+        rows.into_iter()
+            .map(|row| {
+                let currency = rustashop_domain::Currency::new(&row.currency).map_err(|error| {
+                    PersistenceError::Internal {
+                        message: error.to_string(),
+                    }
+                })?;
+                Ok(rustashop_domain::ProductVariant {
+                    id: row.id,
+                    product_id: row.product_id,
+                    sku: row.sku,
+                    name: row.name,
+                    price: rustashop_domain::Money::new(row.price_minor, currency),
+                    stock_quantity: row.stock_quantity,
+                })
+            })
+            .collect()
+    }
 }
 
 #[derive(Debug, FromRow)]

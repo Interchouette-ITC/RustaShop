@@ -19,6 +19,44 @@ impl SeaOrmCatalogRepository {
     pub const fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
+
+    /// Lists purchasable variants for a product (SKU order).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PersistenceError`] on query failure.
+    pub async fn list_variants_for_product(
+        &self,
+        product_id: &str,
+    ) -> Result<Vec<rustashop_domain::ProductVariant>, PersistenceError> {
+        use crate::entities::product_variant;
+
+        let uuid = parse_uuid(product_id)?;
+        let rows = product_variant::Entity::find()
+            .filter(product_variant::Column::ProductId.eq(uuid))
+            .order_by_asc(product_variant::Column::Sku)
+            .all(&self.db)
+            .await
+            .map_err(|error| internal(&error))?;
+
+        rows.into_iter()
+            .map(|row| {
+                let currency = rustashop_domain::Currency::new(&row.currency).map_err(|error| {
+                    PersistenceError::Internal {
+                        message: error.to_string(),
+                    }
+                })?;
+                Ok(rustashop_domain::ProductVariant {
+                    id: row.id.to_string(),
+                    product_id: row.product_id.to_string(),
+                    sku: row.sku,
+                    name: row.name,
+                    price: rustashop_domain::Money::new(row.price_minor, currency),
+                    stock_quantity: row.stock_quantity,
+                })
+            })
+            .collect()
+    }
 }
 
 fn internal(error: &DbErr) -> PersistenceError {

@@ -1,12 +1,13 @@
 //! Catalog product read handlers.
 
 use actix_web::{get, web, HttpResponse};
-use rustashop_domain::Product;
+use rustashop_domain::{Product, ProductVariant};
 use rustashop_persist::CatalogRepository;
 use serde::{Deserialize, Serialize};
 use serenade_contracts::{PageRequest, ProductRepository};
 use utoipa::{IntoParams, ToSchema};
 
+use crate::carts::MoneyResponse;
 use crate::error::{ApiError, ErrorBody};
 use crate::request_param::ensure_request_param;
 
@@ -22,7 +23,7 @@ pub struct ListProductsQuery {
     pub offset: Option<u32>,
 }
 
-/// Product JSON returned by catalog routes.
+/// Product JSON returned by list routes (no variants).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
 pub struct ProductResponse {
     /// Stable identifier.
@@ -48,6 +49,75 @@ impl From<Product> for ProductResponse {
             name: product.name,
             description: product.description,
             enabled: product.enabled,
+        }
+    }
+}
+
+/// Variant JSON nested under product detail.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
+pub struct ProductVariantResponse {
+    /// Stable identifier.
+    pub id: String,
+    /// Parent product id.
+    pub product_id: String,
+    /// Unique stock-keeping unit.
+    pub sku: String,
+    /// Optional variant label.
+    pub name: Option<String>,
+    /// Unit price.
+    pub price: MoneyResponse,
+    /// Available stock quantity.
+    pub stock_quantity: i32,
+}
+
+impl From<ProductVariant> for ProductVariantResponse {
+    fn from(variant: ProductVariant) -> Self {
+        Self {
+            id: variant.id,
+            product_id: variant.product_id,
+            sku: variant.sku,
+            name: variant.name,
+            price: MoneyResponse {
+                amount_minor: variant.price.amount_minor,
+                currency: variant.price.currency.as_str().to_owned(),
+            },
+            stock_quantity: variant.stock_quantity,
+        }
+    }
+}
+
+/// Product detail including purchasable variants.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
+pub struct ProductDetailResponse {
+    /// Stable identifier.
+    pub id: String,
+    /// Optional category id.
+    pub category_id: Option<String>,
+    /// Unique URL slug.
+    pub slug: String,
+    /// Display name.
+    pub name: String,
+    /// Optional long description.
+    pub description: Option<String>,
+    /// Whether the product is offered for sale.
+    pub enabled: bool,
+    /// Purchasable SKUs for this product.
+    pub variants: Vec<ProductVariantResponse>,
+}
+
+impl ProductDetailResponse {
+    fn from_parts(product: Product, variants: Vec<ProductVariant>) -> Self {
+        Self {
+            id: product.id,
+            category_id: product.category_id,
+            slug: product.slug,
+            name: product.name,
+            description: product.description,
+            enabled: product.enabled,
+            variants: variants
+                .into_iter()
+                .map(ProductVariantResponse::from)
+                .collect(),
         }
     }
 }
@@ -85,13 +155,13 @@ pub async fn list_products(
     }))
 }
 
-/// Returns one product by id.
+/// Returns one product by id, with variants.
 #[utoipa::path(
     get,
     path = "/v1/products/{id}",
     params(("id" = String, Path, description = "Product id")),
     responses(
-        (status = 200, description = "Product", body = ProductResponse),
+        (status = 200, description = "Product with variants", body = ProductDetailResponse),
         (status = 404, description = "Unknown id", body = ErrorBody)
     )
 )]
@@ -105,8 +175,12 @@ pub async fn get_product(
     let product = ProductRepository::find_by_id(catalog.get_ref(), &id)
         .await
         .map_err(|error| ApiError::from_persist(&error))?;
-    product.map_or_else(
-        || Err(ApiError::NotFound),
-        |product| Ok(HttpResponse::Ok().json(ProductResponse::from(product))),
-    )
+    let Some(product) = product else {
+        return Err(ApiError::NotFound);
+    };
+    let variants = catalog
+        .list_variants_for_product(&id)
+        .await
+        .map_err(|error| ApiError::from_persist(&error))?;
+    Ok(HttpResponse::Ok().json(ProductDetailResponse::from_parts(product, variants)))
 }
