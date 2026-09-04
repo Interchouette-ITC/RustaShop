@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ProductListResponse, RustashopApi } from './api';
 
 @Component({
-  selector: 'app-root',
+  selector: 'rs-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
