@@ -21,10 +21,11 @@ TRUNK ?= env -u NO_COLOR $(TRUNK_BIN)
 COMPOSE := docker compose -f docker/compose.yml --project-directory $(ROOT)
 # Set FORCE=1 to re-run npm install even when node_modules exists.
 FORCE ?= 0
+CVE_LITE_CLI := cve-lite-cli@1.33.0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-dev install-cli
+.PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-dev install-cli audit deny audit-npm audit-all
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -46,6 +47,10 @@ help:
 	@echo "  make install-dev Vite dev server for install UI (proxies /install/api via RUSTASHOP_API_PROXY / RUSTASHOP_BIND)"
 	@echo "  make install-cli run rustashop-install (writes .env; then mv install install.off)"
 	@echo "  make format     cargo fmt"
+	@echo "  make audit      cargo audit"
+	@echo "  make deny       cargo deny check"
+	@echo "  make audit-npm  npm audit + cve-lite + malware IoC (shop/admin/install)"
+	@echo "  make audit-all  audit + deny + audit-npm"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
 	@echo "  make db-up      start Postgres via docker compose"
 	@echo "  make db-down    stop the compose project (Postgres and API if started)"
@@ -103,9 +108,31 @@ lint: format-check check-sql-safety lint-shop-angular lint-admin-angular lint-in
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)
 	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
+## Requires `cargo install cargo-audit`.
+## RUSTSEC-2026-0258: actix-http 3.x pins h2 0.3; fix is only on h2 >= 0.4.16.
+audit:
+	cd $(ROOT) && $(CARGO) audit --ignore RUSTSEC-2026-0258
+
+## Requires `cargo install cargo-deny`.
+deny:
+	cd $(ROOT) && $(CARGO) deny check
+
+audit-npm:
+	@set -e; \
+	for d in $(SHOP_ANGULAR_DIR) $(ADMIN_ANGULAR_DIR) install; do \
+		echo "==> $$d"; \
+		cd $(ROOT)/$$d; \
+		if [ ! -d node_modules ]; then npm ci; fi; \
+		npm audit --audit-level=high --omit=dev; \
+		NPM_CONFIG_MIN_RELEASE_AGE=0 npx --yes --package=$(CVE_LITE_CLI) cve-lite . --fail-on high; \
+	done; \
+	cd $(ROOT) && node scripts/npm-malware-scan.mjs .
+
+audit-all: audit deny audit-npm
+
 install-ui:
 	cd $(ROOT)/install && \
-		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
 		npm run build
 
 install-dev:
@@ -115,7 +142,7 @@ install-dev:
 		*) API_PROXY="http://$${raw%/}" ;; \
 	esac; \
 	cd $(ROOT)/install && \
-		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
 		RUSTASHOP_API_PROXY="$$API_PROXY" npm run dev
 
 install-cli:
@@ -159,7 +186,7 @@ shop-angular:
 		printf '  \033[38;2;235;65;1m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
 	fi; \
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
-		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
 		npm run generate:api && \
 		SERVE_EXTRA=; \
 		if [ "$$BASE_HREF" != "/" ]; then SERVE_EXTRA="--serve-path $$BASE_HREF"; fi; \
@@ -192,7 +219,7 @@ admin-angular:
 		printf '  \033[38;2;235;65;1m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
 	fi; \
 	cd $(ROOT)/$(ADMIN_ANGULAR_DIR) && \
-		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
 		printf '  \033[2mstarting ng serve…\033[0m\n\n'; \
 		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(ADMIN_ANGULAR_PORT)
 
