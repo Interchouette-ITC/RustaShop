@@ -4,9 +4,10 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
+import { rsApiLogInterceptor } from './core/http/api-log.interceptor';
 import { routes } from './app.routes';
 
 /** Prefer the live `<base href>` (build flag or container rewrite). */
@@ -25,7 +26,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([rsApiLogInterceptor])),
     provideRouter(routes),
     { provide: APP_BASE_HREF, useFactory: baseHrefFromDocument },
   ],

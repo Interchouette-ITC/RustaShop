@@ -9,6 +9,7 @@ mod products;
 mod request_param;
 
 use actix_web::{web, App, HttpServer};
+use tracing::info;
 
 pub use carts::{
     add_cart_line, create_cart, delete_cart_line, get_cart, update_cart_line, CartLineResponse,
@@ -27,6 +28,14 @@ pub const DEFAULT_BIND: &str = "127.0.0.1:8080";
 
 /// Environment variable for the API listen address.
 pub const BIND_ENV: &str = "RUSTASHOP_BIND";
+
+/// Compile-time persistence backend label for startup logs.
+#[cfg(feature = "persist-sqlx")]
+const PERSIST_BACKEND: &str = "sqlx";
+
+/// Compile-time persistence backend label for startup logs.
+#[cfg(feature = "persist-seaorm")]
+const PERSIST_BACKEND: &str = "seaorm";
 
 /// Returns the bind address from `RUSTASHOP_BIND` or [`DEFAULT_BIND`].
 #[must_use]
@@ -49,6 +58,32 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         .service(place_order);
 }
 
+/// Redacts the password in a Postgres URL for safe logging.
+fn redacted_database_url(raw: &str) -> String {
+    let Some((scheme, rest)) = raw.split_once("://") else {
+        return "(unrecognized DATABASE_URL)".to_owned();
+    };
+    let Some((userinfo, host_and_path)) = rest.split_once('@') else {
+        return format!("{scheme}://{rest}");
+    };
+    let user = userinfo.split(':').next().unwrap_or(userinfo);
+    format!("{scheme}://{user}:***@{host_and_path}")
+}
+
+/// Maps bind failures to a clearer message (especially address-in-use).
+fn bind_error(bind: &str, error: &std::io::Error) -> std::io::Error {
+    if error.kind() == std::io::ErrorKind::AddrInUse {
+        return std::io::Error::new(
+            error.kind(),
+            format!(
+                "cannot bind {bind}: address already in use \
+                 (another rustashop-api?). Free the port or set {BIND_ENV}"
+            ),
+        );
+    }
+    std::io::Error::new(error.kind(), format!("cannot bind {bind}: {error}"))
+}
+
 /// Starts the Actix HTTP server on [`bind_address`].
 ///
 /// Loads the catalog repository from `DATABASE_URL` via
@@ -64,17 +99,47 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
 #[allow(clippy::future_not_send)]
 pub async fn run() -> std::io::Result<()> {
     let bind = bind_address();
+    let version = env!("CARGO_PKG_VERSION");
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "(unset)".to_owned());
+
+    info!("RustaShop API {version}");
+    info!("bind: http://{bind} (override with {BIND_ENV})");
+    info!("persist: {PERSIST_BACKEND}");
+    info!("database: {}", redacted_database_url(&database_url));
+    info!("health: http://{bind}/healthz");
+    info!("openapi: http://{bind}/openapi.json");
+    info!("swagger: http://{bind}/swagger-ui/");
+
+    info!("connecting catalog repository...");
     let catalog = rustashop_persist::catalog_from_env()
         .await
         .map_err(std::io::Error::other)?;
-    HttpServer::new(move || {
+    info!("catalog repository ready");
+
+    let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(catalog.clone()))
             .configure(routes)
     })
-    .bind(bind)?
-    .run()
-    .await
+    .bind(&bind)
+    .map_err(|error| bind_error(&bind, &error))?;
+
+    info!("listening on http://{bind}");
+    server.run().await
+}
+
+#[cfg(test)]
+mod redact_tests {
+    use super::redacted_database_url;
+
+    #[test]
+    fn redacts_database_password() {
+        let raw = "postgres://rustashop:secret@127.0.0.1:5432/rustashop";
+        assert_eq!(
+            redacted_database_url(raw),
+            "postgres://rustashop:***@127.0.0.1:5432/rustashop"
+        );
+    }
 }
 
 #[cfg(test)]
