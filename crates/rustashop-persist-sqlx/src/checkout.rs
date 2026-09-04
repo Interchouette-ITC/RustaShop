@@ -393,3 +393,109 @@ pub(crate) async fn load_order_lines_pool(
     .await
     .map_err(|error| internal(&error))
 }
+
+#[cfg(test)]
+mod helper_tests {
+    use super::*;
+    use rustashop_domain::CartStatus;
+
+    #[test]
+    fn money_rejects_invalid_currency() {
+        assert!(money(10, "no").is_err());
+        assert_eq!(money(10, "EUR").unwrap().amount_minor, 10);
+    }
+
+    #[test]
+    fn cart_from_rows_maps_open_cart() {
+        let cart = cart_from_rows(
+            CartRow {
+                id: "c1".into(),
+                customer_id: None,
+                token: "t".into(),
+                currency: "EUR".into(),
+                status: "open".into(),
+            },
+            vec![CartLineRow {
+                id: "l1".into(),
+                cart_id: "c1".into(),
+                variant_id: "v1".into(),
+                quantity: 2,
+                unit_price_minor: 100,
+                currency: "EUR".into(),
+                product_name: "Mug".into(),
+                variant_sku: "MUG".into(),
+            }],
+        )
+        .unwrap();
+        assert_eq!(cart.status, CartStatus::Open);
+        assert_eq!(cart.lines.len(), 1);
+        assert_eq!(cart.lines[0].quantity, 2);
+    }
+
+    #[test]
+    fn cart_from_rows_rejects_bad_status() {
+        assert!(cart_from_rows(
+            CartRow {
+                id: "c1".into(),
+                customer_id: None,
+                token: "t".into(),
+                currency: "EUR".into(),
+                status: "nope".into(),
+            },
+            vec![],
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn order_from_rows_builds_pending_order() {
+        let order = order_from_rows(
+            OrderRow {
+                id: "o1".into(),
+                number: "RS-1".into(),
+                customer_id: None,
+                cart_id: Some("c1".into()),
+                state: "placed".into(),
+                currency: "EUR".into(),
+                items_total_minor: 200,
+                total_minor: 200,
+                idempotency_key: Some("k".into()),
+            },
+            vec![OrderLineRow {
+                id: "ol1".into(),
+                order_id: "o1".into(),
+                variant_id: Some("v1".into()),
+                quantity: 2,
+                unit_price_minor: 100,
+                line_total_minor: 200,
+                currency: "EUR".into(),
+                product_name: "Mug".into(),
+                variant_sku: "MUG".into(),
+            }],
+        )
+        .unwrap();
+        assert_eq!(order.total.amount_minor, 200);
+        assert_eq!(order.lines.len(), 1);
+        assert_eq!(
+            order.payment_status,
+            rustashop_domain::PAYMENT_STATUS_PENDING
+        );
+    }
+
+    #[test]
+    fn conflict_unique_matcher() {
+        assert!(is_conflict_unique(&PersistenceError::Conflict {
+            constraint: "idempotency_key"
+        }));
+        assert!(!is_conflict_unique(&PersistenceError::NotFound {
+            entity: "cart",
+            id: "x".into(),
+        }));
+    }
+
+    #[test]
+    fn internal_maps_message() {
+        let err = internal(&sqlx::Error::Protocol("boom".into()));
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+    }
+}

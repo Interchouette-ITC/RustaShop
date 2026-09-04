@@ -284,4 +284,25 @@ mod tests {
     fn sqlx_catalog_implements_cart_repository() {
         assert_cart_repo::<SqlxCatalogRepository>();
     }
+
+    #[test]
+    fn money_and_cart_from_rows_helpers() {
+        assert!(money(1, "x").is_err());
+        assert_eq!(money(5, "EUR").unwrap().amount_minor, 5);
+        let err = internal(&sqlx::Error::Protocol("x".into()));
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+        let cart = cart_from_rows(
+            CartRow {
+                id: "c1".into(),
+                customer_id: Some("u1".into()),
+                token: "tok".into(),
+                currency: "EUR".into(),
+                status: "open".into(),
+            },
+            vec![],
+        )
+        .unwrap();
+        assert_eq!(cart.id, "c1");
+        assert_eq!(cart.lines.len(), 0);
+    }
 }

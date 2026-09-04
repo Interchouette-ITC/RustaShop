@@ -295,3 +295,26 @@ pub(crate) async fn load_order_lines<C: ConnectionTrait>(
         .await
         .map_err(|error| internal(&error))
 }
+
+#[cfg(test)]
+mod helper_tests {
+    use super::*;
+
+    #[test]
+    fn money_and_parse_uuid() {
+        assert!(money(10, "no").is_err());
+        assert_eq!(money(10, "EUR").unwrap().amount_minor, 10);
+        assert!(parse_uuid("not-a-uuid").is_err());
+        assert!(parse_uuid("33333333-3333-3333-3333-333333333331").is_ok());
+    }
+
+    #[test]
+    fn internal_and_unique_helpers() {
+        let err = internal(&DbErr::Custom("boom".into()));
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+        assert!(is_unique_violation(&DbErr::Custom(
+            "duplicate key value violates unique constraint".into()
+        )));
+        assert!(!is_unique_violation(&DbErr::Custom("other".into())));
+    }
+}
