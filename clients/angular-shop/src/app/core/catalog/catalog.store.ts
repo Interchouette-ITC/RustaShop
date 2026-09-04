@@ -1,15 +1,15 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { ProductDetailResponse, ProductResponse, RustashopApi } from '../../api';
+import { CatalogApi, type ProductDetailResponse, type ProductResponse } from '../../api';
 import { formatApiError } from '../http/api-error';
 
 /**
- * Catalog session state (list + last detail). Pages bind signals; HTTP stays in `RustashopApi`.
+ * Catalog session state (list + last detail). Pages bind signals; HTTP stays in `CatalogApi`.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogStore {
-  private readonly api = inject(RustashopApi);
+  private readonly catalogApi = inject(CatalogApi);
 
   private readonly productsSignal = signal<ProductResponse[]>([]);
   private readonly productSignal = signal<ProductDetailResponse | null>(null);
@@ -29,7 +29,7 @@ export class CatalogStore {
     this.loadingListSignal.set(true);
     this.errorSignal.set(null);
     try {
-      const body = await firstValueFrom(this.api.listProducts());
+      const body = await firstValueFrom(this.catalogApi.listProducts());
       this.productsSignal.set(body.items);
     } catch (err) {
       this.productsSignal.set([]);
@@ -45,7 +45,7 @@ export class CatalogStore {
     this.loadingDetailSignal.set(true);
     this.errorSignal.set(null);
     try {
-      const body = await firstValueFrom(this.api.getProduct(id));
+      const body = await firstValueFrom(this.catalogApi.getProduct(id));
       this.productSignal.set(body);
       return body;
     } catch (err) {

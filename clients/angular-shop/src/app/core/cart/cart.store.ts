@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { CartResponse, RustashopApi } from '../../api';
+import { CartApi, type CartResponse } from '../../api';
 import { formatApiError } from '../http/api-error';
 
 const CART_ID_KEY = 'rs.cartId';
@@ -11,7 +11,7 @@ const CART_ID_KEY = 'rs.cartId';
  */
 @Injectable({ providedIn: 'root' })
 export class CartStore {
-  private readonly api = inject(RustashopApi);
+  private readonly cartApi = inject(CartApi);
 
   private readonly cartSignal = signal<CartResponse | null>(null);
   private readonly busySignal = signal(false);
@@ -33,7 +33,7 @@ export class CartStore {
     const existingId = readCartId();
     if (existingId) {
       try {
-        const cart = await firstValueFrom(this.api.getCart(existingId));
+        const cart = await firstValueFrom(this.cartApi.getCart(existingId));
         if (cart.status === 'open') {
           this.cartSignal.set(cart);
           this.errorSignal.set(null);
@@ -55,7 +55,7 @@ export class CartStore {
     }
     this.busySignal.set(true);
     try {
-      const cart = await firstValueFrom(this.api.getCart(id));
+      const cart = await firstValueFrom(this.cartApi.getCart(id));
       this.cartSignal.set(cart);
       writeCartId(cart.id);
       this.errorSignal.set(null);
@@ -73,7 +73,7 @@ export class CartStore {
     try {
       const cart = await this.ensureCart();
       const updated = await firstValueFrom(
-        this.api.addCartLine(cart.id, { variant_id: variantId, quantity }),
+        this.cartApi.addLine(cart.id, { variant_id: variantId, quantity }),
       );
       this.cartSignal.set(updated);
       writeCartId(updated.id);
@@ -94,7 +94,7 @@ export class CartStore {
     this.busySignal.set(true);
     this.errorSignal.set(null);
     try {
-      const updated = await firstValueFrom(this.api.updateCartLine(cart.id, lineId, { quantity }));
+      const updated = await firstValueFrom(this.cartApi.updateLine(cart.id, lineId, { quantity }));
       this.cartSignal.set(updated);
       return updated;
     } catch (err) {
@@ -113,7 +113,7 @@ export class CartStore {
     this.busySignal.set(true);
     this.errorSignal.set(null);
     try {
-      const updated = await firstValueFrom(this.api.deleteCartLine(cart.id, lineId));
+      const updated = await firstValueFrom(this.cartApi.deleteLine(cart.id, lineId));
       this.cartSignal.set(updated);
       return updated;
     } catch (err) {
@@ -134,7 +134,7 @@ export class CartStore {
   private async createCart(): Promise<CartResponse> {
     this.busySignal.set(true);
     try {
-      const cart = await firstValueFrom(this.api.createCart({ currency: 'EUR' }));
+      const cart = await firstValueFrom(this.cartApi.createCart({ currency: 'EUR' }));
       this.cartSignal.set(cart);
       writeCartId(cart.id);
       this.errorSignal.set(null);

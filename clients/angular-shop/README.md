@@ -19,7 +19,8 @@ No CDN tags in `index.html`. The SPA owns its CSS/JS bundles (same role as a Web
 
 ```text
 src/app/
-  api/           # HTTP client + OpenAPI types  → @rustashop/shop-api
+  api/           # OpenAPI types + domain HTTP clients → @rustashop/shop-api
+                 #   models.ts, api-client.ts, catalog|cart|checkout|health.api.ts
   core/          # CatalogStore, CartStore, CheckoutService (signals)
   shared/        # shell, pipes, ui (ProductCard) → @rustashop/shop-shared
   features/      # catalog, cart, checkout pages (lazy routes)
