@@ -85,10 +85,10 @@ ci: lint test doc audit deny
 coverage:
 	cd $(ROOT) && mkdir -p coverage && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov --workspace \
 		--exclude rustashop-persist-seaorm --lcov \
-		--ignore-filename-regex '/src/bin/|/src/main\.rs$' \
+		--ignore-filename-regex '/src/bin/|/src/main\.rs$$' \
 		--output-path coverage/lcov.info
 	cd $(ROOT) && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov $(SEAORM_PACKAGES) $(SEAORM_FEATURES) --lcov \
-		--ignore-filename-regex '/src/bin/|/src/main\.rs$' \
+		--ignore-filename-regex '/src/bin/|/src/main\.rs$$' \
 		--output-path coverage/lcov-seaorm.info
 
 ## Vitest coverage for shop, admin, and install. Writes coverage/*-lcov.info.
