@@ -1,39 +1,24 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnInit, inject } from '@angular/core';
 
-import { ProductResponse, RustashopApi } from '../../../api';
+import { CatalogStore } from '@rustashop/shop-core';
+import { ProductCard } from '@rustashop/shop-shared';
 
 @Component({
   selector: 'rs-product-list',
-  imports: [RouterLink],
+  imports: [ProductCard],
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss',
 })
 export class ProductListPage implements OnInit {
-  private readonly api = inject(RustashopApi);
+  private readonly catalog = inject(CatalogStore);
 
-  protected readonly products = signal<ProductResponse[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal<string | null>(null);
+  protected readonly products = this.catalog.products;
+  protected readonly loading = this.catalog.loadingList;
+  protected readonly error = this.catalog.error;
 
   ngOnInit(): void {
-    this.api.listProducts().subscribe({
-      next: (body) => {
-        this.products.set(body.items);
-        this.loading.set(false);
-      },
-      error: (err: unknown) => {
-        this.error.set(formatHttpError(err));
-        this.loading.set(false);
-      },
+    void this.catalog.loadProducts().catch(() => {
+      // Error signal already set by CatalogStore.
     });
   }
-}
-
-function formatHttpError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    return `Could not load catalog (${err.status}). Is the API running?`;
-  }
-  return 'Could not load catalog.';
 }

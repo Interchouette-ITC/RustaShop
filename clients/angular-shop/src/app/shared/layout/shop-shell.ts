@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
-import { CartStore } from '../../core/cart/cart.store';
+import { CartStore } from '@rustashop/shop-core';
 
 @Component({
   selector: 'rs-shop-shell',

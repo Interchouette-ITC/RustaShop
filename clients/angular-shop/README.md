@@ -6,24 +6,26 @@ Customer **shop** SPA for RustaShop against the Commerce API.
 
 Front-end styling and shop JS live in **this package** (npm dependencies + `src/styles/`).
 
-| Concern | Owner |
-| --- | --- |
+| Concern                | Owner                                                         |
+| ---------------------- | ------------------------------------------------------------- |
 | Bootstrap CSS (themed) | Angular shop (`bootstrap` npm + `src/styles/_bootstrap.scss`) |
-| Brand tokens | Angular shop (`src/styles/_tokens.scss`) |
-| Interactive UI | Angular components (no Bootstrap JS CDN) |
-| Commerce API | CSS-agnostic; no shop CSS/JS ownership |
+| Brand tokens           | Angular shop (`src/styles/_tokens.scss`)                      |
+| Interactive UI         | Angular components (no Bootstrap JS CDN)                      |
+| Commerce API           | CSS-agnostic; no shop CSS/JS ownership                        |
 
 No CDN tags in `index.html`. The SPA owns its CSS/JS bundles (same role as a Webpack Encore-style frontend package).
 
-## Layout (Nx-ready folders)
+## Layout (Nx-ready folders + path aliases)
 
 ```text
 src/app/
-  api/           # OpenAPI client (future Nx lib)
-  core/          # cart store and other singletons
-  shared/        # shell, pipes
-  features/      # catalog, cart, checkout (lazy routes)
+  api/           # HTTP client + OpenAPI types  → @rustashop/shop-api
+  core/          # CatalogStore, CartStore, CheckoutService (signals)
+  shared/        # shell, pipes, ui (ProductCard) → @rustashop/shop-shared
+  features/      # catalog, cart, checkout pages (lazy routes)
 ```
+
+No Nx yet: path aliases (`tsconfig.json`) mirror future libs. Pages stay thin and bind store signals.
 
 ## Prerequisites
 

@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { OrderResponse } from '../../../api';
-import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import type { OrderResponse } from '@rustashop/shop-api';
+import { MoneyPipe } from '@rustashop/shop-shared';
 
 @Component({
   selector: 'rs-checkout-page',

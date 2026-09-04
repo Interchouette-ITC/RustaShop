@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { CartResponse, RustashopApi } from '../../api';
+import { formatApiError } from '../http/api-error';
 
 const CART_ID_KEY = 'rs.cartId';
 
@@ -172,8 +173,5 @@ function clearCartId(): void {
 }
 
 function formatError(err: unknown): string {
-  if (err && typeof err === 'object' && 'message' in err) {
-    return String((err as { message: unknown }).message);
-  }
-  return 'Cart request failed';
+  return formatApiError(err, 'Cart request failed');
 }

@@ -1,11 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
-import { CartStore } from '../../../core/cart/cart.store';
-import { RustashopApi } from '../../../api';
-import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { CartStore, CheckoutService, formatApiError } from '@rustashop/shop-core';
+import { MoneyPipe } from '@rustashop/shop-shared';
 
 @Component({
   selector: 'rs-cart-page',
@@ -15,17 +13,17 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 })
 export class CartPage implements OnInit {
   private readonly cartStore = inject(CartStore);
-  private readonly api = inject(RustashopApi);
+  private readonly checkout = inject(CheckoutService);
   private readonly router = inject(Router);
 
   protected readonly cart = this.cartStore.cart;
   protected readonly busy = this.cartStore.busy;
+  protected readonly checkingOut = this.checkout.busy;
   protected readonly error = signal<string | null>(null);
-  protected readonly checkingOut = signal(false);
 
   ngOnInit(): void {
     void this.cartStore.ensureCart().catch((err: unknown) => {
-      this.error.set(messageOf(err));
+      this.error.set(formatApiError(err, 'Cart action failed.'));
     });
   }
 
@@ -35,7 +33,7 @@ export class CartPage implements OnInit {
     try {
       await this.cartStore.updateLine(lineId, qty);
     } catch (err) {
-      this.error.set(messageOf(err));
+      this.error.set(formatApiError(err, 'Cart action failed.'));
     }
   }
 
@@ -44,35 +42,19 @@ export class CartPage implements OnInit {
     try {
       await this.cartStore.removeLine(lineId);
     } catch (err) {
-      this.error.set(messageOf(err));
+      this.error.set(formatApiError(err, 'Cart action failed.'));
     }
   }
 
-  protected async checkout(): Promise<void> {
-    const cart = this.cart();
-    if (!cart || cart.lines.length === 0) {
-      return;
-    }
-    this.checkingOut.set(true);
+  protected async placeOrder(): Promise<void> {
     this.error.set(null);
     try {
-      const key = crypto.randomUUID();
-      const order = await firstValueFrom(this.api.checkout({ cart_id: cart.id }, key));
-      this.cartStore.clearSession();
+      const order = await this.checkout.placeOrder();
       await this.router.navigate(['/checkout', order.id], {
         state: { order },
       });
     } catch (err) {
-      this.error.set(messageOf(err));
-    } finally {
-      this.checkingOut.set(false);
+      this.error.set(this.checkout.error() ?? formatApiError(err, 'Checkout failed.'));
     }
   }
-}
-
-function messageOf(err: unknown): string {
-  if (err && typeof err === 'object' && 'message' in err) {
-    return String((err as { message: unknown }).message);
-  }
-  return 'Cart action failed.';
 }
