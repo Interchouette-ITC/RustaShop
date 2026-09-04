@@ -83,10 +83,7 @@ mod tests {
 
     #[tokio::test]
     async fn execute_fragment_when_allowed() {
-        let Ok(url) = std::env::var("DATABASE_URL") else {
-            eprintln!("skip: DATABASE_URL is not set");
-            return;
-        };
+        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
         unsafe {
             std::env::set_var(ALLOW_RAW_SQL_ENV, "1");
         }

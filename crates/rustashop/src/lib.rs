@@ -213,11 +213,7 @@ mod tests {
         unsafe {
             std::env::set_var(APP_ENV, "   ");
         }
-        let result = boot_kernel(&dir);
-        let Err(err) = result else {
-            panic!("empty APP_ENV must fail boot");
-        };
-        assert_ne!(err.to_string(), "");
+        assert!(boot_kernel(&dir).is_err(), "empty APP_ENV must fail boot");
         unsafe {
             std::env::remove_var(APP_ENV);
         }
