@@ -7,6 +7,48 @@ use crate::{Cart, CartLine, Currency, DomainError, Money};
 /// Payment status before a payment provider is attached (`pending` at checkout).
 pub const PAYMENT_STATUS_PENDING: &str = "pending";
 
+/// Fulfillment lifecycle stored on `"order".state`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OrderState {
+    /// Order placed at checkout.
+    Placed,
+    /// Marked paid by an operator (or payment flow later).
+    Paid,
+    /// Marked shipped by an operator.
+    Shipped,
+    /// Cancelled by an operator.
+    Cancelled,
+}
+
+impl OrderState {
+    /// Wire value stored in Postgres.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Placed => "placed",
+            Self::Paid => "paid",
+            Self::Shipped => "shipped",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    /// Parses a stored or request status string.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DomainError::InvalidOrderState`] when `raw` is not a known state.
+    pub fn parse(raw: &str) -> Result<Self, DomainError> {
+        match raw {
+            "placed" => Ok(Self::Placed),
+            "paid" => Ok(Self::Paid),
+            "shipped" => Ok(Self::Shipped),
+            "cancelled" => Ok(Self::Cancelled),
+            other => Err(DomainError::InvalidOrderState(other.to_owned())),
+        }
+    }
+}
+
 /// Placed order line snapshot.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OrderLine {
@@ -121,7 +163,7 @@ impl Order {
             number,
             cart_id: Some(cart.id.clone()),
             customer_id: cart.customer_id.clone(),
-            state: "placed".to_owned(),
+            state: OrderState::Placed.as_str().to_owned(),
             payment_status: PAYMENT_STATUS_PENDING.to_owned(),
             currency: cart.currency.clone(),
             total: items_total.clone(),

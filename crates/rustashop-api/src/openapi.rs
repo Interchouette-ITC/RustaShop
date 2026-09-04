@@ -1,9 +1,11 @@
 //! `OpenAPI` document and Swagger UI for the Actix API.
 
 use actix_web::{get, HttpResponse, Responder};
-use utoipa::OpenApi;
+use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
+use utoipa::{Modify, OpenApi};
 use utoipa_swagger_ui::SwaggerUi;
 
+use crate::admin_orders::{OrderListResponse, PatchOrderStatusRequest};
 use crate::carts::{
     AddCartLineRequest, CartLineResponse, CartResponse, CreateCartRequest, MoneyResponse,
     UpdateCartLineRequest,
@@ -14,6 +16,24 @@ use crate::health::HealthResponse;
 use crate::products::{
     ProductDetailResponse, ProductListResponse, ProductResponse, ProductVariantResponse,
 };
+
+struct AdminSecurityAddon;
+
+impl Modify for AdminSecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "admin_bearer",
+                SecurityScheme::Http(
+                    HttpBuilder::new()
+                        .scheme(HttpAuthScheme::Bearer)
+                        .bearer_format("token")
+                        .build(),
+                ),
+            );
+        }
+    }
+}
 
 /// Generated `OpenAPI` document.
 #[derive(OpenApi)]
@@ -28,6 +48,8 @@ use crate::products::{
         crate::carts::update_cart_line,
         crate::carts::delete_cart_line,
         crate::checkout::place_order,
+        crate::admin_orders::list_admin_orders,
+        crate::admin_orders::patch_admin_order,
         openapi_json
     ),
     components(schemas(
@@ -45,8 +67,11 @@ use crate::products::{
         CheckoutRequest,
         OrderResponse,
         OrderLineResponse,
+        OrderListResponse,
+        PatchOrderStatusRequest,
         ErrorBody
-    ))
+    )),
+    modifiers(&AdminSecurityAddon)
 )]
 pub struct ApiDoc;
 

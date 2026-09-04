@@ -1,5 +1,7 @@
 //! Actix-web API surface.
 
+mod admin_auth;
+mod admin_orders;
 mod carts;
 mod checkout;
 mod error;
@@ -11,6 +13,10 @@ mod request_param;
 use actix_web::{web, App, HttpServer};
 use tracing::info;
 
+pub use admin_auth::{AdminAuthConfig, ADMIN_TOKEN_ENV, ADMIN_TOKEN_ENV_ALT};
+pub use admin_orders::{
+    list_admin_orders, patch_admin_order, OrderListResponse, PatchOrderStatusRequest,
+};
 pub use carts::{
     add_cart_line, create_cart, delete_cart_line, get_cart, update_cart_line, CartLineResponse,
     CartResponse, MoneyResponse,
@@ -55,7 +61,9 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         .service(add_cart_line)
         .service(update_cart_line)
         .service(delete_cart_line)
-        .service(place_order);
+        .service(place_order)
+        .service(list_admin_orders)
+        .service(patch_admin_order);
 }
 
 /// Redacts the password in a Postgres URL for safe logging.
@@ -115,10 +123,19 @@ pub async fn run() -> std::io::Result<()> {
         .await
         .map_err(std::io::Error::other)?;
     info!("catalog repository ready");
+    let admin_auth = AdminAuthConfig::from_env();
+    if admin_auth.is_configured() {
+        info!("admin: bearer token configured for /v1/admin/*");
+    } else {
+        info!(
+            "admin: {ADMIN_TOKEN_ENV} (or {ADMIN_TOKEN_ENV_ALT}) unset - /v1/admin/* returns 401"
+        );
+    }
 
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(catalog.clone()))
+            .app_data(web::Data::new(admin_auth.clone()))
             .configure(routes)
     })
     .bind(&bind)
@@ -179,6 +196,7 @@ mod tests {
         assert!(paths.get("/v1/products").is_some());
         assert!(paths.get("/v1/carts").is_some());
         assert!(paths.get("/v1/checkout").is_some());
+        assert!(paths.get("/v1/admin/orders").is_some());
         assert!(paths.get("/healthz").is_some());
     }
 }

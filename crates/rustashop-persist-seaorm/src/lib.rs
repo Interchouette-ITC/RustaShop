@@ -5,6 +5,7 @@ pub mod catalog;
 pub mod checkout;
 pub mod entities;
 pub mod migration;
+pub mod orders;
 pub mod param;
 pub mod raw_sql;
 

@@ -18,6 +18,9 @@ pub struct ErrorBody {
 /// Handler failure mapped to an HTTP status.
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
+    /// Missing or invalid admin bearer token.
+    #[error("unauthorized")]
+    Unauthorized,
     /// Requested aggregate is missing.
     #[error("not found")]
     NotFound,
@@ -37,6 +40,7 @@ impl ApiError {
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self {
+            Self::Unauthorized => "unauthorized",
             Self::NotFound => "not_found",
             Self::Conflict => "conflict",
             Self::Unprocessable(_) => "unprocessable",
@@ -60,7 +64,8 @@ impl ApiError {
             | DomainError::InvalidQuantity(_)
             | DomainError::Overflow
             | DomainError::EmptyCart
-            | DomainError::InvalidCartStatus(_) => Self::Unprocessable(error.to_string()),
+            | DomainError::InvalidCartStatus(_)
+            | DomainError::InvalidOrderState(_) => Self::Unprocessable(error.to_string()),
             DomainError::CartAlreadyCheckedOut => Self::Conflict,
             DomainError::LineNotFound(_) => Self::NotFound,
         }
@@ -70,6 +75,7 @@ impl ApiError {
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         match self {
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::Conflict => StatusCode::CONFLICT,
             Self::Unprocessable(_) => StatusCode::UNPROCESSABLE_ENTITY,

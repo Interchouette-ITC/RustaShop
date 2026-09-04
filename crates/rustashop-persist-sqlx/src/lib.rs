@@ -3,6 +3,7 @@
 pub mod cart;
 pub mod catalog;
 pub mod checkout;
+pub mod orders;
 pub mod param;
 pub mod raw_sql;
 

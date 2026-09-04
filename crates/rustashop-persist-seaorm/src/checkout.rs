@@ -38,7 +38,7 @@ fn money(amount_minor: i64, currency: &str) -> Result<Money, PersistenceError> {
     Ok(Money::new(amount_minor, currency))
 }
 
-fn order_from_models(
+pub(crate) fn order_from_models(
     model: commerce_order::Model,
     lines: Vec<order_line::Model>,
 ) -> Result<Order, PersistenceError> {
@@ -267,7 +267,10 @@ async fn find_order_by_key<C: ConnectionTrait>(
     Ok(Some(order_from_models(model, lines)?))
 }
 
-async fn load_order<C: ConnectionTrait>(db: &C, order_id: Uuid) -> Result<Order, PersistenceError> {
+pub(crate) async fn load_order<C: ConnectionTrait>(
+    db: &C,
+    order_id: Uuid,
+) -> Result<Order, PersistenceError> {
     let model = commerce_order::Entity::find_by_id(order_id)
         .one(db)
         .await
@@ -280,7 +283,7 @@ async fn load_order<C: ConnectionTrait>(db: &C, order_id: Uuid) -> Result<Order,
     order_from_models(model, lines)
 }
 
-async fn load_order_lines<C: ConnectionTrait>(
+pub(crate) async fn load_order_lines<C: ConnectionTrait>(
     db: &C,
     order_id: Uuid,
 ) -> Result<Vec<order_line::Model>, PersistenceError> {
