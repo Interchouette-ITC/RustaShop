@@ -83,6 +83,10 @@ mod bind_tests {
 
     #[test]
     fn bind_address_defaults_and_env_override() {
+        // Ensure the restore path that rewrites a previous value is exercised.
+        unsafe {
+            std::env::set_var(BIND_ENV, "127.0.0.1:19090");
+        }
         let previous = std::env::var(BIND_ENV).ok();
         unsafe {
             std::env::remove_var(BIND_ENV);
@@ -98,6 +102,29 @@ mod bind_tests {
                 None => std::env::remove_var(BIND_ENV),
             }
         }
+        assert_eq!(bind_address(), "127.0.0.1:19090");
+        unsafe {
+            std::env::remove_var(BIND_ENV);
+        }
+    }
+
+    #[test]
+    fn bind_address_restore_clears_when_previously_unset() {
+        unsafe {
+            std::env::remove_var(BIND_ENV);
+        }
+        let previous = std::env::var(BIND_ENV).ok();
+        unsafe {
+            std::env::set_var(BIND_ENV, "127.0.0.1:18081");
+        }
+        assert_eq!(bind_address(), "127.0.0.1:18081");
+        unsafe {
+            match previous {
+                Some(value) => std::env::set_var(BIND_ENV, value),
+                None => std::env::remove_var(BIND_ENV),
+            }
+        }
+        assert_eq!(bind_address(), DEFAULT_BIND);
     }
 }
 
