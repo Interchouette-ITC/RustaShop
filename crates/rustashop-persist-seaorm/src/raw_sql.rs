@@ -51,7 +51,7 @@ pub async fn execute_fragment(
     ensure_param(sql)?;
     eprintln!("WARNING: {ALLOW_RAW_SQL_ENV} enabled; executing raw SQL fragment");
     connection
-        .execute(Statement::from_string(
+        .execute_raw(Statement::from_string(
             connection.get_database_backend(),
             sql.to_owned(),
         ))

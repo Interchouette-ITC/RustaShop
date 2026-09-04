@@ -35,7 +35,9 @@ pub async fn seed_catalog(pool: &PgPool) -> Result<(), sqlx::Error> {
         if statement.is_empty() {
             continue;
         }
-        sqlx::query(statement).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(statement.to_owned()))
+            .execute(pool)
+            .await?;
     }
     Ok(())
 }

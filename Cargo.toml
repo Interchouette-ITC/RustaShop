@@ -16,7 +16,7 @@ license = "Apache-2.0"
 version = "0.1.0"
 authors = ["Interchouette"]
 repository = "https://github.com/Interchouette-ITC/RustaShop"
-rust-version = "1.75"
+rust-version = "1.94"
 
 [workspace.dependencies]
 rustashop = { path = "crates/rustashop", version = "0.1.0" }
@@ -30,9 +30,26 @@ serenade-contracts = { git = "https://github.com/Interchouette-ITC/Serenade.git"
 actix-web = "4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.8", default-features = false, features = ["macros", "migrate", "postgres", "runtime-tokio"] }
-sea-orm = { version = "1.1", default-features = false, features = ["macros", "runtime-tokio-rustls", "sqlx-postgres", "with-chrono", "with-uuid"] }
-sea-orm-migration = { version = "1.1", default-features = false, features = ["runtime-tokio-rustls", "sqlx-postgres", "with-chrono", "with-uuid"] }
+sqlx = { version = "0.9", default-features = false, features = [
+    "macros",
+    "migrate",
+    "postgres",
+    "runtime-tokio",
+    "tls-rustls",
+] }
+sea-orm = { version = "2.0.2", default-features = false, features = [
+    "macros",
+    "runtime-tokio-rustls",
+    "sqlx-postgres",
+    "with-chrono",
+    "with-uuid",
+] }
+sea-orm-migration = { version = "2.0.2", default-features = false, features = [
+    "runtime-tokio-rustls",
+    "sqlx-postgres",
+    "with-chrono",
+    "with-uuid",
+] }
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 utoipa = { version = "5", features = ["actix_extras"] }
