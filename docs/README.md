@@ -110,4 +110,8 @@ Thank you to their maintainers and communities.
 
 ## License
 
-To be decided before first release. Interchouette-ITC projects often use **Apache-2.0**; this repo will align with org policy when code is added.
+Open Software License **v3.0** (OSL-3.0). See [`LICENSE`](../LICENSE).
+
+<p align="center">
+  <img src="brand/seal-crab-128.png" alt="rustashop seal: crab" width="128" />
+</p>

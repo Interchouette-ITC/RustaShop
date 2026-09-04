@@ -74,6 +74,10 @@ cargo check -p rustashop-persist -p rustashop-api --no-default-features --featur
 
 Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, …). PR body: **Summary** + **Test plan** only.
 
+## License
+
+This repository is licensed under **OSL-3.0** (see [`../LICENSE`](../LICENSE)).
+
 ## Questions
 
 Open a GitHub issue on `Interchouette-ITC/rustashop` for product design. Framework questions that affect multiple apps go to serenade.
