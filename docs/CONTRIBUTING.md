@@ -38,8 +38,8 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make stack-up` | Postgres + migrate + API image |
 | `make db-migrate` | SQLx migrations |
 | `make db-migrate-seaorm` | SeaORM migrations |
-| `make db-seed` | catalog seed SQL |
-| `make db-reset` | drop public schema and re-run SQLx migrations |
+| `make db-seed` | catalog seed SQL (idempotent; does not wipe) |
+| `make db-reset` | **DESTROYS** schema `public` then migrates; requires `CONFIRM=YES` |
 
 Default DSN: `postgres://rustashop:rustashop@127.0.0.1:5432/rustashop`.
 

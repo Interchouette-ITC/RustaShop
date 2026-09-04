@@ -40,11 +40,11 @@ help:
 	@echo "  make db-psql    psql shell (needs db-up)"
 	@echo "  make db-migrate run SQLx migrations (needs db-up, DATABASE_URL)"
 	@echo "  make db-migrate-seaorm run SeaORM migrations (needs db-up, DATABASE_URL)"
-	@echo "  make db-seed    load catalog seed (needs db-up, migrated schema)"
-	@echo "  make db-reset   drop public schema and re-run migrations"
+	@echo "  make db-seed    load catalog seed (idempotent; never drops data)"
+	@echo "  make db-reset   DROP SCHEMA public + migrate (requires CONFIRM=YES)"
 	@echo "  make clean      cargo clean"
 	@echo ""
-	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE)"
+	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE) CONFIRM="
 
 check:
 	cd $(ROOT) && $(CARGO) check --workspace
@@ -122,9 +122,24 @@ db-migrate-seaorm:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-seaorm --bin rustashop-seaorm-migrate
 
 db-seed:
+	@echo "Seeding catalog (idempotent; does not wipe the database)"
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop < db/seeds/catalog.sql
 
+# Destroys ALL tables and data in the rustashop database, then re-migrates.
+# Refuses unless CONFIRM=YES (example: CONFIRM=YES make db-reset).
 db-reset:
+	@if [ "$(CONFIRM)" != "YES" ]; then \
+		echo ""; \
+		echo "REFUSING: make db-reset DROPS SCHEMA public CASCADE."; \
+		echo "That deletes every table and all data in database 'rustashop'."; \
+		echo "This is not undoable from Make."; \
+		echo ""; \
+		echo "If you really want that, run:"; \
+		echo "  CONFIRM=YES make db-reset"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "CONFIRM=YES: dropping schema public and re-running migrations..."
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 	@$(MAKE) db-migrate
 
