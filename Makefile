@@ -30,7 +30,7 @@ help:
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
-	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls)"
+	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls; RUSTASHOP_BASE_HREF=/)"
 	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop (when client lands)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
