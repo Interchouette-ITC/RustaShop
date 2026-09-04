@@ -13,6 +13,11 @@
   <strong>Modern commerce. Rust powered. AI native.</strong>
 </p>
 
+<p align="center">
+  <a href="https://github.com/Interchouette-ITC/rustashop/actions/workflows/ci.yml"><img src="https://github.com/Interchouette-ITC/rustashop/actions/workflows/ci.yml/badge.svg?branch=dev" alt="CI" /></a>
+  <a href="https://codecov.io/gh/Interchouette-ITC/rustashop"><img src="https://codecov.io/gh/Interchouette-ITC/rustashop/branch/dev/graph/badge.svg" alt="codecov" /></a>
+</p>
+
 One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI contracts. Shared storefront markup lives in `templates/shop/default/`; each shop host adapts it. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`../docs-dev/UI-RENDERERS.md`](../docs-dev/UI-RENDERERS.md).
 
 AI is on the product map (discovery, shopping agents, catalog assist, pricing, support, MCP), not glued on later. See [`../docs-dev/AI-NATIVE.md`](../docs-dev/AI-NATIVE.md).

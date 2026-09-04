@@ -103,3 +103,52 @@ pub fn configure_install(cfg: &mut web::ServiceConfig, root: &std::path::Path) {
 pub fn configure_install_from_env(cfg: &mut web::ServiceConfig) {
     configure_install(cfg, &shop_root());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::install_fs::install_dist_index;
+    use actix_web::{test, App};
+    use std::fs;
+
+    #[actix_web::test]
+    async fn status_ok_when_dist_present() {
+        let dir = tempfile_dir("status-ok");
+        let index = install_dist_index(&dir);
+        fs::create_dir_all(index.parent().expect("parent")).expect("mkdir");
+        fs::write(&index, "<!doctype html>").expect("write");
+
+        let app =
+            test::init_service(App::new().configure(|cfg| configure_install(cfg, &dir))).await;
+        let req = test::TestRequest::get()
+            .uri("/install/api/status")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["available"], true);
+        assert_eq!(body["wipe_required"], false);
+    }
+
+    #[actix_web::test]
+    async fn routes_absent_without_dist() {
+        let dir = tempfile_dir("status-absent");
+        let app =
+            test::init_service(App::new().configure(|cfg| configure_install(cfg, &dir))).await;
+        let req = test::TestRequest::get()
+            .uri("/install/api/status")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 404);
+    }
+
+    fn tempfile_dir(label: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "rustashop-install-routes-{label}-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("tmpdir");
+        dir
+    }
+}

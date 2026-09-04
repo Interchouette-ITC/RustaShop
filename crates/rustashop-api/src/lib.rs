@@ -200,6 +200,22 @@ mod redact_tests {
             "postgres://rustashop:***@127.0.0.1:5432/rustashop"
         );
     }
+
+    #[test]
+    fn leaves_url_without_userinfo() {
+        assert_eq!(
+            redacted_database_url("postgres://127.0.0.1:5432/rustashop"),
+            "postgres://127.0.0.1:5432/rustashop"
+        );
+    }
+
+    #[test]
+    fn unrecognized_scheme_is_marked() {
+        assert_eq!(
+            redacted_database_url("not-a-url"),
+            "(unrecognized DATABASE_URL)"
+        );
+    }
 }
 
 #[cfg(test)]

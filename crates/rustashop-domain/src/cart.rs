@@ -365,4 +365,17 @@ mod tests {
             Err(DomainError::InvalidQuantity(0))
         ));
     }
+
+    #[test]
+    fn update_missing_line_is_error() {
+        let mut cart = eur_cart();
+        assert!(matches!(
+            cart.update_line_quantity("missing", 2),
+            Err(DomainError::LineNotFound(_))
+        ));
+        assert!(matches!(
+            cart.remove_line("missing"),
+            Err(DomainError::LineNotFound(_))
+        ));
+    }
 }

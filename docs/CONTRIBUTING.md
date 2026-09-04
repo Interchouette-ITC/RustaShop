@@ -14,6 +14,14 @@ make test
 
 Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 
+Coverage (no %-fail gate in CI; reports upload to Codecov):
+
+```bash
+make db-up
+make coverage      # Rust lcov → coverage/lcov.info (needs cargo-llvm-cov)
+make coverage-js   # Vitest lcov for shop, admin, install
+```
+
 3. One concern per PR. Prefer draft until the slice is complete.
 4. English only in code, docs, commits, and PR text. In markdown prose, write
    **Serenade** (capital S); crate ids stay lowercase (`serenade-contracts`).
@@ -30,8 +38,9 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | --- | --- |
 | `make lint` | `fmt --check` + clippy (`-D warnings`, pedantic, nursery) for workspace and SeaORM features |
 | `make test` | workspace tests, then SeaORM feature tests |
-| `make doc` | rustdoc (`-D warnings`) |
-| `make openapi` | write `openapi/openapi.json` from utoipa |
+| `make coverage` | Rust `cargo llvm-cov` → `coverage/lcov.info` |
+| `make coverage-js` | Vitest coverage for shop, admin, install |
+| `make doc` | rustdoc (`-D warnings`) || `make openapi` | write `openapi/openapi.json` from utoipa |
 | `make shop-angular` | serve Angular shop (`shops/angular`, port 4242) |
 | `make admin-angular` | serve Angular admin (`admin/angular`, port 4250) |
 | `make shop-leptos-rangular` | serve Leptos+rangular shop (`shops/leptos-rangular`, port 4181) |

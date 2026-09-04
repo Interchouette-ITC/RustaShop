@@ -86,6 +86,14 @@
           },
           "defaultConfiguration": "development"
         },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "admin-angular:build:development",
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest"
+          }
+        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {

@@ -143,6 +143,9 @@ jobs:
       - name: Lint
         if: needs.changes.outputs.code == 'true'
         run: npm run lint
+      - name: Test
+        if: needs.changes.outputs.code == 'true'
+        run: npm test
       - name: Build
         if: needs.changes.outputs.code == 'true'
         run: npm run build
@@ -172,6 +175,9 @@ jobs:
       - name: Lint
         if: needs.changes.outputs.code == 'true'
         run: npm run lint
+      - name: Test
+        if: needs.changes.outputs.code == 'true'
+        run: npm test
       - name: Build
         if: needs.changes.outputs.code == 'true'
         run: npm run build
@@ -198,6 +204,9 @@ jobs:
       - name: Install
         if: needs.changes.outputs.code == 'true'
         run: npm ci
+      - name: Test
+        if: needs.changes.outputs.code == 'true'
+        run: npm test
       - name: Build
         if: needs.changes.outputs.code == 'true'
         run: npm run build
@@ -243,3 +252,78 @@ jobs:
       - name: Malware IoC scan
         if: needs.changes.outputs.code == 'true'
         run: node scripts/npm-malware-scan.mjs .
+
+  coverage:
+    name: coverage (rust)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rustashop
+          POSTGRES_PASSWORD: rustashop
+          POSTGRES_DB: rustashop
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rustashop -d rustashop"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
+    steps:
+      - uses: actions/checkout@v7
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping coverage"
+      - uses: dtolnay/rust-toolchain@stable
+        if: needs.changes.outputs.code == 'true'
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+        if: needs.changes.outputs.code == 'true'
+      - name: Install cargo-llvm-cov
+        if: needs.changes.outputs.code == 'true'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: Coverage
+        if: needs.changes.outputs.code == 'true'
+        run: make coverage
+      - name: Upload to Codecov
+        if: needs.changes.outputs.code == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info,coverage/lcov-seaorm.info
+          flags: rust
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  coverage-js:
+    name: coverage (javascript)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping coverage-js"
+      - uses: actions/setup-node@v7
+        if: needs.changes.outputs.code == 'true'
+        with:
+          node-version: "22"
+      - name: Coverage
+        if: needs.changes.outputs.code == 'true'
+        run: make coverage-js
+      - name: Upload to Codecov
+        if: needs.changes.outputs.code == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/shop-lcov.info,coverage/admin-lcov.info,coverage/install-lcov.info
+          flags: javascript
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

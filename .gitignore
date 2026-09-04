@@ -5,10 +5,14 @@ shops/**/target/
 .env
 .env.*
 !.env.example
+coverage/
 install/node_modules/
 install/dist/
+install/coverage/
 assets/
 shops/**/node_modules/
 shops/**/dist/
 shops/**/.angular/
+shops/**/coverage/
 shops/angular/.vscode/
+admin/**/coverage/

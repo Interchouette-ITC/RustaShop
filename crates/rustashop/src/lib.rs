@@ -11,3 +11,13 @@ pub const SERENADE_KERNEL_PENDING: &str = "serenade-pending";
 pub const fn kernel_status() -> &'static str {
     SERENADE_KERNEL_PENDING
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kernel_status_is_pending_marker() {
+        assert_eq!(kernel_status(), SERENADE_KERNEL_PENDING);
+    }
+}
