@@ -10,6 +10,8 @@ DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
 SHOP_ANGULAR_DIR := clients/angular-shop
 SHOP_ANGULAR_PORT ?= 4242
+# Set FORCE=1 to re-run npm install even when node_modules exists.
+FORCE ?= 0
 
 .DEFAULT_GOAL := help
 
@@ -28,7 +30,7 @@ help:
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
-	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT))"
+	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls)"
 	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop (when client lands)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
@@ -42,7 +44,7 @@ help:
 	@echo "  make db-reset   drop public schema and re-run migrations"
 	@echo "  make clean      cargo clean"
 	@echo ""
-	@echo "Overrides: API_BIND=$(API_BIND)"
+	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE)"
 
 check:
 	cd $(ROOT) && $(CARGO) check --workspace
@@ -79,10 +81,16 @@ shop-angular:
 		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
 		exit 1; \
 	fi
+	@API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^#http://#;s#^http://http://#http://#')}; \
+	echo "shop proxy → $$API_PROXY (override with RUSTASHOP_API_PROXY=... if $(API_BIND) is not RustaShop)"; \
+	if ! curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
+		echo "warning: $${API_PROXY}/healthz failed — start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
+	fi
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
-		if [ ! -d node_modules ]; then npm install; fi && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run generate:api && \
-		npm start -- --port $(SHOP_ANGULAR_PORT)
+		RUSTASHOP_API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^http://##;s#^#http://#')} \
+			npm start -- --port $(SHOP_ANGULAR_PORT)
 
 shop-leptos-rangular:
 	@echo "clients/leptos-rangular-shop is not scaffolded yet (see GitHub #23)"
