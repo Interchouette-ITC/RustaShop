@@ -85,3 +85,26 @@ fn bearer_token(request: &HttpRequest) -> Option<String> {
         .filter(|value| !value.is_empty())
         .map(ToOwned::to_owned)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_token_is_configured() {
+        let config = AdminAuthConfig::from_token("secret");
+        assert!(config.is_configured());
+        assert!(config.authorize_bearer(Some("secret")).is_ok());
+    }
+
+    #[rstest::rstest]
+    #[case::unset(AdminAuthConfig::from_token(""), Some("x"))]
+    #[case::missing(AdminAuthConfig::from_token("secret"), None)]
+    #[case::wrong(AdminAuthConfig::from_token("secret"), Some("nope"))]
+    fn authorize_bearer_rejects(#[case] config: AdminAuthConfig, #[case] presented: Option<&str>) {
+        assert!(matches!(
+            config.authorize_bearer(presented),
+            Err(ApiError::Unauthorized)
+        ));
+    }
+}
