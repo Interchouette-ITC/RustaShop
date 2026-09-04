@@ -2,15 +2,17 @@
 
 use rustashop_persist_sqlx::{migrate, SqlxCatalogRepository};
 use serenade_contracts::{CategoryRepository, PageRequest, ProductRepository};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPool, PgPoolOptions};
 
 const SCHEMA_LOCK: i64 = 874_512;
+const HOODIE_PRODUCT: &str = "22222222-2222-2222-2222-222222222221";
+const APPAREL: &str = "11111111-1111-1111-1111-111111111111";
+const CHILD_CATEGORY: &str = "11111111-1111-1111-1111-111111111112";
 
-#[tokio::test]
-async fn sqlx_catalog_lists_and_finds_seeded_rows() {
+async fn exclusive_catalog() -> Option<(PgPool, SqlxCatalogRepository)> {
     let Ok(url) = std::env::var("DATABASE_URL") else {
         eprintln!("skip: DATABASE_URL is not set");
-        return;
+        return None;
     };
     let pool = PgPoolOptions::new()
         .max_connections(1)
@@ -38,14 +40,44 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
     .await
     .expect("seed category");
     sqlx::query(
+        "INSERT INTO category (id, parent_id, slug, name) VALUES ($1::uuid, $2::uuid, 'tees', 'Tees')",
+    )
+    .bind(CHILD_CATEGORY)
+    .bind(APPAREL)
+    .execute(&pool)
+    .await
+    .expect("seed child category");
+    sqlx::query(
         "INSERT INTO product (id, category_id, slug, name, enabled) VALUES
-         ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'hoodie', 'Hoodie', TRUE)",
+         ('22222222-2222-2222-2222-222222222221', '11111111-1111-1111-1111-111111111111', 'hoodie', 'Hoodie', TRUE),
+         ('22222222-2222-2222-2222-222222222229', '11111111-1111-1111-1111-111111111111', 'retired', 'Retired', FALSE)",
     )
     .execute(&pool)
     .await
-    .expect("seed product");
+    .expect("seed products");
+    sqlx::query(
+        "INSERT INTO product_variant (id, product_id, sku, name, price_minor, currency, stock_quantity) VALUES
+         ('33333333-3333-3333-3333-333333333331', '22222222-2222-2222-2222-222222222221', 'HOODIE-M', 'Medium', 4500, 'EUR', 8)",
+    )
+    .execute(&pool)
+    .await
+    .expect("seed variant");
+    Some((pool.clone(), SqlxCatalogRepository::new(pool)))
+}
 
-    let repo = SqlxCatalogRepository::new(pool.clone());
+async fn unlock(pool: &PgPool) {
+    sqlx::query("SELECT pg_advisory_unlock($1)")
+        .bind(SCHEMA_LOCK)
+        .execute(pool)
+        .await
+        .expect("unlock");
+}
+
+#[tokio::test]
+async fn sqlx_catalog_lists_and_finds_seeded_rows() {
+    let Some((pool, repo)) = exclusive_catalog().await else {
+        return;
+    };
     let product = ProductRepository::find_by_slug(&repo, "hoodie")
         .await
         .expect("slug")
@@ -56,11 +88,39 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
         .expect("id")
         .expect("row");
     assert_eq!(by_id.slug, "hoodie");
+    let bad_id = "not-a-uuid".to_owned();
+    let missing_id = "00000000-0000-0000-0000-000000000000".to_owned();
+    assert!(ProductRepository::find_by_id(&repo, &bad_id).await.is_err());
+    assert!(ProductRepository::find_by_id(&repo, &missing_id)
+        .await
+        .expect("miss")
+        .is_none());
+
     let listed = ProductRepository::list(&repo, PageRequest::first(10))
         .await
         .expect("list");
     assert_eq!(listed.len(), 1);
+    let all = repo
+        .list_all_products(PageRequest::first(10))
+        .await
+        .expect("list all");
+    assert_eq!(all.len(), 2);
 
+    let variants = repo
+        .list_variants_for_product(HOODIE_PRODUCT)
+        .await
+        .expect("variants");
+    assert_eq!(variants.len(), 1);
+    assert_eq!(variants[0].sku, "HOODIE-M");
+    assert!(repo.list_variants_for_product("bad-id").await.is_err());
+    unlock(&pool).await;
+}
+
+#[tokio::test]
+async fn sqlx_catalog_category_parent_paths() {
+    let Some((pool, repo)) = exclusive_catalog().await else {
+        return;
+    };
     let category = CategoryRepository::find_by_slug(&repo, "apparel", None)
         .await
         .expect("category slug")
@@ -71,14 +131,27 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
         .expect("category id")
         .expect("apparel by id");
     assert_eq!(category_by_id.slug, "apparel");
+    let bad_id = "not-a-uuid".to_owned();
+    assert!(CategoryRepository::find_by_id(&repo, &bad_id)
+        .await
+        .is_err());
+
+    let apparel = APPAREL.to_owned();
+    let child = CategoryRepository::find_by_slug(&repo, "tees", Some(&apparel))
+        .await
+        .expect("child slug")
+        .expect("tees");
+    assert_eq!(child.id, CHILD_CATEGORY);
+    let under_parent =
+        CategoryRepository::list_children(&repo, Some(&apparel), PageRequest::first(10))
+            .await
+            .expect("children under parent");
+    assert_eq!(under_parent.len(), 1);
+    assert_eq!(under_parent[0].slug, "tees");
+
     let children = CategoryRepository::list_children(&repo, None, PageRequest::first(10))
         .await
         .expect("children");
     assert_eq!(children.len(), 1);
-
-    sqlx::query("SELECT pg_advisory_unlock($1)")
-        .bind(SCHEMA_LOCK)
-        .execute(&pool)
-        .await
-        .expect("unlock");
+    unlock(&pool).await;
 }
