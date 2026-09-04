@@ -2519,7 +2519,7 @@ dependencies = [
 [[package]]
 name = "serenade-contracts"
 version = "0.1.0"
-source = "git+https://github.com/Interchouette-ITC/Serenade.git?branch=dev#b4e98caa8709cd3f14031296b0ec36a101944f6b"
+source = "git+https://github.com/Interchouette-ITC/Serenade.git?branch=dev#ad2d39852146f7bd9cca3562bb4a000e1324e28a"
 dependencies = [
  "serde",
  "thiserror",
