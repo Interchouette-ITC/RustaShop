@@ -24,7 +24,7 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping heavy lint"
@@ -75,7 +75,7 @@ jobs:
     env:
       DATABASE_URL: postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping heavy tests"
@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping rustdoc"
@@ -114,7 +114,7 @@ jobs:
       run:
         working-directory: shops/angular
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping shop-angular"
@@ -156,7 +156,7 @@ jobs:
       run:
         working-directory: admin/angular
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping admin-angular"
@@ -185,7 +185,7 @@ jobs:
       run:
         working-directory: install
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping install-ui"
@@ -208,7 +208,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown-only
         if: needs.changes.outputs.code != 'true'
         run: echo "markdown-only; skipping supply-chain"
