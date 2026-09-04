@@ -5,8 +5,8 @@ fn main() {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let template_root = rustashop_template_default::root();
     let template_id = rustashop_template_default::id();
-    std::fs::create_dir_all(manifest.join("style-generated")).expect("create style-generated");
-    let css_out = manifest.join("style-generated/components.css");
+    std::fs::create_dir_all(manifest.join("generated")).expect("create generated");
+    let css_out = manifest.join("generated/components.css");
     let out_dir = Path::new(&std::env::var("OUT_DIR").expect("OUT_DIR")).join("rangular");
     std::fs::create_dir_all(&out_dir).expect("create rangular OUT_DIR");
 

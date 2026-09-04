@@ -27,7 +27,7 @@ Port override: `make shop-leptos-rangular SHOP_LEPTOS_PORT=3000`.
 | `../../templates/<id>/` | Shared `.html` / `.scss` |
 | `src/components/<name>/` | Rust controllers |
 | `style/main.css` | Host-only chrome (temporary catalog page) |
-| `style-generated/components.css` | From `build.rs` (template SCSS) |
+| `generated/components.css` | From `build.rs` (template SCSS) |
 | `build.rs` | rangular AOT + SCSS compile |
 
 rangular crates come from git `Interchouette-ITC/rangular` branch `dev`.
