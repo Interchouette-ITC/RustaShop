@@ -9,7 +9,7 @@ API_BIND ?= 127.0.0.1:8080
 DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
 SHOP_ANGULAR_DIR := clients/angular-shop
-SHOP_ANGULAR_PORT ?= 4200
+SHOP_ANGULAR_PORT ?= 4242
 
 .DEFAULT_GOAL := help
 

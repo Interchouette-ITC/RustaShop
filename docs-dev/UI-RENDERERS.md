@@ -81,7 +81,7 @@ The back-office is **API-first**. Any SPA that speaks admin OpenAPI + auth may p
 
 | Target | Role |
 | --- | --- |
-| `make shop-angular` | Serve Angular shop (port `4200` by default) |
+| `make shop-angular` | Serve Angular shop (port `4242` by default) |
 | `make shop-leptos-rangular` | Serve Leptos+rangular shop (Trunk; port documented in that client) |
 
 Product vocabulary: **shop** (not storefront / vitrine).

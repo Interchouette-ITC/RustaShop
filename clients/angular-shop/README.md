@@ -23,7 +23,7 @@ npm run generate:api
 npm start
 ```
 
-Dev server: `http://127.0.0.1:4200/` (proxy `/api` → Actix `:8080`).
+Dev server: `http://127.0.0.1:4242/` (proxy `/api` → Actix `:8080`).
 
 ## OpenAPI client
 
