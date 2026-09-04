@@ -81,9 +81,14 @@ ci: lint test doc audit deny
 ## Requires `cargo install cargo-llvm-cov`. Writes `coverage/lcov.info`.
 ## Uses the stable toolchain so llvm-cov finds instrumented objects.
 ## Integration tests need DATABASE_URL (make db-up).
+## Bins match Codecov ignore paths so local lcov stays aligned.
 coverage:
-	cd $(ROOT) && mkdir -p coverage && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov --workspace --lcov --output-path coverage/lcov.info
-	cd $(ROOT) && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov $(SEAORM_PACKAGES) $(SEAORM_FEATURES) --lcov --output-path coverage/lcov-seaorm.info
+	cd $(ROOT) && mkdir -p coverage && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov --workspace --lcov \
+		--ignore-filename-regex '(^|/)(bin|generated)/|templates/' \
+		--output-path coverage/lcov.info
+	cd $(ROOT) && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov $(SEAORM_PACKAGES) $(SEAORM_FEATURES) --lcov \
+		--ignore-filename-regex '(^|/)(bin|generated)/|templates/' \
+		--output-path coverage/lcov-seaorm.info
 
 ## Vitest coverage for shop, admin, and install. Writes coverage/*-lcov.info.
 coverage-js:
