@@ -79,7 +79,10 @@ shop-angular:
 		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
 		exit 1; \
 	fi
-	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && npm install && npm run generate:api && npm start -- --port $(SHOP_ANGULAR_PORT)
+	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
+		if [ ! -d node_modules ]; then npm install; fi && \
+		npm run generate:api && \
+		npm start -- --port $(SHOP_ANGULAR_PORT)
 
 shop-leptos-rangular:
 	@echo "clients/leptos-rangular-shop is not scaffolded yet (see GitHub #23)"
