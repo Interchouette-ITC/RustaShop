@@ -26,6 +26,8 @@ npm start
 
 - Dev server host/port: `angular.json` (`127.0.0.1:4242`), not `package.json`.
 - App API base URL: `src/environments/` (`apiBaseUrl`, default `/api` via proxy).
+- HTML / router base: `RUSTASHOP_BASE_HREF` or `BASE_HREF` (default `/`). Example: `RUSTASHOP_BASE_HREF=/shop/ make shop-angular`.
+- Container deploy: `docker/entrypoint.sh` rewrites `<base href>` from the same env at start.
 
 ## OpenAPI client
 
@@ -39,4 +41,5 @@ Refresh the dump from Rust with `make openapi` at the repo root, then regenerate
 
 ```bash
 npm run build
+RUSTASHOP_BASE_HREF=/shop/ npm run build
 ```

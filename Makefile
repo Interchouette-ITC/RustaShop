@@ -90,6 +90,7 @@ shop-angular:
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run generate:api && \
 		RUSTASHOP_API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^http://##;s#^#http://#')} \
+		RUSTASHOP_BASE_HREF=$${RUSTASHOP_BASE_HREF:-/} \
 			npm start -- --port $(SHOP_ANGULAR_PORT)
 
 shop-leptos-rangular:
