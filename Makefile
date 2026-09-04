@@ -83,11 +83,12 @@ ci: lint test doc audit deny
 ## Integration tests need DATABASE_URL (make db-up).
 ## Bins match Codecov ignore paths so local lcov stays aligned.
 coverage:
-	cd $(ROOT) && mkdir -p coverage && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov --workspace --lcov \
-		--ignore-filename-regex '(^|/)(bin|generated)/|templates/' \
+	cd $(ROOT) && mkdir -p coverage && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov --workspace \
+		--exclude rustashop-persist-seaorm --lcov \
+		--ignore-filename-regex '/src/bin/|/src/main\.rs$$' \
 		--output-path coverage/lcov.info
 	cd $(ROOT) && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov $(SEAORM_PACKAGES) $(SEAORM_FEATURES) --lcov \
-		--ignore-filename-regex '(^|/)(bin|generated)/|templates/' \
+		--ignore-filename-regex '/src/bin/|/src/main\.rs$$' \
 		--output-path coverage/lcov-seaorm.info
 
 ## Vitest coverage for shop, admin, and install. Writes coverage/*-lcov.info.
