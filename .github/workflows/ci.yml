@@ -12,10 +12,13 @@ concurrency:
 permissions:
   contents: read
 
+# Action runtimes: Node 24+ (checkout/setup-node v7, codecov-action v6).
+# Project Node for Angular/install jobs: 24 (matches engines ^24).
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
   RUSTDOCFLAGS: "-D warnings"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   changes:
@@ -121,7 +124,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: needs.changes.outputs.code == 'true'
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
           cache-dependency-path: shops/angular/package-lock.json
       - name: Makefile shop-angular guards
@@ -166,7 +169,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: needs.changes.outputs.code == 'true'
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
           cache-dependency-path: admin/angular/package-lock.json
       - name: Install
@@ -198,7 +201,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: needs.changes.outputs.code == 'true'
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
           cache-dependency-path: install/package-lock.json
       - name: Install
@@ -224,7 +227,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: needs.changes.outputs.code == 'true'
         with:
-          node-version: "22"
+          node-version: "24"
       - uses: dtolnay/rust-toolchain@stable
         if: needs.changes.outputs.code == 'true'
       - uses: Swatinem/rust-cache@v2
@@ -295,7 +298,7 @@ jobs:
         run: make coverage
       - name: Upload to Codecov
         if: needs.changes.outputs.code == 'true'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: coverage/lcov.info,coverage/lcov-seaorm.info
           flags: rust
@@ -315,13 +318,13 @@ jobs:
       - uses: actions/setup-node@v7
         if: needs.changes.outputs.code == 'true'
         with:
-          node-version: "22"
+          node-version: "24"
       - name: Coverage
         if: needs.changes.outputs.code == 'true'
         run: make coverage-js
       - name: Upload to Codecov
         if: needs.changes.outputs.code == 'true'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: coverage/shop-lcov.info,coverage/admin-lcov.info,coverage/install-lcov.info
           flags: javascript
