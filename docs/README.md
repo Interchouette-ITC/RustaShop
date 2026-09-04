@@ -88,7 +88,7 @@ Framework: [serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wir
 4. Commits and docs in **English**; conventional commits when code lands.
 
 <p align="center">
-  <img src="brand/badge-stack-readme.png" alt="rustashop stack: Rust API, Angular, rangular" width="480" />
+  <img src="brand/badge-stack-readme.png" alt="rustashop stack: Rust API, Angular, rangular" width="480" style="margin-top: 1.5rem; margin-bottom: 0.25rem;" />
 </p>
 
 ## Thanks
@@ -110,8 +110,8 @@ Thank you to their maintainers and communities.
 
 ## License
 
-Open Software License **v3.0** (OSL-3.0). See [`LICENSE`](../LICENSE).
+**OSL-3.0** (Open Software License v3.0). See [`LICENSE`](../LICENSE).
 
 <p align="center">
-  <img src="brand/seal-crab-128.png" alt="rustashop seal: crab" width="128" />
+  <img src="brand/seal-crab-128.png" alt="rustashop seal: crab" width="128" height="128" style="margin-top: 1.25rem; margin-bottom: 0; vertical-align: middle;" />
 </p>

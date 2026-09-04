@@ -18,21 +18,44 @@ env:
   RUSTDOCFLAGS: "-D warnings"
 
 jobs:
+  changes:
+    name: detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - "**"
+              - "!**/*.md"
+
   lint:
     name: fmt · clippy
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping heavy lint"
       - uses: dtolnay/rust-toolchain@stable
+        if: needs.changes.outputs.code == 'true'
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+        if: needs.changes.outputs.code == 'true'
       - name: Lint
+        if: needs.changes.outputs.code == 'true'
         run: make lint
 
   test:
     name: workspace tests
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -53,24 +76,38 @@ jobs:
       DATABASE_URL: postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
     steps:
       - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping heavy tests"
       - uses: dtolnay/rust-toolchain@stable
+        if: needs.changes.outputs.code == 'true'
       - uses: Swatinem/rust-cache@v2
+        if: needs.changes.outputs.code == 'true'
       - name: Test
+        if: needs.changes.outputs.code == 'true'
         run: make test
 
   doc:
     name: rustdoc
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping rustdoc"
       - uses: dtolnay/rust-toolchain@stable
+        if: needs.changes.outputs.code == 'true'
       - uses: Swatinem/rust-cache@v2
+        if: needs.changes.outputs.code == 'true'
       - name: Doc
+        if: needs.changes.outputs.code == 'true'
         run: make doc
 
   shop-angular:
     name: shop-angular
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -78,12 +115,17 @@ jobs:
         working-directory: apps/shop-angular
     steps:
       - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping shop-angular"
       - uses: actions/setup-node@v4
+        if: needs.changes.outputs.code == 'true'
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: apps/shop-angular/package-lock.json
       - name: Makefile shop-angular guards
+        if: needs.changes.outputs.code == 'true'
         working-directory: .
         run: |
           # Proxy URL must not double the scheme (regression from sed wrapping).
@@ -96,8 +138,11 @@ jobs:
           # ng serve no longer accepts --base-href; Make must not pass it.
           ! grep -nE 'npm start -- .*--base-href' Makefile
       - name: Install
+        if: needs.changes.outputs.code == 'true'
         run: npm ci --no-fund --no-audit
       - name: Lint
+        if: needs.changes.outputs.code == 'true'
         run: npm run lint
       - name: Build
+        if: needs.changes.outputs.code == 'true'
         run: npm run build
