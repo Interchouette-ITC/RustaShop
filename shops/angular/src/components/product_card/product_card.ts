@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 
 import { template as productCardTpl, styles as productCardStyles } from '@generated/product_card.ng';
 
-/** Compact catalog tile. Markup: `@rustashop/template-default`. */
+/** Compact catalog tile. Markup: `@rustashop/template-shop-default`. */
 @Component({
   selector: 'rs-product-card',
   template: productCardTpl,

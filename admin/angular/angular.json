@@ -26,7 +26,7 @@
             "inlineStyleLanguage": "scss",
             "baseHref": "/",
             "stylePreprocessorOptions": {
-              "includePaths": ["node_modules/@rustashop/template-default-admin", "node_modules"],
+              "includePaths": ["node_modules/@rustashop/template-admin-default", "node_modules"],
               "sass": {
                 "silenceDeprecations": ["import", "color-functions", "global-builtin"]
               }
@@ -37,7 +37,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["node_modules/@rustashop/template-default-admin/admin.scss"]
+            "styles": ["node_modules/@rustashop/template-admin-default/admin.scss"]
           },
           "configurations": {
             "production": {

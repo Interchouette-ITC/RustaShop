@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 
 fn main() {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let template_root = rustashop_template_default::root();
-    let template_id = rustashop_template_default::id();
+    let template_root = rustashop_template_shop_default::root();
+    let template_id = rustashop_template_shop_default::id();
     std::fs::create_dir_all(manifest.join("generated")).expect("create generated");
     let css_out = manifest.join("generated/components.css");
     let out_dir = Path::new(&std::env::var("OUT_DIR").expect("OUT_DIR")).join("rangular");
@@ -12,7 +12,7 @@ fn main() {
 
     println!("cargo:rerun-if-changed={}", template_root.display());
 
-    let mut css = String::from("/* Generated from templates/default - do not edit. */\n");
+    let mut css = String::from("/* Generated from templates/shop/default - do not edit. */\n");
     append_scss(&mut css, "tokens", &template_root.join("tokens.scss"));
     append_scss(&mut css, "chrome", &template_root.join("chrome.scss"));
 
@@ -38,14 +38,14 @@ fn compile_template_panel(
     append_scss(
         css,
         dir,
-        &rustashop_template_default::component_file(dir, "scss"),
+        &rustashop_template_shop_default::component_file(dir, "scss"),
     );
 
-    let html_path = rustashop_template_default::component_file(dir, "html");
+    let html_path = rustashop_template_shop_default::component_file(dir, "html");
     let html = std::fs::read_to_string(&html_path).unwrap_or_else(|err| {
         panic!("read {}: {err}", html_path.display());
     });
-    let source = format!("templates/{template_id}/{dir}/{dir}.html");
+    let source = format!("templates/shop/{template_id}/{dir}/{dir}.html");
     let aot = rangular_aot::compile_named(&html, &source, fn_name);
     assert!(aot.ok(), "{dir}.html: {:?}", aot.issues);
     let rs_path = out_dir.join(format!("{fn_name}.rs"));

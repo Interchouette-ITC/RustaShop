@@ -43,7 +43,8 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make db-seed` | catalog seed SQL (idempotent; does not wipe) |
 | `make db-reset` | **DESTROYS** schema `public` then migrates; requires `CONFIRM=YES` |
 
-Shared shop markup/SCSS: `templates/default/`. Admin markup/SCSS: `templates/default-admin/`.
+Shared shop markup/SCSS: `templates/shop/default/`. Admin markup/SCSS: `templates/admin/default/`.
+Kinds (`shop` | `admin`) are separate trees; see [`../templates/README.md`](../templates/README.md).
 Do not edit generated adapters under `shops/*/generated/` or `admin/*/generated/`
 (build output, gitignored).
 

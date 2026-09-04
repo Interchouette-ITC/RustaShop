@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Admin Angular host: emit generated/*.ng.ts from templates/default-admin.
+ * Admin Angular host: emit generated/*.ng.ts from templates/admin/default.
  */
 import { createRequire } from 'node:module';
 import {
@@ -13,13 +13,16 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertTemplateKind } from '../../../templates/scripts/assert-template-kind.mjs';
 
 const adminRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const templateRoot = join(adminRoot, '../../templates/default-admin');
+const templateRoot = join(adminRoot, '../../templates/admin/default');
 const adminComponents = join(adminRoot, 'src/components');
 const generatedRoot = join(adminRoot, 'generated');
 const require = createRequire(join(adminRoot, 'package.json'));
 const sass = require('sass');
+
+assertTemplateKind(templateRoot, 'admin');
 
 mkdirSync(generatedRoot, { recursive: true });
 writeFileSync(join(generatedRoot, '.gitkeep'), '');
@@ -40,7 +43,7 @@ for (const name of readdirSync(templateRoot)) {
 
   writeFileSync(
     join(generatedRoot, `${name}.ng.ts`),
-    `/** Generated from templates/default-admin/${name}/ - do not edit. */\n` +
+    `/** Generated from templates/admin/default/${name}/ - do not edit. */\n` +
       `export const template = ${JSON.stringify(html)};\n` +
       `export const styles = [${JSON.stringify(css)}];\n`,
   );

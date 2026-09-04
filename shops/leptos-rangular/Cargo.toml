@@ -24,4 +24,4 @@ web-sys = { version = "0.3.104", features = ["Window", "Storage"] }
 [build-dependencies]
 rangular-aot = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
 rangular-css = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
-rustashop-template-default = { path = "../../templates/default" }
+rustashop-template-shop-default = { path = "../../templates/shop/default" }

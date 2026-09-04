@@ -13,7 +13,7 @@
   <strong>Modern commerce. Rust powered. AI native.</strong>
 </p>
 
-One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI contracts. Shared storefront markup lives in `templates/default/`; each shop host adapts it. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`../docs-dev/UI-RENDERERS.md`](../docs-dev/UI-RENDERERS.md).
+One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI contracts. Shared storefront markup lives in `templates/shop/default/`; each shop host adapts it. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`../docs-dev/UI-RENDERERS.md`](../docs-dev/UI-RENDERERS.md).
 
 AI is on the product map (discovery, shopping agents, catalog assist, pricing, support, MCP), not glued on later. See [`../docs-dev/AI-NATIVE.md`](../docs-dev/AI-NATIVE.md).
 
@@ -26,7 +26,7 @@ AI is on the product map (discovery, shopping agents, catalog assist, pricing, s
 | **Commerce API** | Actix-web: products, carts, checkout → orders; money as integers                                                                                    |
 | **OpenAPI**      | utoipa + Swagger UI at `/swagger-ui/`; `make openapi` writes `openapi/openapi.json`                                                                 |
 | **Persistence**  | Postgres; SQLx default, SeaORM feature path; Docker compose                                                                                         |
-| **Templates**    | `templates/default/` (shops) and `templates/default-admin/` (operator BO)                                                                           |
+| **Templates**    | `templates/shop/default/` (shops) and `templates/admin/default/` (operator BO)                                                                           |
 | **UI A**         | `shops/angular` - Angular storefront (catalog, cart, checkout)                                                                                      |
 | **UI B**         | `shops/leptos-rangular` - Leptos + rangular (catalog, product, cart)                                                                                |
 | **Admin**        | `admin/angular` - Angular sample BO (orders table + status PATCH; bearer token)                                                                     |
@@ -63,7 +63,7 @@ make admin-angular           # http://127.0.0.1:4250/ (paste RUSTASHOP_ADMIN_API
 make shop-leptos-rangular    # http://127.0.0.1:4181/
 ```
 
-Designers edit `templates/default/` (shop) and `templates/default-admin/` (admin). Do not
+Designers edit `templates/shop/default/` (shop) and `templates/admin/default/` (admin). Do not
 hand-edit `shops/*/generated/` or `admin/*/generated/` (build output, gitignored).
 
 ### Quality gate

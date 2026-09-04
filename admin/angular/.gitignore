@@ -13,7 +13,7 @@ npm-debug.log
 .DS_Store
 Thumbs.db
 
-# Emit adapters (templates/default-admin → generated/*.ng.ts)
+# Emit adapters (templates/admin/default → generated/*.ng.ts)
 /generated/*
 !/generated/.gitkeep
 src/components/**/*.ng.ts

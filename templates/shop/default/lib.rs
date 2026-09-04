@@ -1,15 +1,18 @@
-//! Default template package: exposes the on-disk template root for shop hosts.
-//! Markup lives beside this crate (`product_card/`, …).
+//! Default **shop** template package: on-disk root for storefront hosts.
+//! Markup lives beside this crate (`product_card/`, …). Kind is always shop.
 
 use std::path::{Path, PathBuf};
 
-/// Absolute directory of this template (`templates/default`).
+/// Template surface: customer storefront (not admin).
+pub const KIND: &str = "shop";
+
+/// Absolute directory of this template (`templates/shop/default`).
 #[must_use]
 pub fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
-/// Template id (folder name under `templates/`).
+/// Template id (folder name under `templates/shop/`).
 #[must_use]
 pub fn id() -> &'static str {
     "default"
