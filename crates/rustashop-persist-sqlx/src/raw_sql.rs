@@ -63,30 +63,23 @@ pub async fn execute_fragment(pool: &PgPool, sql: &str) -> Result<(), Persistenc
 mod tests {
     use super::*;
 
-    #[test]
-    fn raw_sql_flag_round_trip() {
+    #[tokio::test]
+    async fn raw_sql_gate_and_execute_fragment() {
+        // Single async test: parallel `remove_var` / `set_var` across two tests
+        // raced under CI (`--test-threads` > 1) and flaked locally vs Actions.
         unsafe {
             std::env::remove_var(ALLOW_RAW_SQL_ENV);
         }
         assert!(!raw_sql_allowed());
         assert!(assert_raw_sql_allowed().is_err());
+
         unsafe {
             std::env::set_var(ALLOW_RAW_SQL_ENV, "1");
         }
         assert!(raw_sql_allowed());
         assert!(assert_raw_sql_allowed().is_ok());
-        unsafe {
-            std::env::remove_var(ALLOW_RAW_SQL_ENV);
-        }
-        assert!(!raw_sql_allowed());
-    }
 
-    #[tokio::test]
-    async fn execute_fragment_when_allowed() {
         let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-        unsafe {
-            std::env::set_var(ALLOW_RAW_SQL_ENV, "1");
-        }
         let pool = sqlx::postgres::PgPoolOptions::new()
             .max_connections(1)
             .connect(&url)
@@ -94,9 +87,11 @@ mod tests {
             .expect("connect");
         execute_fragment(&pool, "SELECT 1").await.expect("execute");
         assert!(execute_fragment(&pool, "SELECT 1\0").await.is_err());
+
         unsafe {
             std::env::remove_var(ALLOW_RAW_SQL_ENV);
         }
+        assert!(!raw_sql_allowed());
         assert!(execute_fragment(&pool, "SELECT 1").await.is_err());
     }
 }
