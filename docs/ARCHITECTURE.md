@@ -86,6 +86,7 @@ Wasm roles (UI wasm vs plugins vs sandbox): [`docs-dev/WASM-LAYERS.md`](../docs-
 | Full stack | `make stack-up` (Postgres + migrate + API on `8080`) |
 | Host API | `make db-up && make db-migrate && make run-api` |
 | Angular shop | `make shop-angular` (port `4242`) |
+| Angular admin | `make admin-angular` (port `4250`) |
 | Leptos shop | `make shop-leptos-rangular` (port `4181`) |
 
 Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).

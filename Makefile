@@ -10,6 +10,8 @@ DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
 SHOP_ANGULAR_DIR := shops/angular
 SHOP_ANGULAR_PORT ?= 4242
+ADMIN_ANGULAR_DIR := admin/angular
+ADMIN_ANGULAR_PORT ?= 4250
 SHOP_LEPTOS_DIR := shops/leptos-rangular
 SHOP_LEPTOS_PORT ?= 4181
 SHOP_LEPTOS_ADDR ?= 127.0.0.1
@@ -22,7 +24,7 @@ FORCE ?= 0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint lint-shop-angular format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
+.PHONY: help check test lint lint-shop-angular lint-admin-angular format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -32,12 +34,13 @@ help:
 	@echo ""
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
-	@echo "  make lint       fmt check + SQL safety + clippy + shop-angular lint (when node_modules present)"
+	@echo "  make lint       fmt check + SQL safety + clippy + Angular shop/admin lint (when node_modules present)"
 	@echo "  make check-sql-safety  cargo test: deny format!-built SQL in persist crates"
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
 	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls; RUSTASHOP_BASE_HREF=/)"
+	@echo "  make admin-angular serve Angular admin ($(ADMIN_ANGULAR_DIR), port $(ADMIN_ANGULAR_PORT); FORCE=1 reinstalls)"
 	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop ($(SHOP_LEPTOS_DIR), port $(SHOP_LEPTOS_PORT))"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
@@ -51,7 +54,7 @@ help:
 	@echo "  make db-reset   DROP SCHEMA public + migrate (requires CONFIRM=YES)"
 	@echo "  make clean      cargo clean"
 	@echo ""
-	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) SHOP_LEPTOS_PORT=$(SHOP_LEPTOS_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE) CONFIRM="
+	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) ADMIN_ANGULAR_PORT=$(ADMIN_ANGULAR_PORT) SHOP_LEPTOS_PORT=$(SHOP_LEPTOS_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE) CONFIRM="
 
 check:
 	cd $(ROOT) && $(CARGO) check --workspace
@@ -78,7 +81,15 @@ lint-shop-angular:
 		cd $(ROOT)/$(SHOP_ANGULAR_DIR) && npm run lint; \
 	fi
 
-lint: format-check check-sql-safety lint-shop-angular
+# Angular admin eslint. Same skip rule as shop.
+lint-admin-angular:
+	@if [ ! -d "$(ROOT)/$(ADMIN_ANGULAR_DIR)/node_modules" ]; then \
+		echo "skip lint-admin-angular: $(ADMIN_ANGULAR_DIR)/node_modules missing (npm install or make admin-angular)"; \
+	else \
+		cd $(ROOT)/$(ADMIN_ANGULAR_DIR) && npm run lint; \
+	fi
+
+lint: format-check check-sql-safety lint-shop-angular lint-admin-angular
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)
 	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
@@ -126,6 +137,36 @@ shop-angular:
 		if [ "$$BASE_HREF" != "/" ]; then SERVE_EXTRA="--serve-path $$BASE_HREF"; fi; \
 		printf '  \033[2mstarting ng serve…\033[0m\n\n'; \
 		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(SHOP_ANGULAR_PORT) $$SERVE_EXTRA
+
+admin-angular:
+	@if ss -tln | grep -qE ':$(ADMIN_ANGULAR_PORT)\\b'; then \
+		printf '\033[1;31m✗\033[0m  port \033[1m$(ADMIN_ANGULAR_PORT)\033[0m busy - stop the other process or set ADMIN_ANGULAR_PORT=\n'; \
+		exit 1; \
+	fi
+	@raw="$${RUSTASHOP_API_PROXY:-$(API_BIND)}"; \
+	case "$$raw" in \
+		http://*|https://*) API_PROXY="$${raw%/}" ;; \
+		*) API_PROXY="http://$${raw%/}" ;; \
+	esac; \
+	if curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
+		API_STATE=ready; API_COLOR='\033[32m'; \
+	else \
+		API_STATE=down; API_COLOR='\033[33m'; \
+	fi; \
+	printf '\n'; \
+	printf '  🦀 \033[97m\033[1mrusta\033[0m\033[38;2;235;65;1m\033[1mshop\033[0m admin\n'; \
+	printf '  \033[2m─────────────────────────────────────\033[0m\n'; \
+	printf '  \033[37mapp\033[0m    admin-angular\n'; \
+	printf '  \033[37madmin\033[0m  http://127.0.0.1:$(ADMIN_ANGULAR_PORT)/\n'; \
+	printf '  \033[37mapi\033[0m    %s  %b%s\033[0m\n' "$$API_PROXY" "$$API_COLOR" "$$API_STATE"; \
+	printf '\n'; \
+	if [ "$$API_STATE" = down ]; then \
+		printf '  \033[38;2;235;65;1m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
+	fi; \
+	cd $(ROOT)/$(ADMIN_ANGULAR_DIR) && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		printf '  \033[2mstarting ng serve…\033[0m\n\n'; \
+		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(ADMIN_ANGULAR_PORT)
 
 shop-leptos-rangular:
 	@if ss -tlnp 2>/dev/null | grep -q ':$(SHOP_LEPTOS_PORT) '; then \

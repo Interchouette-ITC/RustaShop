@@ -146,3 +146,32 @@ jobs:
       - name: Build
         if: needs.changes.outputs.code == 'true'
         run: npm run build
+
+  admin-angular:
+    name: admin-angular
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: admin/angular
+    steps:
+      - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping admin-angular"
+      - uses: actions/setup-node@v4
+        if: needs.changes.outputs.code == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: admin/angular/package-lock.json
+      - name: Install
+        if: needs.changes.outputs.code == 'true'
+        run: npm ci --no-fund --no-audit
+      - name: Lint
+        if: needs.changes.outputs.code == 'true'
+        run: npm run lint
+      - name: Build
+        if: needs.changes.outputs.code == 'true'
+        run: npm run build

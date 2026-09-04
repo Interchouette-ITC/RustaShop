@@ -17,7 +17,7 @@ One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenA
 
 AI is on the product map (discovery, shopping agents, catalog assist, pricing, support, MCP), not glued on later. See [`../docs-dev/AI-NATIVE.md`](../docs-dev/AI-NATIVE.md).
 
-**Status today:** catalog + cart + checkout HTTP, OpenAPI / Swagger UI, local Postgres (Docker), and two shop hosts on shared templates. Payments, admin, and realtime are next.
+**Status today:** catalog + cart + checkout HTTP, OpenAPI / Swagger UI, local Postgres (Docker), two shop hosts on shared templates, and an Angular admin sample (orders list + status PATCH). Payments and realtime are next.
 
 ## What you get today
 
@@ -26,12 +26,13 @@ AI is on the product map (discovery, shopping agents, catalog assist, pricing, s
 | **Commerce API** | Actix-web: products, carts, checkout → orders; money as integers                                                                                    |
 | **OpenAPI**      | utoipa + Swagger UI at `/swagger-ui/`; `make openapi` writes `openapi/openapi.json`                                                                 |
 | **Persistence**  | Postgres; SQLx default, SeaORM feature path; Docker compose                                                                                         |
-| **Templates**    | `templates/default/` - shared HTML/SCSS for both shops                                                                                              |
+| **Templates**    | `templates/default/` (shops) and `templates/default-admin/` (operator BO)                                                                           |
 | **UI A**         | `shops/angular` - Angular storefront (catalog, cart, checkout)                                                                                      |
 | **UI B**         | `shops/leptos-rangular` - Leptos + rangular (catalog, product, cart)                                                                                |
+| **Admin**        | `admin/angular` - Angular sample BO (orders table + status PATCH; bearer token)                                                                     |
 | **Framework**    | [Serenade](https://github.com/Interchouette-ITC/Serenade) contracts / kernel wire ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)) |
 
-Still building toward: one payment provider, orders + basic admin, WebSocket live surfaces, MCP / agent tools (Axum).
+Still building toward: one payment provider, WebSocket live surfaces, MCP / agent tools (Axum).
 
 ## Quick start
 
@@ -58,10 +59,12 @@ Swagger UI: `http://127.0.0.1:8080/swagger-ui/`. Do not bind port `8080` twice.
 
 ```bash
 make shop-angular            # http://127.0.0.1:4242/
+make admin-angular           # http://127.0.0.1:4250/ (paste RUSTASHOP_ADMIN_API_TOKEN)
 make shop-leptos-rangular    # http://127.0.0.1:4181/
 ```
 
-Designers edit `templates/default/`. Do not hand-edit `shops/*/generated/` (build output, gitignored).
+Designers edit `templates/default/` (shop) and `templates/default-admin/` (admin). Do not
+hand-edit `shops/*/generated/` or `admin/*/generated/` (build output, gitignored).
 
 ### Quality gate
 

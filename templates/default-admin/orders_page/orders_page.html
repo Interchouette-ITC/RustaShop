@@ -1,0 +1,58 @@
+<section aria-labelledby="orders-heading">
+  <h1 id="orders-heading" class="admin__title">Orders</h1>
+  <p class="admin__tagline">List from GET /v1/admin/orders. Change status with PATCH.</p>
+
+  @if (error()) {
+    <p class="admin__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (busy() && orders().length === 0) {
+    <p class="admin__tagline">Loading orders…</p>
+  } @else if (!hasToken()) {
+    <p class="admin__tagline">Set an admin bearer token in the bar (RUSTASHOP_ADMIN_API_TOKEN value).</p>
+  } @else if (orders().length === 0) {
+    <p class="admin__empty">No orders yet. Place one from the shop checkout, then refresh.</p>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="reload()">Refresh</button>
+  } @else {
+    <div class="admin__panel">
+      <table class="admin__table">
+        <thead>
+          <tr>
+            <th scope="col">Number</th>
+            <th scope="col">State</th>
+            <th scope="col">Total</th>
+            <th scope="col">Id</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.id) {
+            <tr>
+              <td>{{ order.number }}</td>
+              <td>{{ order.state }}</td>
+              <td>{{ formatMoney(order.total) }}</td>
+              <td><code>{{ order.id }}</code></td>
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  [ngModel]="order.state"
+                  (ngModelChange)="onStatusChange(order, $event)"
+                  [disabled]="busy()"
+                >
+                  @for (status of statuses; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="admin__tagline mt-3">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="reload()" [disabled]="busy()">
+        Refresh
+      </button>
+    </p>
+  }
+</section>

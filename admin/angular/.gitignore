@@ -1,0 +1,20 @@
+/dist
+/tmp
+/out-tsc
+/node_modules
+npm-debug.log
+.idea/
+.vscode/*
+!.vscode/settings.json
+.history/*
+/.angular/cache
+.sass-cache/
+/coverage
+.DS_Store
+Thumbs.db
+
+# Emit adapters (templates/default-admin → generated/*.ng.ts)
+/generated/*
+!/generated/.gitkeep
+src/components/**/*.ng.ts
+src/components/**/*.scss
