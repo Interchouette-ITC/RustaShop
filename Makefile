@@ -82,19 +82,24 @@ shop-angular:
 		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
 		exit 1; \
 	fi
-	@API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^#http://#;s#^http://http://#http://#')}; \
+	@raw="$${RUSTASHOP_API_PROXY:-$(API_BIND)}"; \
+	case "$$raw" in \
+		http://*|https://*) API_PROXY="$${raw%/}" ;; \
+		*) API_PROXY="http://$${raw%/}" ;; \
+	esac; \
 	echo "shop proxy → $$API_PROXY (override with RUSTASHOP_API_PROXY=... if $(API_BIND) is not RustaShop)"; \
 	if ! curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
 		echo "warning: $${API_PROXY}/healthz failed - start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
-	fi
+	fi; \
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run generate:api && \
 		BASE_HREF=$${RUSTASHOP_BASE_HREF:-/}; \
 		case "$$BASE_HREF" in /|*/) ;; *) BASE_HREF="$$BASE_HREF/";; esac; \
-		echo "shop base href → $$BASE_HREF"; \
-		RUSTASHOP_API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^http://##;s#^#http://#')} \
-			npm start -- --port $(SHOP_ANGULAR_PORT) --base-href "$$BASE_HREF"
+		echo "shop base href → $$BASE_HREF (angular.json / ng build; serve uses --serve-path when not /)"; \
+		SERVE_EXTRA=; \
+		if [ "$$BASE_HREF" != "/" ]; then SERVE_EXTRA="--serve-path $$BASE_HREF"; fi; \
+		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(SHOP_ANGULAR_PORT) $$SERVE_EXTRA
 
 shop-leptos-rangular:
 	@echo "apps/shop-leptos-rangular is not scaffolded yet (see GitHub #23)"
