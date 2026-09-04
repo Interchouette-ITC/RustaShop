@@ -100,7 +100,7 @@ shop-leptos-rangular:
 	@exit 1
 
 run-api:
-	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
+	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api --bin rustashop-api
 
 stack-up:
 	cd $(ROOT) && docker compose up --build -d
