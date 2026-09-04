@@ -31,8 +31,8 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make test` | workspace tests, then SeaORM feature tests |
 | `make doc` | rustdoc (`-D warnings`) |
 | `make openapi` | write `openapi/openapi.json` from utoipa |
-| `make shop-angular` | serve Angular shop (`apps/shop-angular`, port 4242) |
-| `make shop-leptos-rangular` | serve Leptos+rangular shop (when client lands) |
+| `make shop-angular` | serve Angular shop (`shops/angular`, port 4242) |
+| `make shop-leptos-rangular` | serve Leptos+rangular shop (`shops/leptos-rangular`, port 4181) |
 | `make run-api` | Actix API on host (`RUSTASHOP_BIND`, default `127.0.0.1:8080`) |
 | `make db-up` | Postgres only via compose |
 | `make stack-up` | Postgres + migrate + API image |

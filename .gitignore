@@ -1,11 +1,12 @@
 /target/
+shops/**/target/
 **/*.rs.bk
 *.pdb
 .env
 .env.*
 !.env.example
 assets/
-apps/**/node_modules/
-apps/**/dist/
-apps/**/.angular/
-apps/shop-angular/.vscode/
+shops/**/node_modules/
+shops/**/dist/
+shops/**/.angular/
+shops/angular/.vscode/

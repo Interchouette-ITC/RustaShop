@@ -8,6 +8,7 @@ members = [
     "crates/rustashop-api",
     "crates/rustashop-mcp",
 ]
+exclude = ["shops/leptos-rangular"]
 resolver = "2"
 
 [workspace.package]

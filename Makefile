@@ -8,9 +8,13 @@ RUSTDOCFLAGS ?= -D warnings
 API_BIND ?= 127.0.0.1:8080
 DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
-SHOP_ANGULAR_DIR := apps/shop-angular
+SHOP_ANGULAR_DIR := shops/angular
 SHOP_ANGULAR_PORT ?= 4242
-SHOP_LEPTOS_DIR := apps/shop-leptos-rangular
+SHOP_LEPTOS_DIR := shops/leptos-rangular
+SHOP_LEPTOS_PORT ?= 4181
+SHOP_LEPTOS_ADDR ?= 127.0.0.1
+TRUNK_BIN ?= $(HOME)/.cargo/bin/trunk
+TRUNK ?= env -u NO_COLOR $(TRUNK_BIN)
 # Compose file lives under docker/; project name keeps container names stable.
 COMPOSE := docker compose -f docker/compose.yml --project-directory $(ROOT)
 # Set FORCE=1 to re-run npm install even when node_modules exists.
@@ -34,7 +38,7 @@ help:
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
 	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls; RUSTASHOP_BASE_HREF=/)"
-	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop (when client lands)"
+	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop ($(SHOP_LEPTOS_DIR), port $(SHOP_LEPTOS_PORT))"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
 	@echo "  make db-up      start Postgres via docker compose"
@@ -47,7 +51,7 @@ help:
 	@echo "  make db-reset   DROP SCHEMA public + migrate (requires CONFIRM=YES)"
 	@echo "  make clean      cargo clean"
 	@echo ""
-	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE) CONFIRM="
+	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) SHOP_LEPTOS_PORT=$(SHOP_LEPTOS_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE) CONFIRM="
 
 check:
 	cd $(ROOT) && $(CARGO) check --workspace
@@ -124,8 +128,12 @@ shop-angular:
 		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(SHOP_ANGULAR_PORT) $$SERVE_EXTRA
 
 shop-leptos-rangular:
-	@echo "apps/shop-leptos-rangular is not scaffolded yet (see GitHub #23)"
-	@exit 1
+	@if ss -tlnp 2>/dev/null | grep -q ':$(SHOP_LEPTOS_PORT) '; then \
+		echo "Port $(SHOP_LEPTOS_PORT) already in use - reuse that server or set SHOP_LEPTOS_PORT"; \
+		exit 1; \
+	fi
+	@test -x $(TRUNK_BIN) || { echo "trunk not found at $(TRUNK_BIN) (install: cargo install trunk)"; exit 1; }
+	cd $(ROOT)/$(SHOP_LEPTOS_DIR) && $(TRUNK) serve --release --port $(SHOP_LEPTOS_PORT) --address $(SHOP_LEPTOS_ADDR)
 
 run-api:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api --bin rustashop-api

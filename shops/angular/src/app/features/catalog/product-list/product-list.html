@@ -14,7 +14,12 @@
     <div class="row g-3">
       @for (product of products(); track product.id) {
         <div class="col-12 col-md-6 col-lg-4">
-          <rs-product-card [product]="product" />
+          <rs-product-card
+            [name]="product.name"
+            [slug]="product.slug"
+            [description]="product.description"
+            [detailHref]="'/products/' + product.id"
+          />
         </div>
       }
     </div>

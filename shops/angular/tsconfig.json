@@ -19,7 +19,8 @@
     "paths": {
       "@rustashop/shop-api": ["src/app/api/index.ts"],
       "@rustashop/shop-core": ["src/app/core/index.ts"],
-      "@rustashop/shop-shared": ["src/app/shared/index.ts"]
+      "@rustashop/shop-shared": ["src/app/shared/index.ts"],
+      "@templates/*": ["../../templates/default/*"]
     }
   },
   "angularCompilerOptions": {

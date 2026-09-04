@@ -1,0 +1,21 @@
+[package]
+name = "shop-leptos-rangular"
+description = "rustashop Leptos CSR shop with rangular templates (track B)"
+version = "0.1.0"
+edition = "2021"
+license = "OSL-3.0"
+publish = false
+
+# Standalone package (not a member of the rustashop workspace).
+[workspace]
+
+[dependencies]
+console_error_panic_hook = "0.1"
+leptos = { version = "0.8", features = ["csr"] }
+rangular-aot = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
+rangular-expr = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
+rangular-host = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
+
+[build-dependencies]
+rangular-aot = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
+rangular-css = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }

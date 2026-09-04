@@ -26,6 +26,7 @@
             "inlineStyleLanguage": "scss",
             "baseHref": "/",
             "stylePreprocessorOptions": {
+              "includePaths": ["../../templates/default"],
               "sass": {
                 "silenceDeprecations": ["import", "color-functions", "global-builtin"]
               }
@@ -99,7 +100,11 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html",
+              "../../templates/default/**/*.html"
+            ]
           }
         }
       }

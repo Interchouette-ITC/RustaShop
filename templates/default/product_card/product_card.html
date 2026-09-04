@@ -1,0 +1,10 @@
+<article class="product-card">
+  <h2 class="product-card__title">
+    <a class="product-card__link" [attr.href]="detailHref">{{ name }}</a>
+  </h2>
+  <p class="product-card__slug">{{ slug }}</p>
+  @if (description) {
+  <p class="product-card__desc">{{ description }}</p>
+  }
+  <a class="product-card__cta" [attr.href]="detailHref">View</a>
+</article>
