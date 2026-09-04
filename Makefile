@@ -89,9 +89,11 @@ shop-angular:
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run generate:api && \
+		BASE_HREF=$${RUSTASHOP_BASE_HREF:-/}; \
+		case "$$BASE_HREF" in /|*/) ;; *) BASE_HREF="$$BASE_HREF/";; esac; \
+		echo "shop base href → $$BASE_HREF"; \
 		RUSTASHOP_API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^http://##;s#^#http://#')} \
-		RUSTASHOP_BASE_HREF=$${RUSTASHOP_BASE_HREF:-/} \
-			npm start -- --port $(SHOP_ANGULAR_PORT)
+			npm start -- --port $(SHOP_ANGULAR_PORT) --base-href "$$BASE_HREF"
 
 shop-leptos-rangular:
 	@echo "clients/leptos-rangular-shop is not scaffolded yet (see GitHub #23)"

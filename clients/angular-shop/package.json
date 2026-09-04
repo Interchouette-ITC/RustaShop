@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "scripts": {
     "ng": "ng",
-    "start": "node scripts/with-base-href.mjs serve",
-    "build": "node scripts/with-base-href.mjs build",
-    "watch": "node scripts/with-base-href.mjs build --watch --configuration development",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "generate:api": "node scripts/generate-api.mjs"
   },
