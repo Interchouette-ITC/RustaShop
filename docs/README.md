@@ -110,7 +110,7 @@ Thank you to their maintainers and communities.
 
 ## License
 
-Open Software License **v3.0** (OSL-3.0). See [`LICENSE`](../LICENSE).
+**OSL-3.0** (Open Software License v3.0). See [`LICENSE`](../LICENSE).
 
 <p align="center">
   <img src="brand/seal-crab-128.png" alt="rustashop seal: crab" width="128" />
