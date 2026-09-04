@@ -34,7 +34,7 @@ yarn-error.log
 /connect.lock
 /coverage
 /libpeerconnection.log
-testem.log
+/testem.log
 /typings
 __screenshots__/
 
@@ -42,7 +42,8 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Generated from templates/default (template:emit) — not beside controllers
-src/generated/*.ng.ts
+# Emit adapters (templates/default → generated/*.ng.ts)
+/generated/*
+!/generated/.gitkeep
 src/components/**/*.ng.ts
 src/components/**/*.scss

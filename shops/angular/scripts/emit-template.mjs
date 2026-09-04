@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Angular host: emit src/generated/*.ng.ts from templates/default (HTML + CSS).
+ * Angular host: emit generated/*.ng.ts from templates/default (HTML + CSS).
  */
 import { createRequire } from 'node:module';
 import {
@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 const shopRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = join(shopRoot, '../../templates/default');
 const shopComponents = join(shopRoot, 'src/components');
-const generatedRoot = join(shopRoot, 'src/generated');
+const generatedRoot = join(shopRoot, 'generated');
 const require = createRequire(join(shopRoot, 'package.json'));
 const sass = require('sass');
 
