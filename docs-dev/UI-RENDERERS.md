@@ -35,7 +35,7 @@ Tracks A and B are developed **alike** against the same OpenAPI and realtime con
 └───────────────────────┼──────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Commerce kernel (serenade app + Actix API + Axum MCP)       │
+│  Commerce kernel (Serenade app + Actix API + Axum MCP)       │
 └─────────────────────────────────────────────────────────────┘
 ```
 

@@ -1,6 +1,6 @@
 # Architecture
 
-rustashop is a Rust commerce product. The [serenade](https://github.com/Interchouette-ITC/Serenade) framework supplies kernel concepts (DI, events, config, contracts). This repo owns commerce domain, persistence adapters, and HTTP surfaces.
+rustashop is a Rust commerce product. The [Serenade](https://github.com/Interchouette-ITC/Serenade) framework supplies kernel concepts (DI, events, config, contracts). This repo owns commerce domain, persistence adapters, and HTTP surfaces.
 
 ## Layers
 
@@ -22,13 +22,13 @@ sqlx        seaorm
 PostgreSQL
 ```
 
-serenade kernel wire (`rustashop` crate) lands when framework HTTP + bundles are ready. Until then the app boots Actix directly with persist + domain.
+Serenade kernel wire (`rustashop` crate) lands when framework HTTP + bundles are ready. Until then the app boots Actix directly with persist + domain.
 
 ## Crates (today)
 
 | Crate | Role |
 | --- | --- |
-| `rustashop` | App kernel placeholder until serenade path/git wire |
+| `rustashop` | App kernel placeholder until Serenade path/git wire |
 | `rustashop-domain` | Money, Product, Variant, Category (no ORM types) |
 | `rustashop-persist` | Facade: `persist-sqlx` (default) or `persist-seaorm` |
 | `rustashop-persist-sqlx` | SQLx migrations, catalog repos, migrate binary |
@@ -55,14 +55,14 @@ GET /v1/products
   → PostgreSQL
 ```
 
-Intended commerce path when cart/checkout land: catalog → cart → checkout → order (same stack; messenger/events via serenade when wired).
+Intended commerce path when cart/checkout land: catalog → cart → checkout → order (same stack; messenger/events via Serenade when wired).
 
 ## Persistence
 
 - Postgres in Docker (`docker/compose.yml`); no host Postgres install.
 - Dual backends behind one facade; enable exactly one of `persist-sqlx` / `persist-seaorm`.
 - Diesel is deferred (separate issue).
-- Repository traits come from **serenade-contracts**; adapters live here.
+- Repository traits come from **`serenade-contracts`**; adapters live here.
 
 ## Room for later crates
 
@@ -87,6 +87,6 @@ Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Related
 
-- Framework: [serenade](https://github.com/Interchouette-ITC/Serenade)
+- Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade)
 - App kernel wire: issue [#49](https://github.com/Interchouette-ITC/rustashop/issues/49)
 - Contributor docs epic: [#10](https://github.com/Interchouette-ITC/rustashop/issues/10)

@@ -77,7 +77,7 @@ Host API against compose Postgres only: `make db-up && make db-migrate && make r
 - [`../docs-dev/README.md`](../docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
 - Brand sizes: [`brand/`](brand/)
 
-Framework: [serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
+Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
