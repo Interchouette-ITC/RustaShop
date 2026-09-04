@@ -87,7 +87,7 @@ openapi:
 
 shop-angular:
 	@if ss -tln | grep -qE ':$(SHOP_ANGULAR_PORT)\\b'; then \
-		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
+		printf '\033[1;31m✗\033[0m  port \033[1m$(SHOP_ANGULAR_PORT)\033[0m busy — stop the other process or set SHOP_ANGULAR_PORT=\n'; \
 		exit 1; \
 	fi
 	@raw="$${RUSTASHOP_API_PROXY:-$(API_BIND)}"; \
@@ -95,18 +95,29 @@ shop-angular:
 		http://*|https://*) API_PROXY="$${raw%/}" ;; \
 		*) API_PROXY="http://$${raw%/}" ;; \
 	esac; \
-	echo "shop proxy → $$API_PROXY (override with RUSTASHOP_API_PROXY=... if $(API_BIND) is not RustaShop)"; \
-	if ! curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
-		echo "warning: $${API_PROXY}/healthz failed - start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
+	BASE_HREF=$${RUSTASHOP_BASE_HREF:-/}; \
+	case "$$BASE_HREF" in /|*/) ;; *) BASE_HREF="$$BASE_HREF/";; esac; \
+	if curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
+		API_STATE=ready; API_COLOR='\033[32m'; \
+	else \
+		API_STATE=down; API_COLOR='\033[33m'; \
+	fi; \
+	printf '\n'; \
+	printf '  \033[38;2;180;83;9m\033[1mRustaShop\033[0m  \033[2mshop-angular\033[0m\n'; \
+	printf '  \033[2m─────────────────────────────────────\033[0m\n'; \
+	printf '  \033[36mshop\033[0m   http://127.0.0.1:$(SHOP_ANGULAR_PORT)/\n'; \
+	printf '  \033[36mapi\033[0m    %s  %b%s\033[0m\n' "$$API_PROXY" "$$API_COLOR" "$$API_STATE"; \
+	printf '  \033[36mbase\033[0m   %s\n' "$$BASE_HREF"; \
+	printf '\n'; \
+	if [ "$$API_STATE" = down ]; then \
+		printf '  \033[33m!\033[0m  API not reachable — \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
 	fi; \
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run generate:api && \
-		BASE_HREF=$${RUSTASHOP_BASE_HREF:-/}; \
-		case "$$BASE_HREF" in /|*/) ;; *) BASE_HREF="$$BASE_HREF/";; esac; \
-		echo "shop base href → $$BASE_HREF (angular.json / ng build; serve uses --serve-path when not /)"; \
 		SERVE_EXTRA=; \
 		if [ "$$BASE_HREF" != "/" ]; then SERVE_EXTRA="--serve-path $$BASE_HREF"; fi; \
+		printf '  \033[2mstarting ng serve…\033[0m\n\n'; \
 		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(SHOP_ANGULAR_PORT) $$SERVE_EXTRA
 
 shop-leptos-rangular:
