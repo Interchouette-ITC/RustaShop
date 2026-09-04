@@ -13,4 +13,4 @@ pub use cart::{Cart, CartLine, CartStatus};
 pub use catalog::{Category, Product, ProductVariant};
 pub use error::DomainError;
 pub use money::{Currency, Money};
-pub use order::{Order, OrderLine, PAYMENT_STATUS_PENDING};
+pub use order::{Order, OrderLine, OrderState, PAYMENT_STATUS_PENDING};

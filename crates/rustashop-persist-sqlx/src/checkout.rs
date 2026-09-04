@@ -29,29 +29,29 @@ struct CartLineRow {
 }
 
 #[derive(Debug, FromRow)]
-struct OrderRow {
-    id: String,
-    number: String,
-    customer_id: Option<String>,
-    cart_id: Option<String>,
-    state: String,
-    currency: String,
-    items_total_minor: i64,
-    total_minor: i64,
-    idempotency_key: Option<String>,
+pub(crate) struct OrderRow {
+    pub(crate) id: String,
+    pub(crate) number: String,
+    pub(crate) customer_id: Option<String>,
+    pub(crate) cart_id: Option<String>,
+    pub(crate) state: String,
+    pub(crate) currency: String,
+    pub(crate) items_total_minor: i64,
+    pub(crate) total_minor: i64,
+    pub(crate) idempotency_key: Option<String>,
 }
 
 #[derive(Debug, FromRow)]
-struct OrderLineRow {
-    id: String,
-    order_id: String,
-    variant_id: Option<String>,
-    quantity: i32,
-    unit_price_minor: i64,
-    line_total_minor: i64,
-    currency: String,
-    product_name: String,
-    variant_sku: String,
+pub(crate) struct OrderLineRow {
+    pub(crate) id: String,
+    pub(crate) order_id: String,
+    pub(crate) variant_id: Option<String>,
+    pub(crate) quantity: i32,
+    pub(crate) unit_price_minor: i64,
+    pub(crate) line_total_minor: i64,
+    pub(crate) currency: String,
+    pub(crate) product_name: String,
+    pub(crate) variant_sku: String,
 }
 
 fn internal(error: &sqlx::Error) -> PersistenceError {
@@ -104,7 +104,10 @@ fn cart_from_rows(row: CartRow, lines: Vec<CartLineRow>) -> Result<Cart, Persist
     })
 }
 
-fn order_from_rows(row: OrderRow, lines: Vec<OrderLineRow>) -> Result<Order, PersistenceError> {
+pub(crate) fn order_from_rows(
+    row: OrderRow,
+    lines: Vec<OrderLineRow>,
+) -> Result<Order, PersistenceError> {
     let code = row.currency.clone();
     let currency = Currency::new(&code).map_err(|error| PersistenceError::InvalidInput {
         message: error.to_string(),
@@ -376,7 +379,7 @@ async fn load_order_lines_tx(
     .map_err(|error| internal(&error))
 }
 
-async fn load_order_lines_pool(
+pub(crate) async fn load_order_lines_pool(
     pool: &PgPool,
     order_id: &str,
 ) -> Result<Vec<OrderLineRow>, PersistenceError> {

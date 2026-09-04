@@ -32,4 +32,7 @@ pub enum DomainError {
     /// Stored cart status is not `open` or `checked_out`.
     #[error("invalid cart status `{0}` (expected `open` or `checked_out`)")]
     InvalidCartStatus(String),
+    /// Stored or requested order state is not a known fulfillment value.
+    #[error("invalid order state `{0}` (expected `placed`, `paid`, `shipped`, or `cancelled`)")]
+    InvalidOrderState(String),
 }
