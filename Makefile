@@ -126,6 +126,7 @@ db-migrate-seaorm:
 
 db-seed:
 	@echo "Seeding catalog (idempotent; does not wipe the database)"
+	@echo "Expect INSERT 0 0 / UPDATE N on re-run when rows already exist."
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop < db/seeds/catalog.sql
 
 # Destroys ALL tables and data in the rustashop database, then re-migrates.
