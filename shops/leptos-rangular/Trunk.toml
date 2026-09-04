@@ -11,3 +11,8 @@ no_autoreload = false
 
 [tools]
 wasm_opt = "version_132"
+
+# Same shape as Angular `proxy.conf.js`: browser `/api/*` → Actix (strip `/api`).
+[[proxy]]
+rewrite = "/api/"
+backend = "http://127.0.0.1:8080/"

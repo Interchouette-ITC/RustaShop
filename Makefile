@@ -133,7 +133,7 @@ shop-leptos-rangular:
 		exit 1; \
 	fi
 	@test -x $(TRUNK_BIN) || { echo "trunk not found at $(TRUNK_BIN) (install: cargo install trunk)"; exit 1; }
-	cd $(ROOT)/$(SHOP_LEPTOS_DIR) && $(TRUNK) serve --release --port $(SHOP_LEPTOS_PORT) --address $(SHOP_LEPTOS_ADDR)
+	cd $(ROOT)/$(SHOP_LEPTOS_DIR) && env -u NO_COLOR $(TRUNK) serve --release --port $(SHOP_LEPTOS_PORT) --address $(SHOP_LEPTOS_ADDR)
 
 run-api:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api --bin rustashop-api
