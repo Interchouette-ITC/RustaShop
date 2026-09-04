@@ -28,6 +28,7 @@ npm start
 - App API base URL: `src/environments/` (`apiBaseUrl`, default `/api` via proxy).
 - HTML / router base: default `/` (`angular.json`). Override: `RUSTASHOP_BASE_HREF=/shop/ make shop-angular`, or `ng serve --base-href /shop/` / `ng build --base-href /shop/`.
 - Unit tests: Vitest via `@angular/build:unit-test` (`npm test`).
+- Lint / format: `npm run lint`, `npm run format` / `npm run format:check`.
 
 ## OpenAPI client
 

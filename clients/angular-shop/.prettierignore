@@ -1,0 +1,7 @@
+dist
+out-tsc
+coverage
+node_modules
+package-lock.json
+.angular
+src/app/api/schema.d.ts
