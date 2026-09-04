@@ -179,6 +179,26 @@ mod tests {
     use super::*;
     use crate::CartStatus;
 
+    fn sample_cart(status: CartStatus) -> Cart {
+        let eur = Currency::new("EUR").unwrap();
+        Cart {
+            id: "c1".into(),
+            customer_id: Some("cust".into()),
+            token: "tok".into(),
+            currency: eur.clone(),
+            status,
+            lines: vec![CartLine {
+                id: "l1".into(),
+                cart_id: "c1".into(),
+                variant_id: "v1".into(),
+                quantity: 2,
+                unit_price: Money::new(100, eur),
+                product_name: "Mug".into(),
+                variant_sku: "MUG".into(),
+            }],
+        }
+    }
+
     #[test]
     fn empty_cart_cannot_check_out() {
         let eur = Currency::new("EUR").unwrap();
@@ -193,6 +213,53 @@ mod tests {
         assert!(matches!(
             Order::from_cart(&cart, "o1".into(), "RS-1".into(), None),
             Err(DomainError::EmptyCart)
+        ));
+    }
+
+    #[test]
+    fn checked_out_cart_cannot_check_out_again() {
+        let cart = sample_cart(CartStatus::CheckedOut);
+        assert!(matches!(
+            Order::from_cart(&cart, "o1".into(), "RS-1".into(), None),
+            Err(DomainError::CartAlreadyCheckedOut)
+        ));
+    }
+
+    #[test]
+    fn from_cart_places_pending_order() {
+        let cart = sample_cart(CartStatus::Open);
+        let order = Order::from_cart(&cart, "o1".into(), "RS-1".into(), Some("idem".into()))
+            .expect("place");
+        assert_eq!(order.id, "o1");
+        assert_eq!(order.number, "RS-1");
+        assert_eq!(order.cart_id.as_deref(), Some("c1"));
+        assert_eq!(order.customer_id.as_deref(), Some("cust"));
+        assert_eq!(order.state, "placed");
+        assert_eq!(order.payment_status, PAYMENT_STATUS_PENDING);
+        assert_eq!(order.total.amount_minor, 200);
+        assert_eq!(order.items_total.amount_minor, 200);
+        assert_eq!(order.idempotency_key.as_deref(), Some("idem"));
+        assert_eq!(order.lines.len(), 1);
+        assert_eq!(order.lines[0].variant_sku, "MUG");
+        assert_eq!(order.lines[0].quantity, 2);
+        assert_eq!(order.lines[0].line_total.amount_minor, 200);
+    }
+
+    #[rstest::rstest]
+    #[case::placed(OrderState::Placed, "placed")]
+    #[case::paid(OrderState::Paid, "paid")]
+    #[case::shipped(OrderState::Shipped, "shipped")]
+    #[case::cancelled(OrderState::Cancelled, "cancelled")]
+    fn order_state_round_trips(#[case] state: OrderState, #[case] wire: &str) {
+        assert_eq!(state.as_str(), wire);
+        assert_eq!(OrderState::parse(wire).unwrap(), state);
+    }
+
+    #[test]
+    fn order_state_parse_rejects_unknown() {
+        assert!(matches!(
+            OrderState::parse("bogus"),
+            Err(DomainError::InvalidOrderState(_))
         ));
     }
 }
