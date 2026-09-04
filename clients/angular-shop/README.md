@@ -1,4 +1,4 @@
-# Angular shop (UI track A)
+# Angular shop (UI track A) — `@rustashop/shop-angular` 0.1.0
 
 Customer **shop** SPA for RustaShop. Same Commerce API as the Leptos+rangular shop.
 
@@ -24,11 +24,10 @@ npm run generate:api
 npm start
 ```
 
-Dev server: `http://127.0.0.1:4242/` (proxy `/api` → Actix via `proxy.conf.js`, default `:8080`).
+- Dev server host/port: `angular.json` (`127.0.0.1:4242`), not `package.json`.
+- App API base URL: `src/environments/` (`apiBaseUrl`, default `/api` via proxy).
 
 ## OpenAPI client
-
-Types are generated from the committed `openapi/openapi.json`:
 
 ```bash
 npm run generate:api

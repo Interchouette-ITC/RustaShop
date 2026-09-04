@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "angular-shop": {
+    "shop-angular": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -15,7 +15,7 @@
       },
       "root": "",
       "sourceRoot": "src",
-      "prefix": "app",
+      "prefix": "rs",
       "architect": {
         "build": {
           "builder": "@angular/build:application",
@@ -50,7 +50,13 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -64,14 +70,15 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "proxyConfig": "proxy.conf.js",
+            "host": "127.0.0.1",
             "port": 4242
           },
           "configurations": {
             "production": {
-              "buildTarget": "angular-shop:build:production"
+              "buildTarget": "shop-angular:build:production"
             },
             "development": {
-              "buildTarget": "angular-shop:build:development"
+              "buildTarget": "shop-angular:build:development"
             }
           },
           "defaultConfiguration": "development"

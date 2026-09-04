@@ -1,9 +1,9 @@
 {
-  "name": "angular-shop",
-  "version": "0.0.0",
+  "name": "@rustashop/shop-angular",
+  "version": "0.1.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 127.0.0.1 --port 4242",
+    "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
