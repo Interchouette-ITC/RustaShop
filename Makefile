@@ -8,10 +8,12 @@ RUSTDOCFLAGS ?= -D warnings
 API_BIND ?= 127.0.0.1:8080
 DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
+SHOP_ANGULAR_DIR := clients/angular-shop
+SHOP_ANGULAR_PORT ?= 4200
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up
+.PHONY: help check test lint format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -26,6 +28,8 @@ help:
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
+	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT))"
+	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop (when client lands)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
 	@echo "  make db-up      start Postgres via docker compose"
@@ -69,6 +73,17 @@ doc-open: doc
 
 openapi:
 	cd $(ROOT) && $(CARGO) run -p rustashop-api --bin rustashop-openapi -- $(OPENAPI_OUT)
+
+shop-angular:
+	@if ss -tln | grep -qE ':$(SHOP_ANGULAR_PORT)\\b'; then \
+		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
+		exit 1; \
+	fi
+	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && npm install && npm run generate:api && npm start -- --port $(SHOP_ANGULAR_PORT)
+
+shop-leptos-rangular:
+	@echo "clients/leptos-rangular-shop is not scaffolded yet (see GitHub #23)"
+	@exit 1
 
 run-api:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
