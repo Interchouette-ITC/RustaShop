@@ -9,6 +9,8 @@ use utoipa::ToSchema;
 pub struct HealthResponse {
     /// Liveness status.
     pub status: String,
+    /// Serenade kernel integration marker from the `rustashop` crate.
+    pub kernel: String,
 }
 
 /// `GET /healthz` handler.
@@ -21,5 +23,6 @@ pub struct HealthResponse {
 pub async fn healthz() -> impl Responder {
     HttpResponse::Ok().json(HealthResponse {
         status: "ok".to_owned(),
+        kernel: rustashop::kernel_status().to_owned(),
     })
 }

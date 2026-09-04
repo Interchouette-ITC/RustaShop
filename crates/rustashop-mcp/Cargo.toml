@@ -10,10 +10,6 @@ rust-version.workspace = true
 
 [dependencies]
 rustashop = { workspace = true }
-rustashop-domain = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-tokio = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,17 +1,17 @@
 # Architecture
 
-rustashop is a Rust commerce product. The [Serenade](https://github.com/Interchouette-ITC/Serenade) framework supplies kernel concepts (DI, events, config, contracts). This repo owns commerce domain, persistence adapters, and HTTP surfaces.
+rustashop is a Rust commerce product. The [Serenade](https://github.com/Interchouette-ITC/Serenade) framework supplies kernel concepts (DI, events, config, contracts). This repo owns commerce domain, persistence adapters, HTTP surfaces, shared templates, and shop hosts.
 
 ## Layers
 
 ```text
-Clients (Angular | rangular)
-        │  OpenAPI + (later) WebSocket
+Clients (Angular | Leptos+rangular)
+        │  OpenAPI (+ WebSocket later)
         ▼
-rustashop-api (Actix)     rustashop-mcp (Axum, placeholder)
+rustashop-api (Actix)     rustashop-mcp (Axum name marker)
         │
         ▼
-rustashop-domain          pure types (Money, Product, …)
+rustashop-domain          pure types (Money, Product, Cart, Order, …)
         │
         ▼
 rustashop-persist         feature-selected facade
@@ -22,40 +22,45 @@ sqlx        seaorm
 PostgreSQL
 ```
 
+Shop markup/SCSS: `templates/default/`. Hosts: `shops/angular`, `shops/leptos-rangular`.
+
 Serenade kernel wire (`rustashop` crate) lands when framework HTTP + bundles are ready. Until then the app boots Actix directly with persist + domain.
 
 ## Crates (today)
 
 | Crate | Role |
 | --- | --- |
-| `rustashop` | App kernel placeholder until Serenade path/git wire |
-| `rustashop-domain` | Money, Product, Variant, Category (no ORM types) |
+| `rustashop` | App kernel name marker for Serenade path/git wire |
+| `rustashop-domain` | Money, Product, Variant, Category, Cart, Order (no ORM types) |
 | `rustashop-persist` | Facade: `persist-sqlx` (default) or `persist-seaorm` |
-| `rustashop-persist-sqlx` | SQLx migrations, catalog repos, migrate binary |
-| `rustashop-persist-seaorm` | SeaORM mirror schema and catalog repos |
+| `rustashop-persist-sqlx` | SQLx migrations, catalog/cart/order repos, migrate binary |
+| `rustashop-persist-seaorm` | SeaORM mirror schema and repos |
 | `rustashop-api` | Actix commerce HTTP, OpenAPI, Swagger UI |
-| `rustashop-mcp` | Axum MCP / agent tools (placeholder) |
+| `rustashop-mcp` | Axum MCP / agent tools (name marker; not wired yet) |
+| `rustashop-template-default` | Shared storefront HTML/SCSS package |
 
 ## HTTP house split
 
 | Surface | Framework | Owns |
 | --- | --- | --- |
-| Commerce API | **Actix-web** | Catalog, cart, checkout, orders, webhooks, admin REST, WebSocket gateway (later) |
+| Commerce API | **Actix-web** | Catalog, cart, checkout, orders; admin REST and WebSocket later |
 | MCP / tools | **Axum** | Streamable MCP and narrow agent endpoints |
 
 Both share domain and persist. OpenAPI is generated with **utoipa** on the Actix crate (`/openapi.json`, `/swagger-ui/`). Regenerated file: `openapi/openapi.json` via `make openapi`.
 
-## Request path (catalog today)
+## Request path (commerce)
 
 ```text
-GET /v1/products
-  → rustashop-api handler
-  → ProductRepository (serenade-contracts)
-  → SqlxCatalogRepository | SeaOrmCatalogRepository
+GET  /v1/products
+POST /v1/carts → lines
+POST /v1/checkout
+  → rustashop-api handlers
+  → serenade-contracts repository traits
+  → Sqlx* | SeaOrm* adapters
   → PostgreSQL
 ```
 
-Intended commerce path when cart/checkout land: catalog → cart → checkout → order (same stack; messenger/events via Serenade when wired).
+Catalog → cart → checkout → order on the same stack. Messenger/events via Serenade when the kernel is wired.
 
 ## Persistence
 
@@ -64,9 +69,7 @@ Intended commerce path when cart/checkout land: catalog → cart → checkout �
 - Diesel is deferred (separate issue).
 - Repository traits come from **`serenade-contracts`**; adapters live here.
 
-## Room for later crates
-
-Leave headroom for:
+## Related surfaces
 
 | Lane | Intent |
 | --- | --- |
@@ -74,7 +77,7 @@ Leave headroom for:
 | Extensions | WIT / Component Model host hooks |
 | Sandbox | Wasmer (or similar) for untrusted / polyglot scripts |
 
-Wasm roles (UI wasm vs plugins vs sandbox) are spelled out in [`docs-dev/WASM-LAYERS.md`](../docs-dev/WASM-LAYERS.md). Foundations overview: [`docs-dev/FOUNDATIONS.md`](../docs-dev/FOUNDATIONS.md).
+Wasm roles (UI wasm vs plugins vs sandbox): [`docs-dev/WASM-LAYERS.md`](../docs-dev/WASM-LAYERS.md). Foundations: [`docs-dev/FOUNDATIONS.md`](../docs-dev/FOUNDATIONS.md).
 
 ## Local run
 
@@ -82,6 +85,8 @@ Wasm roles (UI wasm vs plugins vs sandbox) are spelled out in [`docs-dev/WASM-LA
 | --- | --- |
 | Full stack | `make stack-up` (Postgres + migrate + API on `8080`) |
 | Host API | `make db-up && make db-migrate && make run-api` |
+| Angular shop | `make shop-angular` (port `4242`) |
+| Leptos shop | `make shop-leptos-rangular` (port `4181`) |
 
 Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

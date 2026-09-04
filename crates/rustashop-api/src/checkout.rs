@@ -50,7 +50,7 @@ pub struct OrderResponse {
     pub cart_id: Option<String>,
     /// Fulfillment state.
     pub state: String,
-    /// Payment stub (`pending` until a PSP is wired).
+    /// Payment status (`pending` at checkout; no provider attached yet).
     pub payment_status: String,
     /// Order currency.
     pub currency: String,

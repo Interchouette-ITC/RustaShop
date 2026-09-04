@@ -43,11 +43,12 @@ fn cart_body(error: Option<String>, busy: bool, cart: Option<Cart>) -> AnyView {
         return view! { <p class="shop__tagline">"Your cart is empty."</p> }.into_any();
     }
     let total = cart.items_total.display();
+    let currency = cart.currency_code().to_owned();
     view! {
         <ul class="shop__cart-lines">
             <For
                 each=move || cart.lines.clone()
-                key=|line| line.id.clone()
+                key=|line| format!("{}:{}", line.id, line.variant_ref())
                 children=move |line| {
                     view! {
                         <li class="shop__cart-line">
@@ -61,7 +62,7 @@ fn cart_body(error: Option<String>, busy: bool, cart: Option<Cart>) -> AnyView {
                 }
             />
         </ul>
-        <p class="shop__title">{format!("Total: {total}")}</p>
+        <p class="shop__title">{format!("Total: {total} ({currency})")}</p>
     }
     .into_any()
 }

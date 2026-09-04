@@ -18,18 +18,20 @@ Designers edit **`templates/default`**. This host only owns controllers and the
 No CDN tags in `index.html`. Controllers use `@generated/<id>.ng` (from
 `npm run template:emit` → `scripts/emit-template.mjs`).
 
-## Layout (Nx-ready folders + path aliases)
+## Layout
 
 ```text
-src/app/
-  api/           # OpenAPI types + domain HTTP clients → @rustashop/shop-api
-                 #   models.ts, api-client.ts, catalog|cart|checkout|health.api.ts
-  core/          # CatalogStore, CartStore, CheckoutService (signals)
-  shared/        # shell, pipes, ui (ProductCard) → @rustashop/shop-shared
-  features/      # catalog, cart, checkout pages (lazy routes)
+src/
+  app/
+    api/           # OpenAPI types + domain HTTP clients
+    core/          # CatalogStore, CartStore, CheckoutService (signals)
+    shared/        # shared pipes / helpers
+  components/      # page controllers (shop_shell, product_*, cart_page, checkout_page)
+  environments/    # apiBaseUrl and build flags
+generated/         # template emit + OpenAPI client (gitignored; do not hand-edit)
 ```
 
-No Nx yet: path aliases (`tsconfig.json`) mirror future libs. Pages stay thin and bind store signals.
+Controllers import `@generated/<id>.ng` from `npm run template:emit`. Pages stay thin and bind store signals.
 
 ## Prerequisites
 

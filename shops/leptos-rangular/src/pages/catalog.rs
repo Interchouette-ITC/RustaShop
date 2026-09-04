@@ -15,7 +15,14 @@ pub fn CatalogPage() -> impl IntoView {
             loading.set(true);
             error.set(None);
             match api::list_products().await {
-                Ok(body) => products.set(body.items),
+                Ok(body) => {
+                    products.set(
+                        body.items
+                            .into_iter()
+                            .filter(Product::is_listed)
+                            .collect(),
+                    );
+                }
                 Err(err) => {
                     products.set(Vec::new());
                     error.set(Some(err));
