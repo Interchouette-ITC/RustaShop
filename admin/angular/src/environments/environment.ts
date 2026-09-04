@@ -5,7 +5,11 @@ export const environment = {
   apiBaseUrl: '/api',
   /**
    * Operator API URI segment (`/v1/{this}/…`).
-   * Must match `RUSTASHOP_ADMIN_API_PREFIX` on the API (local default `admin`).
+   * Must match `RUSTASHOP_ADMIN_API_PREFIX` from install (`.env`).
    */
   adminApiPrefix: 'admin',
+  /**
+   * Public BO path when reverse-proxied (same opaque segment). Local `ng serve` keeps `/`.
+   */
+  adminPublicPath: '/',
 };

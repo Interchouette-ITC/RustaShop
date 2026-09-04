@@ -8,6 +8,9 @@ mod carts;
 mod checkout;
 mod error;
 mod health;
+mod install_env;
+mod install_fs;
+mod install_routes;
 mod openapi;
 mod products;
 mod request_param;
@@ -29,6 +32,10 @@ pub use carts::{
 };
 pub use checkout::{place_order, OrderLineResponse, OrderResponse};
 pub use health::{healthz, HealthResponse};
+pub use install_env::{run_install_write, InstallWriteOptions, InstallWriteResult};
+pub use install_fs::{
+    install_artefacts_present, shop_root, INSTALL_DIR_NAME, INSTALL_OFF_DIR_NAME, ROOT_ENV,
+};
 pub use openapi::{openapi_json, swagger_ui, ApiDoc};
 pub use products::{
     get_product, list_products, ProductDetailResponse, ProductListResponse, ProductResponse,
@@ -74,6 +81,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPre
         .service(delete_cart_line)
         .service(place_order);
     configure_admin_routes(cfg, admin_prefix);
+    install_routes::configure_install_from_env(cfg);
 }
 
 /// Redacts the password in a Postgres URL for safe logging.
@@ -127,6 +135,18 @@ pub async fn run() -> std::io::Result<()> {
     info!("health: http://{bind}/healthz");
     info!("openapi: http://{bind}/openapi.json");
     info!("swagger: http://{bind}/swagger-ui/");
+    let root = shop_root();
+    if install_artefacts_present(&root) {
+        info!(
+            "install: serving /install from {}/{INSTALL_DIR_NAME}/dist (rename to {INSTALL_OFF_DIR_NAME} after success)",
+            root.display()
+        );
+    } else {
+        info!(
+            "install: not mounted ({}/{INSTALL_DIR_NAME}/dist missing; expected if renamed to {INSTALL_OFF_DIR_NAME})",
+            root.display()
+        );
+    }
 
     info!("connecting catalog repository...");
     let catalog = rustashop_persist::catalog_from_env()
@@ -246,6 +266,45 @@ mod tests {
         let custom_resp = test::call_service(&app, custom).await;
         // No catalog app_data => handler may 500; route must match (not 404).
         assert_ne!(custom_resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn install_absent_without_dist() {
+        let dir = std::env::temp_dir().join(format!("rs-no-install-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("mkdir");
+        let app = test::init_service(App::new().configure(|cfg| {
+            install_routes::configure_install(cfg, &dir);
+            cfg.service(healthz);
+        }))
+        .await;
+        let req = test::TestRequest::get()
+            .uri("/install/api/status")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 404);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[actix_web::test]
+    async fn install_status_when_dist_present() {
+        let dir = std::env::temp_dir().join(format!("rs-yes-install-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let index = dir.join("install/dist/index.html");
+        std::fs::create_dir_all(index.parent().unwrap()).expect("mkdir");
+        std::fs::write(&index, "<!doctype html><title>i</title>").expect("write");
+        let app = test::init_service(
+            App::new().configure(|cfg| install_routes::configure_install(cfg, &dir)),
+        )
+        .await;
+        let req = test::TestRequest::get()
+            .uri("/install/api/status")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(resp).await;
+        assert_eq!(body["available"], true);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
 

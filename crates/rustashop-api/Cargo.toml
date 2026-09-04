@@ -17,6 +17,10 @@ path = "src/main.rs"
 name = "rustashop-openapi"
 path = "src/bin/openapi.rs"
 
+[[bin]]
+name = "rustashop-install"
+path = "src/bin/install.rs"
+
 [features]
 default = ["persist-sqlx"]
 persist-sqlx = [
@@ -32,6 +36,8 @@ persist-seaorm = [
 
 [dependencies]
 actix-web = { workspace = true }
+actix-files = { workspace = true }
+getrandom = "0.3"
 rustashop = { workspace = true }
 rustashop-domain = { workspace = true }
 rustashop-persist = { workspace = true }
