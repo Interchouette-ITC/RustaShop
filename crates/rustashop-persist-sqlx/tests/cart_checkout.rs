@@ -9,6 +9,7 @@ use sqlx::postgres::PgPoolOptions;
 const HOODIE_VARIANT: &str = "33333333-3333-3333-3333-333333333331";
 const MUG_VARIANT: &str = "33333333-3333-3333-3333-333333333332";
 const SCHEMA_LOCK: i64 = 874_520;
+const CUSTOMER_ID: &str = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 
 async fn exclusive_repo() -> Option<(PgPool, SqlxCatalogRepository)> {
     let Ok(url) = std::env::var("DATABASE_URL") else {
@@ -330,4 +331,134 @@ async fn cart_save_preserves_line_id_and_rejects_bad_ids() {
     assert!(CartRepository::delete(&repo, &bad).await.is_err());
     assert!(repo.find_variant_for_cart("not-a-uuid").await.is_err());
     unlock(&pool).await;
+}
+
+#[tokio::test]
+async fn checkout_copies_and_clears_customer_id() {
+    let Some((pool, repo)) = exclusive_repo().await else {
+        return;
+    };
+    insert_customer(&pool).await;
+    let mut cart = cart_with_hoodie(&repo).await;
+    cart.customer_id = Some(CUSTOMER_ID.to_owned());
+    repo.save_cart(&cart).await.expect("save customer");
+    let loaded = repo
+        .find_cart_by_id(&cart.id)
+        .await
+        .expect("reload")
+        .expect("cart");
+    assert_eq!(loaded.customer_id.as_deref(), Some(CUSTOMER_ID));
+
+    let order = repo
+        .checkout_cart(&cart.id, Some("sqlx-customer-key"))
+        .await
+        .expect("checkout");
+    assert_eq!(order.customer_id.as_deref(), Some(CUSTOMER_ID));
+    assert_eq!(
+        repo.get_order(&order.id)
+            .await
+            .expect("get")
+            .customer_id
+            .as_deref(),
+        Some(CUSTOMER_ID)
+    );
+
+    let mut open = cart_with_hoodie(&repo).await;
+    open.customer_id = Some(CUSTOMER_ID.to_owned());
+    repo.save_cart(&open).await.expect("set");
+    open.customer_id = None;
+    repo.save_cart(&open).await.expect("clear");
+    let after = repo
+        .find_cart_by_id(&open.id)
+        .await
+        .expect("reload clear")
+        .expect("cart");
+    assert!(after.customer_id.is_none());
+    unlock(&pool).await;
+}
+
+#[tokio::test]
+async fn checkout_concurrent_same_cart_same_key() {
+    let Some((pool, repo)) = race_repo().await else {
+        return;
+    };
+    let cart = cart_with_hoodie(&repo).await;
+    let key = "sqlx-race-same-cart";
+    let (a, b) = tokio::join!(
+        repo.checkout_cart(&cart.id, Some(key)),
+        repo.checkout_cart(&cart.id, Some(key)),
+    );
+    let a = a.expect("checkout a");
+    let b = b.expect("checkout b");
+    assert_eq!(a.id, b.id);
+    let count: i64 =
+        sqlx::query_scalar(r#"SELECT COUNT(*)::bigint FROM "order" WHERE idempotency_key = $1"#)
+            .bind(key)
+            .fetch_one(&pool)
+            .await
+            .expect("count");
+    assert_eq!(count, 1);
+    unlock(&pool).await;
+}
+
+#[tokio::test]
+async fn checkout_concurrent_two_carts_same_key() {
+    let Some((pool, repo)) = race_repo().await else {
+        return;
+    };
+    let cart_a = cart_with_hoodie(&repo).await;
+    let cart_b = cart_with_hoodie(&repo).await;
+    let key = "sqlx-race-two-carts";
+    let (a, b) = tokio::join!(
+        repo.checkout_cart(&cart_a.id, Some(key)),
+        repo.checkout_cart(&cart_b.id, Some(key)),
+    );
+    let a = a.expect("checkout a");
+    let b = b.expect("checkout b");
+    assert_eq!(a.id, b.id);
+    let count: i64 =
+        sqlx::query_scalar(r#"SELECT COUNT(*)::bigint FROM "order" WHERE idempotency_key = $1"#)
+            .bind(key)
+            .fetch_one(&pool)
+            .await
+            .expect("count");
+    assert_eq!(count, 1);
+    unlock(&pool).await;
+}
+
+async fn insert_customer(pool: &PgPool) {
+    sqlx::query("INSERT INTO customer (id, email) VALUES ($1::uuid, $2)")
+        .bind(CUSTOMER_ID)
+        .bind("buyer@example.com")
+        .execute(pool)
+        .await
+        .expect("insert customer");
+}
+
+async fn race_repo() -> Option<(PgPool, SqlxCatalogRepository)> {
+    let Ok(url) = std::env::var("DATABASE_URL") else {
+        eprintln!("skip: DATABASE_URL is not set");
+        return None;
+    };
+    let pool = PgPoolOptions::new()
+        .max_connections(4)
+        .connect(&url)
+        .await
+        .expect("connect");
+    sqlx::query("SELECT pg_advisory_lock($1)")
+        .bind(SCHEMA_LOCK)
+        .execute(&pool)
+        .await
+        .expect("lock");
+    sqlx::query("DROP SCHEMA public CASCADE")
+        .execute(&pool)
+        .await
+        .expect("drop");
+    sqlx::query("CREATE SCHEMA public")
+        .execute(&pool)
+        .await
+        .expect("create");
+    migrate(&pool).await.expect("migrate");
+    seed_catalog(&pool).await.expect("seed");
+    Some((pool.clone(), SqlxCatalogRepository::new(pool)))
 }
