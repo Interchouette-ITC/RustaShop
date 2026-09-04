@@ -48,7 +48,9 @@ Processing rule: **copy + LANCZOS resize only**. No flood-fill, no alpha rewriti
 - README header: `logo-banner-readme.png` + `icon-app-crab-256.png`
 - Desktop header: `logo-banner-desktop.png`
 - Mobile header: `logo-banner-mobile.png` or `icon-app-crab-128.png`
-- Favicon: `favicon-32.png`
+- Shop (FO) favicon / mark: `seal-crab` (light seal on white chrome)
+- Admin (BO) favicon / mark: `icon-circle-crab` (dark circle on black chrome)
+- Favicon sizes: `favicon-32.png` (derived from the surface mark)
 
 Tagline: **Modern commerce. Rust powered.**
 
