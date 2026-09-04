@@ -24,7 +24,7 @@ FORCE ?= 0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-cli
+.PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-dev install-cli
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -42,7 +42,8 @@ help:
 	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls; RUSTASHOP_BASE_HREF=/)"
 	@echo "  make admin-angular serve Angular admin ($(ADMIN_ANGULAR_DIR), port $(ADMIN_ANGULAR_PORT); FORCE=1 reinstalls)"
 	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop ($(SHOP_LEPTOS_DIR), port $(SHOP_LEPTOS_PORT))"
-	@echo "  make install-ui build Vite+Vue install funnel into install/dist (served at /install when present)"
+	@echo "  make install-ui  build Vite+Vue install funnel into install/dist (API serves /install when present)"
+	@echo "  make install-dev Vite dev server for install UI (proxies /install/api via RUSTASHOP_API_PROXY / RUSTASHOP_BIND)"
 	@echo "  make install-cli run rustashop-install (writes .env; then mv install install.off)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
@@ -106,6 +107,16 @@ install-ui:
 	cd $(ROOT)/install && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run build
+
+install-dev:
+	@raw="$${RUSTASHOP_API_PROXY:-$${RUSTASHOP_BIND:-$(API_BIND)}}"; \
+	case "$$raw" in \
+		http://*|https://*) API_PROXY="$${raw%/}" ;; \
+		*) API_PROXY="http://$${raw%/}" ;; \
+	esac; \
+	cd $(ROOT)/install && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		RUSTASHOP_API_PROXY="$$API_PROXY" npm run dev
 
 install-cli:
 	cd $(ROOT) && $(CARGO) run -p rustashop-api --bin rustashop-install --
