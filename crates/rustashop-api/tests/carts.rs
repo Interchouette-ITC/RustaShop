@@ -32,6 +32,14 @@ async fn cart_crud_add_update_remove_and_totals() {
     assert_eq!(cart.lines.len(), 0);
     assert_eq!(cart.items_total.amount_minor, 0);
 
+    let get = test::TestRequest::get()
+        .uri(&format!("/v1/carts/{}", cart.id))
+        .to_request();
+    let get_resp = test::call_service(&app, get).await;
+    assert!(get_resp.status().is_success());
+    let fetched: CartResponse = test::read_body_json(get_resp).await;
+    assert_eq!(fetched.id, cart.id);
+
     let add = test::TestRequest::post()
         .uri(&format!("/v1/carts/{}/lines", cart.id))
         .set_json(json!({ "variant_id": HOODIE_VARIANT, "quantity": 2 }))

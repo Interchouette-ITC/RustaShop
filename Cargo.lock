@@ -3098,6 +3098,7 @@ dependencies = [
  "rustashop-persist-seaorm",
  "rustashop-persist-sqlx",
  "thiserror 2.0.20",
+ "tokio",
 ]
 
 [[package]]

@@ -27,7 +27,7 @@ CVE_LITE_CLI := cve-lite-cli@1.33.0
 
 .PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-dev install-cli audit deny audit-npm audit-all coverage coverage-js ci
 
-SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
+SEAORM_PACKAGES := -p rustashop-persist -p rustashop-persist-seaorm -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
 
 help:

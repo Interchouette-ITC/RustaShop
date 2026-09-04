@@ -15,8 +15,7 @@ mod openapi;
 mod products;
 mod request_param;
 
-use actix_web::{web, App, HttpServer};
-use tracing::info;
+use actix_web::web;
 
 pub use admin_auth::{AdminAuthConfig, ADMIN_TOKEN_ENV, ADMIN_TOKEN_ENV_ALT};
 pub use admin_orders::{
@@ -50,14 +49,6 @@ pub const DEFAULT_BIND: &str = "127.0.0.1:8080";
 /// Environment variable for the API listen address.
 pub const BIND_ENV: &str = "RUSTASHOP_BIND";
 
-/// Compile-time persistence backend label for startup logs.
-#[cfg(feature = "persist-sqlx")]
-const PERSIST_BACKEND: &str = "sqlx";
-
-/// Compile-time persistence backend label for startup logs.
-#[cfg(feature = "persist-seaorm")]
-const PERSIST_BACKEND: &str = "seaorm";
-
 /// Returns the bind address from `RUSTASHOP_BIND` or [`DEFAULT_BIND`].
 #[must_use]
 pub fn bind_address() -> String {
@@ -86,156 +77,34 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPre
     install_routes::configure_install_from_env(cfg);
 }
 
-/// Redacts the password in a Postgres URL for safe logging.
-fn redacted_database_url(raw: &str) -> String {
-    let Some((scheme, rest)) = raw.split_once("://") else {
-        return "(unrecognized DATABASE_URL)".to_owned();
-    };
-    let Some((userinfo, host_and_path)) = rest.split_once('@') else {
-        return format!("{scheme}://{rest}");
-    };
-    let user = userinfo.split(':').next().unwrap_or(userinfo);
-    format!("{scheme}://{user}:***@{host_and_path}")
-}
-
-/// Maps bind failures to a clearer message (especially address-in-use).
-fn bind_error(bind: &str, error: &std::io::Error) -> std::io::Error {
-    if error.kind() == std::io::ErrorKind::AddrInUse {
-        return std::io::Error::new(
-            error.kind(),
-            format!(
-                "cannot bind {bind}: address already in use \
-                 (another rustashop-api?). Free the port or set {BIND_ENV}"
-            ),
-        );
-    }
-    std::io::Error::new(error.kind(), format!("cannot bind {bind}: {error}"))
-}
-
-/// Starts the Actix HTTP server on [`bind_address`].
-///
-/// Loads the catalog repository from `DATABASE_URL` via
-/// [`rustashop_persist::catalog_from_env`], then serves HTTP until shutdown.
-///
-/// # Errors
-///
-/// Returns [`std::io::Error`] when:
-/// - `DATABASE_URL` is missing or the database is unreachable
-///   ([`rustashop_persist::MigrateError`] mapped via `std::io::Error::other`)
-/// - binding [`bind_address`] fails
-/// - the server accept loop fails
-#[allow(clippy::future_not_send)]
-pub async fn run() -> std::io::Result<()> {
-    let bind = bind_address();
-    let version = env!("CARGO_PKG_VERSION");
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "(unset)".to_owned());
-
-    info!("rustashop API {version}");
-    info!("bind: http://{bind} (override with {BIND_ENV})");
-    info!("persist: {PERSIST_BACKEND}");
-    info!("database: {}", redacted_database_url(&database_url));
-
-    let root = shop_root();
-    let kernel = rustashop::boot_kernel(&root)
-        .map_err(|error| std::io::Error::other(format!("serenade kernel boot failed: {error}")))?;
-    info!(
-        "serenade: env={} bundles={:?} status={}",
-        kernel.environment(),
-        kernel.bundle_names(),
-        rustashop::kernel_status()
-    );
-
-    info!("health: http://{bind}/healthz");
-    info!("openapi: http://{bind}/openapi.json");
-    info!("swagger: http://{bind}/swagger-ui/");
-    if install_artefacts_present(&root) {
-        info!(
-            "install: serving /install from {}/{INSTALL_DIR_NAME}/dist (rename to {INSTALL_OFF_DIR_NAME} after success)",
-            root.display()
-        );
-    } else {
-        info!(
-            "install: not mounted ({}/{INSTALL_DIR_NAME}/dist missing; expected if renamed to {INSTALL_OFF_DIR_NAME})",
-            root.display()
-        );
-    }
-
-    info!("connecting catalog repository...");
-    let catalog = rustashop_persist::catalog_from_env()
-        .await
-        .map_err(std::io::Error::other)?;
-    info!("catalog repository ready");
-    let admin_auth = AdminAuthConfig::from_env();
-    let admin_prefix = AdminApiPrefix::from_env();
-    if admin_auth.is_configured() {
-        info!(
-            "admin: bearer configured; operator API under /v1/{{prefix}}/* (set {ADMIN_API_PREFIX_ENV})"
-        );
-    } else {
-        info!(
-            "admin: {ADMIN_TOKEN_ENV} (or {ADMIN_TOKEN_ENV_ALT}) unset - operator API returns 401"
-        );
-    }
-    if admin_prefix.as_str() == DEFAULT_ADMIN_API_PREFIX {
-        info!(
-            "admin: using default API prefix `{DEFAULT_ADMIN_API_PREFIX}` - set {ADMIN_API_PREFIX_ENV} for installs"
-        );
-    } else {
-        info!("admin: custom API prefix active ({ADMIN_API_PREFIX_ENV})");
-    }
-
-    let server = HttpServer::new(move || {
-        let prefix = admin_prefix.clone();
-        App::new()
-            .app_data(web::Data::new(catalog.clone()))
-            .app_data(web::Data::new(admin_auth.clone()))
-            .configure(move |cfg| configure_routes(cfg, &prefix))
-    })
-    .bind(&bind)
-    .map_err(|error| bind_error(&bind, &error))?;
-
-    info!("listening on http://{bind}");
-    let result = server.run().await;
-    if let Err(error) = kernel.shutdown() {
-        tracing::warn!("serenade kernel shutdown: {error}");
-    }
-    result
-}
-
 #[cfg(test)]
-mod redact_tests {
-    use super::redacted_database_url;
+mod bind_tests {
+    use super::{bind_address, BIND_ENV, DEFAULT_BIND};
 
     #[test]
-    fn redacts_database_password() {
-        let raw = "postgres://rustashop:secret@127.0.0.1:5432/rustashop";
-        assert_eq!(
-            redacted_database_url(raw),
-            "postgres://rustashop:***@127.0.0.1:5432/rustashop"
-        );
-    }
-
-    #[test]
-    fn leaves_url_without_userinfo() {
-        assert_eq!(
-            redacted_database_url("postgres://127.0.0.1:5432/rustashop"),
-            "postgres://127.0.0.1:5432/rustashop"
-        );
-    }
-
-    #[test]
-    fn unrecognized_scheme_is_marked() {
-        assert_eq!(
-            redacted_database_url("not-a-url"),
-            "(unrecognized DATABASE_URL)"
-        );
+    fn bind_address_defaults_and_env_override() {
+        let previous = std::env::var(BIND_ENV).ok();
+        unsafe {
+            std::env::remove_var(BIND_ENV);
+        }
+        assert_eq!(bind_address(), DEFAULT_BIND);
+        unsafe {
+            std::env::set_var(BIND_ENV, "127.0.0.1:18080");
+        }
+        assert_eq!(bind_address(), "127.0.0.1:18080");
+        unsafe {
+            match previous {
+                Some(value) => std::env::set_var(BIND_ENV, value),
+                None => std::env::remove_var(BIND_ENV),
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::test;
+    use actix_web::{test, App};
 
     #[actix_web::test]
     async fn healthz_returns_ok_json() {

@@ -66,6 +66,11 @@ async fn sqlx_catalog_lists_and_finds_seeded_rows() {
         .expect("category slug")
         .expect("apparel");
     assert_eq!(category.name, "Apparel");
+    let category_by_id = CategoryRepository::find_by_id(&repo, &category.id)
+        .await
+        .expect("category id")
+        .expect("apparel by id");
+    assert_eq!(category_by_id.slug, "apparel");
     let children = CategoryRepository::list_children(&repo, None, PageRequest::first(10))
         .await
         .expect("children");

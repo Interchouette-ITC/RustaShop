@@ -142,6 +142,19 @@ mod tests {
         assert_eq!(resp.status(), 404);
     }
 
+    #[actix_web::test]
+    async fn complete_returns_not_found_without_dist() {
+        let dir = tempfile_dir("complete-absent");
+        let app =
+            test::init_service(App::new().configure(|cfg| configure_install(cfg, &dir))).await;
+        let req = test::TestRequest::post()
+            .uri("/install/api/complete")
+            .set_json(serde_json::json!({}))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 404);
+    }
+
     fn tempfile_dir(label: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!(
             "rustashop-install-routes-{label}-{}",

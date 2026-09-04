@@ -18,5 +18,8 @@ rustashop-persist-sqlx = { workspace = true, optional = true }
 rustashop-persist-seaorm = { workspace = true, optional = true }
 thiserror = { workspace = true }
 
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
+
 [lints]
 workspace = true

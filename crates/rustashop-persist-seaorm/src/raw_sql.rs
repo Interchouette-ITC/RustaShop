@@ -67,9 +67,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn raw_sql_denied_by_default() {
-        if std::env::var(ALLOW_RAW_SQL_ENV).is_err() {
-            assert!(assert_raw_sql_allowed().is_err());
+    fn raw_sql_flag_round_trip() {
+        unsafe {
+            std::env::remove_var(ALLOW_RAW_SQL_ENV);
         }
+        assert!(!raw_sql_allowed());
+        assert!(assert_raw_sql_allowed().is_err());
+        unsafe {
+            std::env::set_var(ALLOW_RAW_SQL_ENV, "1");
+        }
+        assert!(raw_sql_allowed());
+        assert!(assert_raw_sql_allowed().is_ok());
+        unsafe {
+            std::env::remove_var(ALLOW_RAW_SQL_ENV);
+        }
+        assert!(!raw_sql_allowed());
     }
 }
