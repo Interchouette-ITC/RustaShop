@@ -1,4 +1,47 @@
-/* Generated from template SCSS - do not edit. */
+/* Generated from templates/default - do not edit. */
+
+/* --- tokens --- */
+:root {--rs-orange: #eb4101;
+  --rs-orange-dark: #c43500;
+  --rs-rust: #eb4101;
+  --rs-rust-dark: #c43500;
+  --rs-ink: #0a0a0a;
+  --rs-muted: #6b7280;
+  --rs-paper: #ffffff;
+  --rs-line: #e5e7eb;
+  --rs-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --rs-display: Georgia, "Times New Roman", serif;}
+
+
+/* --- chrome --- */
+*, *::before, *::after {box-sizing: border-box;}
+html, body {margin: 0;
+  min-height: 100%;}
+body {min-height: 100vh;
+  font-family: var(--rs-font);
+  color: var(--rs-ink);
+  background: var(--rs-paper);
+  line-height: 1.45;}
+a {text-decoration: none;}
+a:hover {text-decoration: underline;}
+.shop {max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;}
+.shop__hero {margin-bottom: 1.5rem;}
+.shop__title {margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--rs-orange);
+  font-family: var(--rs-display);}
+.shop__tagline {margin: 0;
+  color: var(--rs-muted);
+  font-size: 0.95rem;}
+.shop__catalog {display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem;}
+
+
 @layer components {
 
 /* --- product_card --- */

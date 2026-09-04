@@ -12,10 +12,12 @@ fn main() {
 
     println!("cargo:rerun-if-changed={}", template_root.display());
 
-    let panels = [("product_card", "product_card_view")];
+    let mut css = String::from("/* Generated from templates/default - do not edit. */\n");
+    append_scss(&mut css, "tokens", &template_root.join("tokens.scss"));
+    append_scss(&mut css, "chrome", &template_root.join("chrome.scss"));
 
-    let mut css =
-        String::from("/* Generated from template SCSS - do not edit. */\n@layer components {\n");
+    css.push_str("\n@layer components {\n");
+    let panels = [("product_card", "product_card_view")];
     for (dir, fn_name) in panels {
         compile_template_panel(template_id, &out_dir, &mut css, dir, fn_name);
     }
