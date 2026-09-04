@@ -1,6 +1,6 @@
 # Contributing to rustashop
 
-Thank you for improving rustashop. This repo is the **commerce product**. Framework work belongs in [serenade](https://github.com/Interchouette-ITC/Serenade).
+Thank you for improving rustashop. This repo is the **commerce product**. Framework work belongs in [Serenade](https://github.com/Interchouette-ITC/Serenade).
 
 ## Before you open a PR
 
@@ -15,7 +15,8 @@ make test
 Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 
 3. One concern per PR. Prefer draft until the slice is complete.
-4. English only in code, docs, commits, and PR text.
+4. English only in code, docs, commits, and PR text. In markdown prose, write
+   **Serenade** (capital S); crate ids stay lowercase (`serenade-contracts`).
 
 ## Toolchain
 
@@ -33,9 +34,6 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make openapi` | write `openapi/openapi.json` from utoipa |
 | `make shop-angular` | serve Angular shop (`shops/angular`, port 4242) |
 | `make shop-leptos-rangular` | serve Leptos+rangular shop (`shops/leptos-rangular`, port 4181) |
-
-Shared shop markup/SCSS: `templates/default/`. Do not edit generated adapters
-under `shops/*/generated/` (build output, gitignored).
 | `make run-api` | Actix API on host (`RUSTASHOP_BIND`, default `127.0.0.1:8080`) |
 | `make db-up` | Postgres only via compose |
 | `make stack-up` | Postgres + migrate + API image |
@@ -43,6 +41,9 @@ under `shops/*/generated/` (build output, gitignored).
 | `make db-migrate-seaorm` | SeaORM migrations |
 | `make db-seed` | catalog seed SQL (idempotent; does not wipe) |
 | `make db-reset` | **DESTROYS** schema `public` then migrates; requires `CONFIRM=YES` |
+
+Shared shop markup/SCSS: `templates/default/`. Do not edit generated adapters under
+`shops/*/generated/` (build output, gitignored).
 
 Default DSN: `postgres://rustashop:rustashop@127.0.0.1:5432/rustashop`.
 
@@ -70,7 +71,7 @@ cargo check -p rustashop-persist -p rustashop-api --no-default-features --featur
 ## Issues and epics
 
 - Commerce and product ops: this repo’s GitHub issues / milestones.
-- Framework kernel, DI, HTTP foundation, console: serenade issues.
+- Framework kernel, DI, HTTP foundation, console: Serenade issues.
 - Kernel wire into rustashop: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
 
 ## Commits and PRs
@@ -83,4 +84,4 @@ This repository is licensed under **OSL-3.0** (see [`../LICENSE`](../LICENSE)).
 
 ## Questions
 
-Open a GitHub issue on `Interchouette-ITC/rustashop` for product design. Framework questions that affect multiple apps go to serenade.
+Open a GitHub issue on `Interchouette-ITC/rustashop` for product design. Framework questions that affect multiple apps go to Serenade.
