@@ -38,3 +38,9 @@ npm approve-scripts <package>
 ```
 
 Commit the updated `allowScripts` in `package.json`.
+
+## GitHub Dependabot
+
+Public-repo free settings (org): Dependabot alerts, Dependabot security updates, secret scanning, and push protection.
+
+Version bumps: `.github/dependabot.yml` (weekly Cargo, npm apps, and Actions). Review those PRs like any other dependency change; local `make audit` / `make deny` / `make audit-npm` remain the merge gates.
