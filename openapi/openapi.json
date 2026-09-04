@@ -46,149 +46,6 @@
         }
       }
     },
-    "/v1/admin/orders": {
-      "get": {
-        "tags": [
-          "crate::admin_orders"
-        ],
-        "summary": "`GET /v1/admin/orders` - list orders (bearer required).",
-        "operationId": "list_admin_orders",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Maximum rows (capped).",
-            "required": false,
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "int32",
-              "minimum": 0
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Rows to skip.",
-            "required": false,
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "int32",
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Order page",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid bearer",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "admin_bearer": []
-          }
-        ]
-      }
-    },
-    "/v1/admin/orders/{id}": {
-      "patch": {
-        "tags": [
-          "crate::admin_orders"
-        ],
-        "summary": "`PATCH /v1/admin/orders/{id}` - update fulfillment status (bearer required).",
-        "operationId": "patch_admin_order",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Order id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PatchOrderStatusRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Updated order",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid bearer",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Order not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Invalid status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "admin_bearer": []
-          }
-        ]
-      }
-    },
     "/v1/carts": {
       "post": {
         "tags": [
@@ -621,6 +478,215 @@
           }
         }
       }
+    },
+    "/v1/{admin_api_prefix}/orders": {
+      "get": {
+        "tags": [
+          "crate::admin_orders"
+        ],
+        "summary": "`GET /v1/{admin_api_prefix}/orders` - list orders (bearer required).",
+        "operationId": "list_admin_orders",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum rows (capped).",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Rows to skip.",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "admin_bearer": []
+          }
+        ]
+      }
+    },
+    "/v1/{admin_api_prefix}/orders/{id}": {
+      "patch": {
+        "tags": [
+          "crate::admin_orders"
+        ],
+        "summary": "`PATCH /v1/{admin_api_prefix}/orders/{id}` - update fulfillment status (bearer required).",
+        "operationId": "patch_admin_order",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Order id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchOrderStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "admin_bearer": []
+          }
+        ]
+      }
+    },
+    "/v1/{admin_api_prefix}/products": {
+      "get": {
+        "tags": [
+          "crate::admin_products"
+        ],
+        "summary": "`GET /v1/{admin_api_prefix}/products` - list products including disabled (bearer required).",
+        "operationId": "list_admin_products",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum rows (capped).",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Rows to skip.",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "admin_bearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -939,7 +1005,7 @@
       },
       "PatchOrderStatusRequest": {
         "type": "object",
-        "description": "Body for `PATCH /v1/admin/orders/{id}`.",
+        "description": "Body for admin order status PATCH.",
         "required": [
           "status"
         ],

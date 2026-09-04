@@ -2,6 +2,7 @@
 
 mod admin_auth;
 mod admin_orders;
+mod admin_prefix;
 mod admin_products;
 mod carts;
 mod checkout;
@@ -17,6 +18,9 @@ use tracing::info;
 pub use admin_auth::{AdminAuthConfig, ADMIN_TOKEN_ENV, ADMIN_TOKEN_ENV_ALT};
 pub use admin_orders::{
     list_admin_orders, patch_admin_order, OrderListResponse, PatchOrderStatusRequest,
+};
+pub use admin_prefix::{
+    configure_admin_routes, AdminApiPrefix, ADMIN_API_PREFIX_ENV, DEFAULT_ADMIN_API_PREFIX,
 };
 pub use admin_products::list_admin_products;
 pub use carts::{
@@ -51,8 +55,13 @@ pub fn bind_address() -> String {
     std::env::var(BIND_ENV).unwrap_or_else(|_| DEFAULT_BIND.to_owned())
 }
 
-/// Registers HTTP routes on `cfg`.
+/// Registers HTTP routes on `cfg` (admin prefix from env / local default).
 pub fn routes(cfg: &mut web::ServiceConfig) {
+    configure_routes(cfg, &AdminApiPrefix::from_env());
+}
+
+/// Registers HTTP routes with an explicit operator API prefix.
+pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPrefix) {
     cfg.service(healthz)
         .service(openapi_json)
         .service(swagger_ui())
@@ -63,10 +72,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         .service(add_cart_line)
         .service(update_cart_line)
         .service(delete_cart_line)
-        .service(place_order)
-        .service(list_admin_orders)
-        .service(patch_admin_order)
-        .service(list_admin_products);
+        .service(place_order);
+    configure_admin_routes(cfg, admin_prefix);
 }
 
 /// Redacts the password in a Postgres URL for safe logging.
@@ -127,19 +134,30 @@ pub async fn run() -> std::io::Result<()> {
         .map_err(std::io::Error::other)?;
     info!("catalog repository ready");
     let admin_auth = AdminAuthConfig::from_env();
+    let admin_prefix = AdminApiPrefix::from_env();
     if admin_auth.is_configured() {
-        info!("admin: bearer token configured for /v1/admin/*");
+        info!(
+            "admin: bearer configured; operator API under /v1/{{prefix}}/* (set {ADMIN_API_PREFIX_ENV})"
+        );
     } else {
         info!(
-            "admin: {ADMIN_TOKEN_ENV} (or {ADMIN_TOKEN_ENV_ALT}) unset - /v1/admin/* returns 401"
+            "admin: {ADMIN_TOKEN_ENV} (or {ADMIN_TOKEN_ENV_ALT}) unset - operator API returns 401"
         );
+    }
+    if admin_prefix.as_str() == DEFAULT_ADMIN_API_PREFIX {
+        info!(
+            "admin: using default API prefix `{DEFAULT_ADMIN_API_PREFIX}` - set {ADMIN_API_PREFIX_ENV} for installs"
+        );
+    } else {
+        info!("admin: custom API prefix active ({ADMIN_API_PREFIX_ENV})");
     }
 
     let server = HttpServer::new(move || {
+        let prefix = admin_prefix.clone();
         App::new()
             .app_data(web::Data::new(catalog.clone()))
             .app_data(web::Data::new(admin_auth.clone()))
-            .configure(routes)
+            .configure(move |cfg| configure_routes(cfg, &prefix))
     })
     .bind(&bind)
     .map_err(|error| bind_error(&bind, &error))?;
@@ -199,9 +217,35 @@ mod tests {
         assert!(paths.get("/v1/products").is_some());
         assert!(paths.get("/v1/carts").is_some());
         assert!(paths.get("/v1/checkout").is_some());
-        assert!(paths.get("/v1/admin/orders").is_some());
-        assert!(paths.get("/v1/admin/products").is_some());
+        assert!(paths.get("/v1/{admin_api_prefix}/orders").is_some());
+        assert!(paths.get("/v1/{admin_api_prefix}/products").is_some());
         assert!(paths.get("/healthz").is_some());
+    }
+
+    #[actix_web::test]
+    async fn admin_routes_respect_custom_prefix() {
+        let prefix = AdminApiPrefix::parse("bk-test1").expect("prefix");
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(AdminAuthConfig::from_token("tok")))
+                .configure(|cfg| configure_routes(cfg, &prefix)),
+        )
+        .await;
+
+        let legacy = test::TestRequest::get()
+            .uri("/v1/admin/products")
+            .insert_header(("Authorization", "Bearer tok"))
+            .to_request();
+        let legacy_resp = test::call_service(&app, legacy).await;
+        assert_eq!(legacy_resp.status(), 404);
+
+        let custom = test::TestRequest::get()
+            .uri("/v1/bk-test1/products")
+            .insert_header(("Authorization", "Bearer tok"))
+            .to_request();
+        let custom_resp = test::call_service(&app, custom).await;
+        // No catalog app_data => handler may 500; route must match (not 404).
+        assert_ne!(custom_resp.status(), 404);
     }
 }
 

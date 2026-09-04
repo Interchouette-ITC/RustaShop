@@ -11,7 +11,7 @@ export class AdminOrdersApi {
 
   list(token: string, limit = 50): Promise<OrderListDto> {
     return firstValueFrom(
-      this.api.http.get<OrderListDto>(this.api.url('/v1/admin/orders'), {
+      this.api.http.get<OrderListDto>(this.api.adminUrl('orders'), {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: String(limit) },
       }),
@@ -20,7 +20,7 @@ export class AdminOrdersApi {
 
   patchStatus(token: string, orderId: string, status: string): Promise<OrderDto> {
     return firstValueFrom(
-      this.api.http.patch<OrderDto>(this.api.url(`/v1/admin/orders/${orderId}`), { status }, {
+      this.api.http.patch<OrderDto>(this.api.adminUrl(`orders/${orderId}`), { status }, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     );

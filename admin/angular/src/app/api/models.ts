@@ -16,7 +16,8 @@ export interface OrderDto {
   total: MoneyDto;
 }
 
-/** `GET /v1/admin/orders` body. */
+/** Admin order list body. */
+
 export interface OrderListDto {
   items: OrderDto[];
 }
@@ -31,7 +32,8 @@ export interface ProductDto {
   enabled: boolean;
 }
 
-/** `GET /v1/admin/products` body. */
+/** Admin product list body. */
+
 export interface ProductListDto {
   items: ProductDto[];
 }

@@ -1,0 +1,136 @@
+//! Configurable operator API URI segment (PrestaShop-style renameable admin path).
+
+/// Env for the public API path segment under `/v1/{segment}/…`.
+pub const ADMIN_API_PREFIX_ENV: &str = "RUSTASHOP_ADMIN_API_PREFIX";
+
+/// Local-only default when [`ADMIN_API_PREFIX_ENV`] is unset.
+///
+/// Production installs must set a non-guessable value; do not leave this as the
+/// only long-term public contract.
+pub const DEFAULT_ADMIN_API_PREFIX: &str = "admin";
+
+const RESERVED: &[&str] = &[
+    "products",
+    "carts",
+    "checkout",
+    "healthz",
+    "openapi.json",
+    "swagger-ui",
+];
+
+/// Single URI segment for operator routes (`/v1/{this}/orders`, …).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AdminApiPrefix {
+    segment: String,
+}
+
+impl AdminApiPrefix {
+    /// Loads from [`ADMIN_API_PREFIX_ENV`], or [`DEFAULT_ADMIN_API_PREFIX`].
+    ///
+    /// # Panics
+    ///
+    /// Panics when the env value is invalid (empty, reserved, or bad charset).
+    #[must_use]
+    pub fn from_env() -> Self {
+        let raw = std::env::var(ADMIN_API_PREFIX_ENV)
+            .unwrap_or_else(|_| DEFAULT_ADMIN_API_PREFIX.to_owned());
+        Self::parse(&raw).unwrap_or_else(|error| {
+            panic!("{ADMIN_API_PREFIX_ENV} invalid: {error}");
+        })
+    }
+
+    /// Builds from an explicit segment (tests).
+    ///
+    /// # Errors
+    ///
+    /// Returns a message when the segment is empty, reserved, or not
+    /// `[A-Za-z0-9][A-Za-z0-9_-]{0,63}`.
+    pub fn parse(raw: &str) -> Result<Self, String> {
+        let segment = raw.trim();
+        if segment.is_empty() {
+            return Err("empty".to_owned());
+        }
+        if segment.len() > 64 {
+            return Err("longer than 64 characters".to_owned());
+        }
+        let mut chars = segment.chars();
+        let Some(first) = chars.next() else {
+            return Err("empty".to_owned());
+        };
+        if !first.is_ascii_alphanumeric() {
+            return Err("must start with ASCII alphanumeric".to_owned());
+        }
+        if !chars.all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+            return Err("only ASCII alphanumeric, hyphen, underscore".to_owned());
+        }
+        if RESERVED
+            .iter()
+            .any(|word| segment.eq_ignore_ascii_case(word))
+        {
+            return Err(format!("reserved segment `{segment}`"));
+        }
+        Ok(Self {
+            segment: segment.to_owned(),
+        })
+    }
+
+    /// Path segment only (no leading slash).
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.segment
+    }
+
+    /// Actix scope path: `/v1/{segment}`.
+    #[must_use]
+    pub fn scope_path(&self) -> String {
+        format!("/v1/{}", self.segment)
+    }
+
+    /// Absolute path for a resource under this prefix (`/v1/{segment}/orders`).
+    #[must_use]
+    pub fn resource_path(&self, resource: &str) -> String {
+        let resource = resource.trim_start_matches('/');
+        format!("{}/{}", self.scope_path(), resource)
+    }
+}
+
+/// Registers operator routes under `/v1/{prefix}/…`.
+pub fn configure_admin_routes(cfg: &mut actix_web::web::ServiceConfig, prefix: &AdminApiPrefix) {
+    use actix_web::web;
+
+    use crate::admin_orders::{list_admin_orders, patch_admin_order};
+    use crate::admin_products::list_admin_products;
+
+    cfg.service(
+        web::scope(&prefix.scope_path())
+            .service(list_admin_orders)
+            .service(patch_admin_order)
+            .service(list_admin_products),
+    );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_default_admin() {
+        let prefix = AdminApiPrefix::parse("admin").expect("admin");
+        assert_eq!(prefix.scope_path(), "/v1/admin");
+        assert_eq!(prefix.resource_path("products"), "/v1/admin/products");
+    }
+
+    #[test]
+    fn accepts_opaque_segment() {
+        let prefix = AdminApiPrefix::parse("bk-x9K2m").expect("opaque");
+        assert_eq!(prefix.as_str(), "bk-x9K2m");
+    }
+
+    #[test]
+    fn rejects_reserved_and_empty() {
+        assert!(AdminApiPrefix::parse("").is_err());
+        assert!(AdminApiPrefix::parse("products").is_err());
+        assert!(AdminApiPrefix::parse("../x").is_err());
+        assert!(AdminApiPrefix::parse("a/b").is_err());
+    }
+}

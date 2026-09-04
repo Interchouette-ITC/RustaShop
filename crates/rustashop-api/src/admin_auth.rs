@@ -1,4 +1,4 @@
-//! Admin bearer token gate for `/v1/admin/*`.
+//! Admin bearer token gate for `/v1/{admin_api_prefix}/*`.
 
 use std::future::{ready, Ready};
 

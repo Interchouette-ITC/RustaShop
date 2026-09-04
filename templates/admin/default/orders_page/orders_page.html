@@ -1,6 +1,7 @@
 <section aria-labelledby="orders-heading">
   <h1 id="orders-heading" class="admin__title">Orders</h1>
-  <p class="admin__tagline">List from GET /v1/admin/orders. Change status with PATCH.</p>
+  <p class="admin__tagline">Order list from the operator API. Change status with PATCH.</p>
+
 
   @if (error()) {
     <p class="admin__error" role="alert">{{ error() }}</p>

@@ -11,7 +11,7 @@ export class AdminProductsApi {
 
   list(token: string, limit = 100): Promise<ProductListDto> {
     return firstValueFrom(
-      this.api.http.get<ProductListDto>(this.api.url('/v1/admin/products'), {
+      this.api.http.get<ProductListDto>(this.api.adminUrl('products'), {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: String(limit) },
       }),

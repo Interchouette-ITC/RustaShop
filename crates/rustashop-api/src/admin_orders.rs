@@ -15,7 +15,7 @@ use crate::request_param::ensure_request_param;
 const DEFAULT_LIMIT: u32 = 20;
 const MAX_LIMIT: u32 = 100;
 
-/// Query string for `GET /v1/admin/orders`.
+/// Query string for admin order list.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListOrdersQuery {
     /// Maximum rows (capped).
@@ -31,17 +31,17 @@ pub struct OrderListResponse {
     pub items: Vec<OrderResponse>,
 }
 
-/// Body for `PATCH /v1/admin/orders/{id}`.
+/// Body for admin order status PATCH.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct PatchOrderStatusRequest {
     /// Fulfillment status: `placed`, `paid`, `shipped`, or `cancelled`.
     pub status: String,
 }
 
-/// `GET /v1/admin/orders` - list orders (bearer required).
+/// `GET /v1/{admin_api_prefix}/orders` - list orders (bearer required).
 #[utoipa::path(
     get,
-    path = "/v1/admin/orders",
+    path = "/v1/{admin_api_prefix}/orders",
     params(ListOrdersQuery),
     security(("admin_bearer" = [])),
     responses(
@@ -49,7 +49,7 @@ pub struct PatchOrderStatusRequest {
         (status = 401, description = "Missing or invalid bearer", body = ErrorBody)
     )
 )]
-#[get("/v1/admin/orders")]
+#[get("/orders")]
 pub async fn list_admin_orders(
     bearer: AdminBearer,
     auth: web::Data<AdminAuthConfig>,
@@ -69,10 +69,10 @@ pub async fn list_admin_orders(
     }))
 }
 
-/// `PATCH /v1/admin/orders/{id}` - update fulfillment status (bearer required).
+/// `PATCH /v1/{admin_api_prefix}/orders/{id}` - update fulfillment status (bearer required).
 #[utoipa::path(
     patch,
-    path = "/v1/admin/orders/{id}",
+    path = "/v1/{admin_api_prefix}/orders/{id}",
     params(("id" = String, Path, description = "Order id")),
     request_body = PatchOrderStatusRequest,
     security(("admin_bearer" = [])),
@@ -83,7 +83,7 @@ pub async fn list_admin_orders(
         (status = 422, description = "Invalid status", body = ErrorBody)
     )
 )]
-#[patch("/v1/admin/orders/{id}")]
+#[patch("/orders/{id}")]
 pub async fn patch_admin_order(
     bearer: AdminBearer,
     auth: web::Data<AdminAuthConfig>,
