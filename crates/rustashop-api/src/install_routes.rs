@@ -112,7 +112,14 @@ mod tests {
     use std::fs;
 
     #[actix_web::test]
+    #[allow(clippy::await_holding_lock)]
     async fn status_ok_when_dist_present() {
+        let _guard = crate::install_env::INSTALL_PROCESS_ENV_LOCK
+            .lock()
+            .expect("lock");
+        unsafe {
+            std::env::remove_var(crate::install_env::ENV_FILE_ENV);
+        }
         let dir = tempfile_dir("status-ok");
         let index = install_dist_index(&dir);
         fs::create_dir_all(index.parent().expect("parent")).expect("mkdir");
@@ -145,20 +152,103 @@ mod tests {
     #[actix_web::test]
     async fn complete_returns_not_found_without_dist() {
         let dir = tempfile_dir("complete-absent");
-        let app =
-            test::init_service(App::new().configure(|cfg| configure_install(cfg, &dir))).await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(InstallRoot(dir.clone())))
+                .service(install_complete),
+        )
+        .await;
         let req = test::TestRequest::post()
             .uri("/install/api/complete")
-            .set_json(serde_json::json!({}))
+            .set_json(serde_json::json!({ "wipe_confirmed": true }))
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 404);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[actix_web::test]
+    #[allow(clippy::await_holding_lock)]
+    async fn complete_success_wipe_and_invalid_prefix() {
+        let _guard = crate::install_env::INSTALL_PROCESS_ENV_LOCK
+            .lock()
+            .expect("lock");
+        let dir = tempfile_dir("complete-ok");
+        let index = install_dist_index(&dir);
+        fs::create_dir_all(index.parent().expect("parent")).expect("mkdir");
+        fs::write(&index, "<!doctype html>").expect("write");
+        let env_path = dir.join(".env");
+        fs::write(&env_path, "RUSTASHOP_ADMIN_API_PREFIX=alreadypfx1\n").expect("env");
+        unsafe {
+            std::env::set_var(crate::install_fs::ROOT_ENV, &dir);
+            std::env::set_var(crate::install_env::ENV_FILE_ENV, &env_path);
+        }
+
+        let app =
+            test::init_service(App::new().configure(|cfg| configure_install(cfg, &dir))).await;
+
+        let conflict = test::TestRequest::post()
+            .uri("/install/api/complete")
+            .set_json(serde_json::json!({
+                "admin_folder": "newfolderok1",
+                "wipe_confirmed": false
+            }))
+            .to_request();
+        let conflict_resp = test::call_service(&app, conflict).await;
+        assert_eq!(conflict_resp.status(), 409);
+        let conflict_body: serde_json::Value = test::read_body_json(conflict_resp).await;
+        assert_eq!(conflict_body["error"], "wipe_required");
+
+        let bad = test::TestRequest::post()
+            .uri("/install/api/complete")
+            .set_json(serde_json::json!({
+                "admin_folder": "carts",
+                "wipe_confirmed": true
+            }))
+            .to_request();
+        let bad_resp = test::call_service(&app, bad).await;
+        assert_eq!(bad_resp.status(), 400);
+        let bad_body: serde_json::Value = test::read_body_json(bad_resp).await;
+        assert_eq!(bad_body["error"], "invalid_admin_folder");
+
+        let ok = test::TestRequest::post()
+            .uri("/install/api/complete")
+            .set_json(serde_json::json!({
+                "admin_folder": "newfolderok1",
+                "wipe_confirmed": true
+            }))
+            .to_request();
+        let ok_resp = test::call_service(&app, ok).await;
+        assert!(ok_resp.status().is_success());
+        let body: serde_json::Value = test::read_body_json(ok_resp).await;
+        assert_eq!(body["admin_prefix"], "newfolderok1");
+        assert!(body["admin_token"].as_str().unwrap().len() >= 16);
+        assert!(body["next_step"]
+            .as_str()
+            .unwrap()
+            .contains(INSTALL_OFF_DIR_NAME));
+
+        let status = test::TestRequest::get()
+            .uri("/install/api/status")
+            .to_request();
+        let status_resp = test::call_service(&app, status).await;
+        let status_body: serde_json::Value = test::read_body_json(status_resp).await;
+        assert_eq!(status_body["wipe_required"], true);
+
+        unsafe {
+            std::env::remove_var(crate::install_fs::ROOT_ENV);
+            std::env::remove_var(crate::install_env::ENV_FILE_ENV);
+        }
+        let _ = fs::remove_dir_all(&dir);
     }
 
     fn tempfile_dir(label: &str) -> std::path::PathBuf {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static N: AtomicU64 = AtomicU64::new(0);
         let dir = std::env::temp_dir().join(format!(
-            "rustashop-install-routes-{label}-{}",
-            std::process::id()
+            "rustashop-install-routes-{label}-{}-{}",
+            std::process::id(),
+            N.fetch_add(1, Ordering::Relaxed)
         ));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).expect("tmpdir");

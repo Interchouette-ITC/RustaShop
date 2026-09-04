@@ -90,3 +90,52 @@ impl ResponseError for ApiError {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_persist_and_domain_variants() {
+        assert!(matches!(
+            ApiError::from_persist(&PersistenceError::NotFound {
+                entity: "cart",
+                id: "1".into(),
+            }),
+            ApiError::NotFound
+        ));
+        assert!(matches!(
+            ApiError::from_persist(&PersistenceError::InvalidInput {
+                message: "bad".into(),
+            }),
+            ApiError::Unprocessable(_)
+        ));
+        assert!(matches!(
+            ApiError::from_persist(&PersistenceError::Conflict { constraint: "x" }),
+            ApiError::Conflict
+        ));
+        assert!(matches!(
+            ApiError::from_persist(&PersistenceError::Internal {
+                message: "db".into(),
+            }),
+            ApiError::Internal
+        ));
+        assert!(matches!(
+            ApiError::from_domain(&DomainError::CartAlreadyCheckedOut),
+            ApiError::Conflict
+        ));
+        assert!(matches!(
+            ApiError::from_domain(&DomainError::LineNotFound("l".into())),
+            ApiError::NotFound
+        ));
+        assert!(matches!(
+            ApiError::from_domain(&DomainError::EmptyCart),
+            ApiError::Unprocessable(_)
+        ));
+        assert_eq!(ApiError::Internal.code(), "internal");
+        assert_eq!(
+            ApiError::Internal.status_code(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+}
