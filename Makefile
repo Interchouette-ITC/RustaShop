@@ -103,8 +103,9 @@ shop-angular:
 		API_STATE=down; API_COLOR='\033[33m'; \
 	fi; \
 	printf '\n'; \
-	printf '  🦀  \033[97m\033[1mRusta\033[0m\033[38;2;235;65;1m\033[1mShop\033[0m  🛒  \033[2mshop-angular\033[0m\n'; \
+	printf '  🦀 Rusta\033[38;2;235;65;1mShop\033[0m 🛒\n'; \
 	printf '  \033[2m─────────────────────────────────────\033[0m\n'; \
+	printf '  \033[37mapp\033[0m    shop-angular\n'; \
 	printf '  \033[37mshop\033[0m   http://127.0.0.1:$(SHOP_ANGULAR_PORT)/\n'; \
 	printf '  \033[37mapi\033[0m    %s  %b%s\033[0m\n' "$$API_PROXY" "$$API_COLOR" "$$API_STATE"; \
 	printf '  \033[37mbase\033[0m   %s\n' "$$BASE_HREF"; \
