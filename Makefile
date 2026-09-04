@@ -11,6 +11,8 @@ OPENAPI_OUT ?= openapi/openapi.json
 SHOP_ANGULAR_DIR := apps/shop-angular
 SHOP_ANGULAR_PORT ?= 4242
 SHOP_LEPTOS_DIR := apps/shop-leptos-rangular
+# Compose file lives under docker/; project name keeps container names stable.
+COMPOSE := docker compose -f docker/compose.yml --project-directory $(ROOT)
 # Set FORCE=1 to re-run npm install even when node_modules exists.
 FORCE ?= 0
 
@@ -129,20 +131,20 @@ run-api:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api --bin rustashop-api
 
 stack-up:
-	cd $(ROOT) && docker compose up --build -d
+	cd $(ROOT) && $(COMPOSE) up --build -d
 
 db-up:
-	cd $(ROOT) && docker compose up -d postgres
+	cd $(ROOT) && $(COMPOSE) up -d postgres
 	@$(MAKE) db-wait
 
 db-down:
-	cd $(ROOT) && docker compose down
+	cd $(ROOT) && $(COMPOSE) down
 
 db-wait:
-	@cd $(ROOT) && docker compose exec -T postgres sh -c 'until pg_isready -U rustashop -d rustashop; do sleep 1; done'
+	@cd $(ROOT) && $(COMPOSE) exec -T postgres sh -c 'until pg_isready -U rustashop -d rustashop; do sleep 1; done'
 
 db-psql:
-	cd $(ROOT) && docker compose exec postgres psql -U rustashop -d rustashop
+	cd $(ROOT) && $(COMPOSE) exec postgres psql -U rustashop -d rustashop
 
 db-migrate:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-sqlx --bin rustashop-migrate
@@ -153,7 +155,7 @@ db-migrate-seaorm:
 db-seed:
 	@echo "Seeding catalog (idempotent; does not wipe the database)"
 	@echo "Expect INSERT 0 0 / UPDATE N on re-run when rows already exist."
-	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop < db/seeds/catalog.sql
+	cd $(ROOT) && $(COMPOSE) exec -T postgres psql -U rustashop -d rustashop < db/seeds/catalog.sql
 
 # Destroys ALL tables and data in the rustashop database, then re-migrates.
 # Refuses unless CONFIRM=YES (example: CONFIRM=YES make db-reset).
@@ -170,7 +172,7 @@ db-reset:
 		exit 1; \
 	fi
 	@echo "CONFIRM=YES: dropping schema public and re-running migrations..."
-	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+	cd $(ROOT) && $(COMPOSE) exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 	@$(MAKE) db-migrate
 
 clean:

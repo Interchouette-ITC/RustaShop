@@ -19,7 +19,7 @@ services:
 
   migrate:
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     image: rustashop-api:local
     container_name: rustashop-migrate
@@ -33,7 +33,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     image: rustashop-api:local
     container_name: rustashop-api

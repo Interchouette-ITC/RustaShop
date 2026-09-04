@@ -60,7 +60,8 @@ Out of v0.1: marketplace, full promotions engine, Magento import wizard.
 Postgres plus the Actix API:
 
 ```bash
-docker compose up --build
+docker compose -f docker/compose.yml --project-directory . up --build
+# or: make stack-up
 curl http://127.0.0.1:8080/healthz
 curl http://127.0.0.1:8080/v1/products
 ```
