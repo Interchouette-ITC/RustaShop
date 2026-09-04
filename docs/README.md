@@ -13,71 +13,84 @@
   <strong>Modern commerce. Rust powered. AI native.</strong>
 </p>
 
-One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI and realtime contracts. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`../docs-dev/UI-RENDERERS.md`](../docs-dev/UI-RENDERERS.md).
+One **Rust** commerce API. **Angular** or **rangular** clients on the same OpenAPI contracts. Shared storefront markup lives in `templates/default/`; each shop host adapts it. rangular targets **two renderers**: Leptos (web/DOM) and GPUI (native GPU). See [`../docs-dev/UI-RENDERERS.md`](../docs-dev/UI-RENDERERS.md).
 
-AI is built into the product map (discovery, shopping agents, catalog assist, pricing, support, MCP, autonomous agents), not glued on later. See [`../docs-dev/AI-NATIVE.md`](../docs-dev/AI-NATIVE.md).
+AI is on the product map (discovery, shopping agents, catalog assist, pricing, support, MCP), not glued on later. See [`../docs-dev/AI-NATIVE.md`](../docs-dev/AI-NATIVE.md).
 
-**Status:** catalog read API, OpenAPI / Swagger UI, and local Postgres. Cart and checkout are not in yet.
+**Status today:** catalog + cart + checkout HTTP, OpenAPI / Swagger UI, local Postgres (Docker), and two shop hosts on shared templates. Payments, admin, and realtime are next.
 
-## What we are building
+## What you get today
 
-| Piece            | Role                                                                                        |
-| ---------------- | ------------------------------------------------------------------------------------------- |
-| **Commerce API** | Catalog, cart, checkout, orders, money (integers), inventory, payments, webhooks            |
-| **HTTP stack**   | **Actix-web** kernel (REST, OpenAPI, WebSocket); **Axum** MCP / agent tools (house pattern) |
-| **UI A**         | Angular storefront / admin (TypeScript)                                                     |
-| **UI B**         | rangular: **Leptos** web renderer + **GPUI** native renderer (same authoring model)         |
-| **Realtime**     | WebSocket-first live cart, stock, orders                                                    |
-| **Extensions**   | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents                       |
-| **AI**           | Native tools and agents on the same API + MCP                                               |
+| Piece | Role |
+| --- | --- |
+| **Commerce API** | Actix-web: products, carts, checkout → orders; money as integers |
+| **OpenAPI** | utoipa + Swagger UI at `/swagger-ui/`; `make openapi` writes `openapi/openapi.json` |
+| **Persistence** | Postgres; SQLx default, SeaORM feature path; Docker compose |
+| **Templates** | `templates/default/` - shared HTML/SCSS for both shops |
+| **UI A** | `shops/angular` - Angular storefront (catalog, cart, checkout) |
+| **UI B** | `shops/leptos-rangular` - Leptos + rangular (catalog, product, cart) |
+| **Framework** | [Serenade](https://github.com/Interchouette-ITC/Serenade) contracts / kernel wire ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)) |
 
-We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/rustashop/issues/29) and [`../docs-dev/`](../docs-dev/).
+Still building toward: one payment provider, orders + basic admin, WebSocket live surfaces, MCP / agent tools (Axum).
 
-## Domains
-
-| Host                           | Role                                                |
-| ------------------------------ | --------------------------------------------------- |
-| `rustashop.interchouette.net`  | First `:dev` image tip (Render service by operator) |
-| `rustashop.ai`                 | Primary marketing                                   |
-| `rustashop.io`                 | Product-oriented                                    |
-| `rustashop.dev`                | Demo                                                |
-| `rustashop.app`                | Ionic app                                           |
-| `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now                            |
-
-Detail: [`../docs-dev/DOMAINS.md`](../docs-dev/DOMAINS.md).
-
-## MVP slice
-
-- [ ] Catalog, cart, checkout, one payment provider, orders + basic admin
-- [ ] Both UI clients on the same API
-- [ ] OpenAPI + compose for local run
-- [ ] Foundations wired so AI, realtime, and extensions are not retrofit surprises
-
-Out of v0.1: marketplace, full promotions engine, Magento import wizard.
-
-## Local stack
-
-Postgres plus the Actix API:
+## Quick start
 
 ```bash
-docker compose -f docker/compose.yml --project-directory . up --build
-# or: make stack-up
+git clone https://github.com/Interchouette-ITC/rustashop.git
+cd rustashop
+make help
+```
+
+### API + database
+
+```bash
+make db-up && make db-migrate && make db-seed
+make run-api
+# or all-in-one: make stack-up
+
 curl http://127.0.0.1:8080/healthz
 curl http://127.0.0.1:8080/v1/products
 ```
 
-Swagger UI is at `/swagger-ui/`. `make openapi` writes `openapi/openapi.json`.
+Swagger UI: `http://127.0.0.1:8080/swagger-ui/`. Do not bind port `8080` twice.
 
-Host API against compose Postgres only: `make db-up && make db-migrate && make run-api`. Do not bind port `8080` twice.
+### Shop fronts (API already running)
+
+```bash
+make shop-angular            # http://127.0.0.1:4242/
+make shop-leptos-rangular    # http://127.0.0.1:4181/
+```
+
+Designers edit `templates/default/`. Do not hand-edit `shops/*/generated/` (build output, gitignored).
+
+### Quality gate
+
+```bash
+make lint
+make test
+```
+
+## Domains
+
+| Host | Role |
+| --- | --- |
+| `rustashop.interchouette.net` | First `:dev` image tip (operator-owned) |
+| `rustashop.ai` | Primary marketing |
+| `rustashop.io` | Product-oriented |
+| `rustashop.dev` | Demo |
+| `rustashop.app` | Ionic app |
+| `rustashop.nl` / `.eu` / `.fr` | Redirect → `.ai` for now |
+
+Detail: [`../docs-dev/DOMAINS.md`](../docs-dev/DOMAINS.md).
 
 ## Docs
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) - crates, HTTP split, request path
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) - make targets, lint bar, PR habits
-- [`../docs-dev/README.md`](../docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
-- Brand sizes: [`brand/`](brand/)
-
-Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
+| Doc | Topic |
+| --- | --- |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Crates, HTTP split, request path |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Make targets, lint bar, PR habits |
+| [`../docs-dev/README.md`](../docs-dev/README.md) | Foundations (Wasm, realtime, AI, domains) |
+| [`brand/`](brand/) | Brand assets |
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
@@ -85,8 +98,7 @@ Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wir
 
 1. Read [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`../docs-dev/`](../docs-dev/).
 2. Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) (`make lint`, `make test`).
-3. Open issues for domain or AI/tool surface debates.
-4. Commits and docs in **English**; conventional commits when code lands.
+3. One concern per PR. Commits and docs in **English**.
 
 <p align="center">
   <img src="brand/badge-stack-readme.png" alt="rustashop stack: Rust API, Angular, rangular" width="480" style="margin-top: 1.5rem; margin-bottom: 0.25rem;" />
@@ -94,18 +106,18 @@ Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wir
 
 ## Thanks
 
-**rustashop** will stand on excellent open-source projects and hosts:
+**rustashop** stands on excellent open-source projects and hosts:
 
-| Project                                                                                   | Role here                                          |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| [Rust](https://www.rust-lang.org/)                                                        | Commerce API and workers                           |
-| [Actix Web](https://actix.rs/)                                                            | Main commerce HTTP API, OpenAPI, WebSocket gateway |
-| [Axum](https://github.com/tokio-rs/axum)                                                  | MCP and narrow agent/tool HTTP surfaces            |
-| [Angular](https://angular.dev/)                                                           | UI option A                                        |
-| [rangular](https://github.com/Interchouette-ITC/rangular) / [Leptos](https://leptos.dev/) | UI option B (templates → wasm)                     |
-| [Tokio](https://tokio.rs/) (planned)                                                      | Async runtime                                      |
-| [PostgreSQL](https://www.postgresql.org/) (planned)                                       | System of record                                   |
-| [Render](https://render.com/)                                                             | Hosting tip / demos (operator-owned services)      |
+| Project | Role here |
+| --- | --- |
+| [Rust](https://www.rust-lang.org/) | Commerce API and workers |
+| [Actix Web](https://actix.rs/) | Main commerce HTTP API, OpenAPI |
+| [Axum](https://github.com/tokio-rs/axum) | MCP / agent HTTP surfaces (planned) |
+| [Angular](https://angular.dev/) | UI option A |
+| [rangular](https://github.com/Interchouette-ITC/rangular) / [Leptos](https://leptos.dev/) | UI option B |
+| [Tokio](https://tokio.rs/) | Async runtime |
+| [PostgreSQL](https://www.postgresql.org/) | System of record |
+| [Render](https://render.com/) | Hosting tip / demos (operator-owned) |
 
 Thank you to their maintainers and communities.
 
