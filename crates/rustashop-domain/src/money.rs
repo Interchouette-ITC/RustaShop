@@ -153,15 +153,34 @@ impl Money {
 mod tests {
     use super::*;
 
+    /// Sync collaborator double for domain ports (mockall + `cargo test`).
+    #[mockall::automock]
+    trait CurrencyCodeSource {
+        fn code(&self) -> &'static str;
+    }
+
     #[test]
-    fn currency_requires_three_letters() {
-        assert!(Currency::new("eur").is_ok());
+    fn mockall_currency_code_source_builds_currency() {
+        let mut source = MockCurrencyCodeSource::new();
+        source.expect_code().return_const("eur");
+        let currency = Currency::new(source.code()).expect("valid");
+        assert_eq!(currency.as_str(), "EUR");
+    }
+
+    #[rstest::rstest]
+    #[case::lower("eur", "EUR")]
+    #[case::upper("USD", "USD")]
+    #[case::mixed("gBp", "GBP")]
+    fn currency_normalizes_ascii_case(#[case] input: &str, #[case] expected: &str) {
+        assert_eq!(Currency::new(input).unwrap().as_str(), expected);
+    }
+
+    #[rstest::rstest]
+    #[case::too_short("eu")]
+    #[case::digit("eu1")]
+    fn currency_rejects_invalid_codes(#[case] input: &str) {
         assert!(matches!(
-            Currency::new("eu"),
-            Err(DomainError::InvalidCurrency(_))
-        ));
-        assert!(matches!(
-            Currency::new("eu1"),
+            Currency::new(input),
             Err(DomainError::InvalidCurrency(_))
         ));
     }

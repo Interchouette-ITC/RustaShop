@@ -248,6 +248,7 @@ mod tests {
         let body: HealthResponse = test::read_body_json(resp).await;
         assert_eq!(body.status, "ok");
         assert_eq!(body.kernel, rustashop::kernel_status());
+        insta::assert_json_snapshot!("healthz_body", body);
     }
 
     #[actix_web::test]

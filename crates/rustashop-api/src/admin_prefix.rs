@@ -114,24 +114,22 @@ pub fn configure_admin_routes(cfg: &mut actix_web::web::ServiceConfig, prefix: &
 mod tests {
     use super::*;
 
-    #[test]
-    fn accepts_default_admin() {
-        let prefix = AdminApiPrefix::parse("admin").expect("admin");
-        assert_eq!(prefix.scope_path(), "/v1/admin");
-        assert_eq!(prefix.resource_path("products"), "/v1/admin/products");
+    #[rstest::rstest]
+    #[case::default_admin("admin", "/v1/admin", "/v1/admin/products")]
+    #[case::opaque("bk-x9K2m", "/v1/bk-x9K2m", "/v1/bk-x9K2m/products")]
+    fn accepts_valid_segment(#[case] raw: &str, #[case] scope: &str, #[case] products: &str) {
+        let prefix = AdminApiPrefix::parse(raw).expect("valid");
+        assert_eq!(prefix.as_str(), raw);
+        assert_eq!(prefix.scope_path(), scope);
+        assert_eq!(prefix.resource_path("products"), products);
     }
 
-    #[test]
-    fn accepts_opaque_segment() {
-        let prefix = AdminApiPrefix::parse("bk-x9K2m").expect("opaque");
-        assert_eq!(prefix.as_str(), "bk-x9K2m");
-    }
-
-    #[test]
-    fn rejects_reserved_and_empty() {
-        assert!(AdminApiPrefix::parse("").is_err());
-        assert!(AdminApiPrefix::parse("products").is_err());
-        assert!(AdminApiPrefix::parse("../x").is_err());
-        assert!(AdminApiPrefix::parse("a/b").is_err());
+    #[rstest::rstest]
+    #[case::empty("")]
+    #[case::reserved_products("products")]
+    #[case::path_traversal("../x")]
+    #[case::slash("a/b")]
+    fn rejects_invalid_segment(#[case] raw: &str) {
+        assert!(AdminApiPrefix::parse(raw).is_err());
     }
 }
