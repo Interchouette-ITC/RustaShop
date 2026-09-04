@@ -1,0 +1,45 @@
+<section aria-labelledby="products-heading">
+  <h1 id="products-heading" class="admin__title">Products</h1>
+  <p class="admin__tagline">List from GET /v1/admin/products (includes disabled).</p>
+
+  @if (error()) {
+    <p class="admin__error" role="alert">{{ error() }}</p>
+  }
+
+  @if (busy() && products().length === 0) {
+    <p class="admin__tagline">Loading products…</p>
+  } @else if (!hasToken()) {
+    <p class="admin__tagline">Set an admin bearer token in the bar (RUSTASHOP_ADMIN_API_TOKEN value).</p>
+  } @else if (products().length === 0) {
+    <p class="admin__empty">No products.</p>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="reload()">Refresh</button>
+  } @else {
+    <div class="admin__panel">
+      <table class="admin__table">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Slug</th>
+            <th scope="col">Enabled</th>
+            <th scope="col">Id</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.id) {
+            <tr>
+              <td>{{ product.name }}</td>
+              <td>{{ product.slug }}</td>
+              <td>{{ product.enabled ? 'yes' : 'no' }}</td>
+              <td><code>{{ product.id }}</code></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="admin__tagline mt-3">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="reload()" [disabled]="busy()">
+        Refresh
+      </button>
+    </p>
+  }
+</section>

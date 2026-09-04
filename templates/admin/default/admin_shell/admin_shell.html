@@ -10,6 +10,12 @@
           alt=""
         />
         <span class="admin__name">rusta<span class="admin__name-accent">shop</span> admin</span>
+        <nav class="admin__nav" aria-label="Admin">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+            >Orders</a
+          >
+          <a routerLink="/products" routerLinkActive="active">Products</a>
+        </nav>
       </div>
       <div class="admin__token">
         <label class="visually-hidden" for="admin-token">Admin API token</label>

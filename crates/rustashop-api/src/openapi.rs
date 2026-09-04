@@ -50,6 +50,7 @@ impl Modify for AdminSecurityAddon {
         crate::checkout::place_order,
         crate::admin_orders::list_admin_orders,
         crate::admin_orders::patch_admin_order,
+        crate::admin_products::list_admin_products,
         openapi_json
     ),
     components(schemas(

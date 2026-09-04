@@ -1,13 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AdminTokenStore } from '@rustashop/admin-core';
 import { template as adminShellTpl, styles as adminShellStyles } from '@generated/admin_shell.ng';
 
 @Component({
   selector: 'rs-admin-shell',
-  imports: [RouterOutlet, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
   template: adminShellTpl,
   styles: adminShellStyles,
 })

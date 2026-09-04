@@ -21,6 +21,21 @@ export interface OrderListDto {
   items: OrderDto[];
 }
 
+/** Product JSON from admin list. */
+export interface ProductDto {
+  id: string;
+  category_id: string | null;
+  slug: string;
+  name: string;
+  description: string | null;
+  enabled: boolean;
+}
+
+/** `GET /v1/admin/products` body. */
+export interface ProductListDto {
+  items: ProductDto[];
+}
+
 /** Allowed fulfillment statuses for PATCH. */
 export const ORDER_STATUSES = ['placed', 'paid', 'shipped', 'cancelled'] as const;
 
