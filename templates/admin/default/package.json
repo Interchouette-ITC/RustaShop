@@ -1,0 +1,17 @@
+{
+  "name": "@rustashop/template-admin-default",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Default admin (operator BO) template - HTML/SCSS.",
+  "license": "OSL-3.0",
+  "rustashop": {
+    "templateKind": "admin"
+  },
+  "files": [
+    "**/*.html",
+    "**/*.scss"
+  ],
+  "exports": {
+    "./*": "./*"
+  }
+}

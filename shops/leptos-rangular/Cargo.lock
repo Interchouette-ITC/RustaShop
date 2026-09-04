@@ -1523,7 +1523,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustashop-template-default"
+name = "rustashop-template-shop-default"
 version = "0.1.0"
 
 [[package]]
@@ -1715,7 +1715,7 @@ dependencies = [
  "rangular-css",
  "rangular-expr",
  "rangular-host",
- "rustashop-template-default",
+ "rustashop-template-shop-default",
  "serde",
  "serde_json",
  "web-sys",

@@ -3,7 +3,7 @@ use leptos_router::components::A;
 
 use crate::cart::use_cart;
 
-/// Leptos shop chrome (nav + cart badge). Markup/SCSS for Angular `shop_shell` live in `templates/default`.
+/// Leptos shop chrome (nav + cart badge). Markup/SCSS for Angular `shop_shell` live in `templates/shop/default`.
 #[component]
 pub fn ShopShell(children: Children) -> impl IntoView {
     let cart = use_cart();

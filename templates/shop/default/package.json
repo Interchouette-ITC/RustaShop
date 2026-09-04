@@ -1,9 +1,12 @@
 {
-  "name": "@rustashop/template-default",
+  "name": "@rustashop/template-shop-default",
   "version": "0.1.0",
   "private": true,
-  "description": "Default rustashop template (HTML/SCSS).",
+  "description": "Default shop (storefront) template - HTML/SCSS.",
   "license": "OSL-3.0",
+  "rustashop": {
+    "templateKind": "shop"
+  },
   "files": [
     "**/*.html",
     "**/*.scss",

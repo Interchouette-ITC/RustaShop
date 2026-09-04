@@ -1,0 +1,27 @@
+// Admin tokens: ink paper, cool gray chrome, brand orange accent (not shop hero layout).
+
+$rs-orange: #eb4101;
+$rs-orange-dark: #c43500;
+$rs-ink: #0a0a0a;
+$rs-muted: #6b7280;
+$rs-paper: #f3f4f6;
+$rs-panel: #ffffff;
+$rs-line: #d1d5db;
+$rs-chrome: #111827;
+
+$rs-rust: $rs-orange;
+$rs-rust-dark: $rs-orange-dark;
+
+:root {
+  --rs-orange: #{$rs-orange};
+  --rs-orange-dark: #{$rs-orange-dark};
+  --rs-rust: #{$rs-orange};
+  --rs-rust-dark: #{$rs-orange-dark};
+  --rs-ink: #{$rs-ink};
+  --rs-muted: #{$rs-muted};
+  --rs-paper: #{$rs-paper};
+  --rs-panel: #{$rs-panel};
+  --rs-line: #{$rs-line};
+  --rs-chrome: #{$rs-chrome};
+  --rs-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+}

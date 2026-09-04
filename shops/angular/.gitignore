@@ -42,7 +42,7 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Emit adapters (templates/default → generated/*.ng.ts)
+# Emit adapters (templates/shop/default → generated/*.ng.ts)
 /generated/*
 !/generated/.gitkeep
 src/components/**/*.ng.ts

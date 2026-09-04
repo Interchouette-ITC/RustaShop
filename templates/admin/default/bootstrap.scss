@@ -1,0 +1,14 @@
+@use 'tokens' as *;
+
+@use 'bootstrap/scss/bootstrap' with (
+  $primary: $rs-rust,
+  $secondary: $rs-chrome,
+  $body-bg: $rs-paper,
+  $body-color: $rs-ink,
+  $link-color: $rs-rust-dark,
+  $border-color: $rs-line,
+  $font-family-sans-serif: var(--rs-font),
+  $border-radius: 0.35rem,
+  $enable-shadows: false,
+  $enable-gradients: false
+);

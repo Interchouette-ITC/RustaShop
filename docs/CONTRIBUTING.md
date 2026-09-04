@@ -33,6 +33,7 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make doc` | rustdoc (`-D warnings`) |
 | `make openapi` | write `openapi/openapi.json` from utoipa |
 | `make shop-angular` | serve Angular shop (`shops/angular`, port 4242) |
+| `make admin-angular` | serve Angular admin (`admin/angular`, port 4250) |
 | `make shop-leptos-rangular` | serve Leptos+rangular shop (`shops/leptos-rangular`, port 4181) |
 | `make run-api` | Actix API on host (`RUSTASHOP_BIND`, default `127.0.0.1:8080`) |
 | `make db-up` | Postgres only via compose |
@@ -42,8 +43,10 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make db-seed` | catalog seed SQL (idempotent; does not wipe) |
 | `make db-reset` | **DESTROYS** schema `public` then migrates; requires `CONFIRM=YES` |
 
-Shared shop markup/SCSS: `templates/default/`. Do not edit generated adapters under
-`shops/*/generated/` (build output, gitignored).
+Shared shop markup/SCSS: `templates/shop/default/`. Admin markup/SCSS: `templates/admin/default/`.
+Kinds (`shop` | `admin`) are separate trees; see [`../templates/README.md`](../templates/README.md).
+Do not edit generated adapters under `shops/*/generated/` or `admin/*/generated/`
+(build output, gitignored).
 
 Default DSN: `postgres://rustashop:rustashop@127.0.0.1:5432/rustashop`.
 

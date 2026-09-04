@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Angular host: emit generated/*.ng.ts from templates/default (HTML + CSS).
+ * Angular shop host: emit generated/*.ng.ts from templates/shop/default (HTML + CSS).
  */
 import { createRequire } from 'node:module';
 import {
@@ -13,13 +13,16 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertTemplateKind } from '../../../templates/scripts/assert-template-kind.mjs';
 
 const shopRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const templateRoot = join(shopRoot, '../../templates/default');
+const templateRoot = join(shopRoot, '../../templates/shop/default');
 const shopComponents = join(shopRoot, 'src/components');
 const generatedRoot = join(shopRoot, 'generated');
 const require = createRequire(join(shopRoot, 'package.json'));
 const sass = require('sass');
+
+assertTemplateKind(templateRoot, 'shop');
 
 mkdirSync(generatedRoot, { recursive: true });
 writeFileSync(join(generatedRoot, '.gitkeep'), '');
@@ -40,7 +43,7 @@ for (const name of readdirSync(templateRoot)) {
 
   writeFileSync(
     join(generatedRoot, `${name}.ng.ts`),
-    `/** Generated from templates/default/${name}/ - do not edit. */\n` +
+    `/** Generated from templates/shop/default/${name}/ - do not edit. */\n` +
       `export const template = ${JSON.stringify(html)};\n` +
       `export const styles = [${JSON.stringify(css)}];\n`,
   );

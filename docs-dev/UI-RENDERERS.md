@@ -71,7 +71,7 @@ differ by stack; **template markup is shared** under `templates/<id>/`
 - Same WS event names
 - Same MVP flows (browse → cart → checkout)
 
-Default template package: `templates/default` (`@rustashop/template-default`).
+Default template package: `templates/shop/default` (`@rustashop/template-shop-default`).
 Hosts keep controllers only; build adapters land in each shop’s `generated/`
 (gitignored).
 

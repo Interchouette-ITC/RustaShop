@@ -22,7 +22,9 @@ sqlx        seaorm
 PostgreSQL
 ```
 
-Shop markup/SCSS: `templates/default/`. Hosts: `shops/angular`, `shops/leptos-rangular`.
+Shop markup/SCSS: `templates/shop/default/`. Hosts: `shops/angular`, `shops/leptos-rangular`.
+Admin markup/SCSS: `templates/admin/default/`. Host: `admin/angular`.
+Kinds (`shop` | `admin`) must not be mixed; see [`../templates/README.md`](../templates/README.md).
 
 Serenade kernel wire (`rustashop` crate) lands when framework HTTP + bundles are ready. Until then the app boots Actix directly with persist + domain.
 
@@ -37,7 +39,7 @@ Serenade kernel wire (`rustashop` crate) lands when framework HTTP + bundles are
 | `rustashop-persist-seaorm` | SeaORM mirror schema and repos |
 | `rustashop-api` | Actix commerce HTTP, OpenAPI, Swagger UI |
 | `rustashop-mcp` | Axum MCP / agent tools (name marker; not wired yet) |
-| `rustashop-template-default` | Shared storefront HTML/SCSS package |
+| `rustashop-template-shop-default` | Shared storefront HTML/SCSS package |
 
 ## HTTP house split
 
@@ -86,6 +88,7 @@ Wasm roles (UI wasm vs plugins vs sandbox): [`docs-dev/WASM-LAYERS.md`](../docs-
 | Full stack | `make stack-up` (Postgres + migrate + API on `8080`) |
 | Host API | `make db-up && make db-migrate && make run-api` |
 | Angular shop | `make shop-angular` (port `4242`) |
+| Angular admin | `make admin-angular` (port `4250`) |
 | Leptos shop | `make shop-leptos-rangular` (port `4181`) |
 
 Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).

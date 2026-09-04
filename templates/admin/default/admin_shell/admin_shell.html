@@ -1,0 +1,33 @@
+<div class="admin">
+  <header class="admin__bar">
+    <div class="admin__bar-inner">
+      <div class="admin__brand">
+        <img
+          class="admin__mark"
+          src="brand/icon-circle-crab-64.png"
+          width="32"
+          height="32"
+          alt=""
+        />
+        <span class="admin__name">rusta<span class="admin__name-accent">shop</span> admin</span>
+      </div>
+      <div class="admin__token">
+        <label class="visually-hidden" for="admin-token">Admin API token</label>
+        <input
+          id="admin-token"
+          type="password"
+          class="form-control form-control-sm"
+          placeholder="Bearer token"
+          [ngModel]="tokenDraft()"
+          (ngModelChange)="tokenDraft.set($event)"
+          autocomplete="off"
+        />
+        <button type="button" class="btn btn-sm btn-primary" (click)="saveToken()">Save token</button>
+        <button type="button" class="btn btn-sm btn-outline-light" (click)="clearToken()">Clear</button>
+      </div>
+    </div>
+  </header>
+  <main class="admin__main">
+    <router-outlet />
+  </main>
+</div>

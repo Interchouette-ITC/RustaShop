@@ -4,14 +4,14 @@ Customer **shop** SPA for rustashop against the Commerce API.
 
 ## CSS / JS ownership
 
-Designers edit **`templates/default`**. This host only owns controllers and the
+Designers edit **`templates/shop/default`**. This host only owns controllers and the
 `bootstrap` npm dep that Sass resolves when compiling the template package.
 
 | Concern              | Owner                                                             |
 | -------------------- | ----------------------------------------------------------------- |
-| Bootstrap + tokens   | `@rustashop/template-default` (`bootstrap.scss`, `tokens.scss`)   |
-| Global chrome        | `@rustashop/template-default` (`shop.scss`)                       |
-| Component markup/CSS | `@rustashop/template-default` (`<id>/<id>.html` + `.scss`)        |
+| Bootstrap + tokens   | `@rustashop/template-shop-default` (`bootstrap.scss`, `tokens.scss`)   |
+| Global chrome        | `@rustashop/template-shop-default` (`shop.scss`)                       |
+| Component markup/CSS | `@rustashop/template-shop-default` (`<id>/<id>.html` + `.scss`)        |
 | Interactive UI       | Angular controllers under `src/components/` (no Bootstrap JS CDN) |
 | Commerce API         | CSS-agnostic                                                      |
 
