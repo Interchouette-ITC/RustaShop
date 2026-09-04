@@ -87,7 +87,7 @@ openapi:
 
 shop-angular:
 	@if ss -tln | grep -qE ':$(SHOP_ANGULAR_PORT)\\b'; then \
-		printf '\033[1;31m✗\033[0m  port \033[1m$(SHOP_ANGULAR_PORT)\033[0m busy — stop the other process or set SHOP_ANGULAR_PORT=\n'; \
+		printf '\033[1;31m✗\033[0m  port \033[1m$(SHOP_ANGULAR_PORT)\033[0m busy - stop the other process or set SHOP_ANGULAR_PORT=\n'; \
 		exit 1; \
 	fi
 	@raw="$${RUSTASHOP_API_PROXY:-$(API_BIND)}"; \
@@ -110,7 +110,7 @@ shop-angular:
 	printf '  \033[36mbase\033[0m   %s\n' "$$BASE_HREF"; \
 	printf '\n'; \
 	if [ "$$API_STATE" = down ]; then \
-		printf '  \033[33m!\033[0m  API not reachable — \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
+		printf '  \033[33m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
 	fi; \
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
