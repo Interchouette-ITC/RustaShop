@@ -1,16 +1,21 @@
-// Brand tokens for the Angular shop (restrained RustaShop palette).
-// Bootstrap theme maps onto these via `_bootstrap.scss`.
+// Brand tokens: black / white / orange (wordmark: Rusta light, Shop orange).
 
-$rs-rust: #b45309;
-$rs-rust-dark: #92400e;
-$rs-ink: #1c1917;
-$rs-muted: #57534e;
-$rs-paper: #fafaf9;
-$rs-line: #e7e5e4;
+$rs-orange: #eb4101;
+$rs-orange-dark: #c43500;
+$rs-ink: #0a0a0a;
+$rs-muted: #6b7280;
+$rs-paper: #ffffff;
+$rs-line: #e5e7eb;
+
+// Bootstrap theme aliases (primary = brand orange).
+$rs-rust: $rs-orange;
+$rs-rust-dark: $rs-orange-dark;
 
 :root {
-  --rs-rust: #{$rs-rust};
-  --rs-rust-dark: #{$rs-rust-dark};
+  --rs-orange: #{$rs-orange};
+  --rs-orange-dark: #{$rs-orange-dark};
+  --rs-rust: #{$rs-orange};
+  --rs-rust-dark: #{$rs-orange-dark};
   --rs-ink: #{$rs-ink};
   --rs-muted: #{$rs-muted};
   --rs-paper: #{$rs-paper};

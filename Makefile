@@ -103,14 +103,14 @@ shop-angular:
 		API_STATE=down; API_COLOR='\033[33m'; \
 	fi; \
 	printf '\n'; \
-	printf '  \033[38;2;180;83;9m\033[1mRustaShop\033[0m  \033[2mshop-angular\033[0m\n'; \
+	printf '  🦀  \033[97m\033[1mRusta\033[0m\033[38;2;235;65;1m\033[1mShop\033[0m  🛒  \033[2mshop-angular\033[0m\n'; \
 	printf '  \033[2m─────────────────────────────────────\033[0m\n'; \
-	printf '  \033[36mshop\033[0m   http://127.0.0.1:$(SHOP_ANGULAR_PORT)/\n'; \
-	printf '  \033[36mapi\033[0m    %s  %b%s\033[0m\n' "$$API_PROXY" "$$API_COLOR" "$$API_STATE"; \
-	printf '  \033[36mbase\033[0m   %s\n' "$$BASE_HREF"; \
+	printf '  \033[37mshop\033[0m   http://127.0.0.1:$(SHOP_ANGULAR_PORT)/\n'; \
+	printf '  \033[37mapi\033[0m    %s  %b%s\033[0m\n' "$$API_PROXY" "$$API_COLOR" "$$API_STATE"; \
+	printf '  \033[37mbase\033[0m   %s\n' "$$BASE_HREF"; \
 	printf '\n'; \
 	if [ "$$API_STATE" = down ]; then \
-		printf '  \033[33m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
+		printf '  \033[38;2;235;65;1m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
 	fi; \
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \

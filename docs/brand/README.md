@@ -1,4 +1,4 @@
-# Serenade brand assets (`docs/brand`)
+# RustaShop brand assets (`docs/brand`)
 
 Public named copies and **resize-only** size declensions.
 
