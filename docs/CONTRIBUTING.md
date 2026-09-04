@@ -69,17 +69,21 @@ cargo check -p rustashop-persist -p rustashop-api --no-default-features --featur
 - **Product architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - **Foundations** (Wasm, realtime, AI, domains): [`docs-dev/`](../docs-dev/)
 - **OpenAPI:** live at `/openapi.json` and `/swagger-ui/`; committed dump via `make openapi`
+- **Code of Conduct:** [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- **Security policy:** [`SECURITY.md`](SECURITY.md)
 - No plan jargon or host-absolute paths in shipped text
 
 ## Issues and epics
 
+- Use GitHub issue forms (Bug report / Feature request) when opening issues.
 - Commerce and product ops: this repo’s GitHub issues / milestones.
 - Framework kernel, DI, HTTP foundation, console: Serenade issues.
 - Kernel wire into rustashop: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
 
 ## Commits and PRs
 
-Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, …). PR body: **Summary** + **Test plan** only.
+Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, …). PR body follows
+[`pull_request_template.md`](pull_request_template.md) (**Summary** + **Test plan** only).
 
 ## License
 
