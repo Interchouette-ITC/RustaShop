@@ -139,7 +139,7 @@ jobs:
           ! grep -nE 'npm start -- .*--base-href' Makefile
       - name: Install
         if: needs.changes.outputs.code == 'true'
-        run: npm ci --no-fund --no-audit
+        run: npm ci
       - name: Lint
         if: needs.changes.outputs.code == 'true'
         run: npm run lint
@@ -168,10 +168,78 @@ jobs:
           cache-dependency-path: admin/angular/package-lock.json
       - name: Install
         if: needs.changes.outputs.code == 'true'
-        run: npm ci --no-fund --no-audit
+        run: npm ci
       - name: Lint
         if: needs.changes.outputs.code == 'true'
         run: npm run lint
       - name: Build
         if: needs.changes.outputs.code == 'true'
         run: npm run build
+
+  install-ui:
+    name: install-ui
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: install
+    steps:
+      - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping install-ui"
+      - uses: actions/setup-node@v4
+        if: needs.changes.outputs.code == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: install/package-lock.json
+      - name: Install
+        if: needs.changes.outputs.code == 'true'
+        run: npm ci
+      - name: Build
+        if: needs.changes.outputs.code == 'true'
+        run: npm run build
+
+  supply-chain:
+    name: supply-chain
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Markdown-only
+        if: needs.changes.outputs.code != 'true'
+        run: echo "markdown-only; skipping supply-chain"
+      - uses: actions/setup-node@v4
+        if: needs.changes.outputs.code == 'true'
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+        if: needs.changes.outputs.code == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: needs.changes.outputs.code == 'true'
+      - name: Install cargo-audit and cargo-deny
+        if: needs.changes.outputs.code == 'true'
+        run: |
+          cargo install --locked cargo-audit --version 0.22.0
+          cargo install --locked cargo-deny --version 0.20.2
+      - name: Cargo audit and deny
+        if: needs.changes.outputs.code == 'true'
+        run: make audit && make deny
+      - name: npm audit shop
+        if: needs.changes.outputs.code == 'true'
+        working-directory: shops/angular
+        run: npm ci && npm audit --audit-level=high --omit=dev && NPM_CONFIG_MIN_RELEASE_AGE=0 npx --yes --package=cve-lite-cli@1.33.0 cve-lite . --fail-on high
+      - name: npm audit admin
+        if: needs.changes.outputs.code == 'true'
+        working-directory: admin/angular
+        run: npm ci && npm audit --audit-level=high --omit=dev && NPM_CONFIG_MIN_RELEASE_AGE=0 npx --yes --package=cve-lite-cli@1.33.0 cve-lite . --fail-on high
+      - name: npm audit install
+        if: needs.changes.outputs.code == 'true'
+        working-directory: install
+        run: npm ci && npm audit --audit-level=high --omit=dev && NPM_CONFIG_MIN_RELEASE_AGE=0 npx --yes --package=cve-lite-cli@1.33.0 cve-lite . --fail-on high
+      - name: Malware IoC scan
+        if: needs.changes.outputs.code == 'true'
+        run: node scripts/npm-malware-scan.mjs .
