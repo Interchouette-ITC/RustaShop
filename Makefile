@@ -16,7 +16,7 @@ FORCE ?= 0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
+.PHONY: help check test lint lint-shop-angular format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -26,7 +26,7 @@ help:
 	@echo ""
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
-	@echo "  make lint       fmt check + SQL safety test + clippy (workspace + SeaORM features)"
+	@echo "  make lint       fmt check + SQL safety + clippy + shop-angular lint (when node_modules present)"
 	@echo "  make check-sql-safety  cargo test: deny format!-built SQL in persist crates"
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
@@ -64,7 +64,15 @@ format-check:
 check-sql-safety:
 	cd $(ROOT) && $(CARGO) test -p rustashop-persist-sqlx --test sql_safety
 
-lint: format-check check-sql-safety
+# Angular shop eslint. Skips only when node_modules is missing (fresh clone without npm install).
+lint-shop-angular:
+	@if [ ! -d "$(ROOT)/$(SHOP_ANGULAR_DIR)/node_modules" ]; then \
+		echo "skip lint-shop-angular: $(SHOP_ANGULAR_DIR)/node_modules missing (npm install or make shop-angular)"; \
+	else \
+		cd $(ROOT)/$(SHOP_ANGULAR_DIR) && npm run lint; \
+	fi
+
+lint: format-check check-sql-safety lint-shop-angular
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)
 	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
