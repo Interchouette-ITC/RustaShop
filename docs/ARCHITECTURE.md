@@ -59,7 +59,7 @@ Intended commerce path when cart/checkout land: catalog → cart → checkout �
 
 ## Persistence
 
-- Postgres in Docker (`docker compose`); no host Postgres install.
+- Postgres in Docker (`docker/compose.yml`); no host Postgres install.
 - Dual backends behind one facade; enable exactly one of `persist-sqlx` / `persist-seaorm`.
 - Diesel is deferred (separate issue).
 - Repository traits come from **serenade-contracts**; adapters live here.
@@ -80,7 +80,7 @@ Wasm roles (UI wasm vs plugins vs sandbox) are spelled out in [`docs-dev/WASM-LA
 
 | Mode | Command |
 | --- | --- |
-| Full stack | `docker compose up --build` (Postgres + migrate + API on `8080`) |
+| Full stack | `make stack-up` (Postgres + migrate + API on `8080`) |
 | Host API | `make db-up && make db-migrate && make run-api` |
 
 Do not bind `8080` twice. Details: [`CONTRIBUTING.md`](CONTRIBUTING.md).
