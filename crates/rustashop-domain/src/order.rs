@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Cart, CartLine, Currency, DomainError, Money};
 
-/// Payment stub until a PSP is wired.
+/// Payment status before a payment provider is attached (`pending` at checkout).
 pub const PAYMENT_STATUS_PENDING: &str = "pending";
 
 /// Placed order line snapshot.
@@ -56,13 +56,13 @@ pub struct Order {
     pub customer_id: Option<String>,
     /// Fulfillment state (`placed` after checkout).
     pub state: String,
-    /// Payment stub (`pending` until a PSP is wired).
+    /// Payment status (`pending` at checkout; no provider attached yet).
     pub payment_status: String,
     /// Order currency.
     pub currency: Currency,
     /// Sum of line totals.
     pub items_total: Money,
-    /// Payable total (same as items for this slice).
+    /// Payable total (equals `items_total` until fees or taxes are modeled).
     pub total: Money,
     /// Optional client idempotency key.
     pub idempotency_key: Option<String>,

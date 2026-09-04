@@ -107,9 +107,10 @@ fn variant_label(variant: &ProductVariant) -> String {
         .clone()
         .unwrap_or_else(|| variant.sku.clone());
     format!(
-        "{name} - {} (stock {})",
+        "{name} - {} (stock {}) [{}]",
         variant.price.display(),
-        variant.stock_quantity
+        variant.stock_quantity,
+        variant.parent_product_id()
     )
 }
 
@@ -123,12 +124,16 @@ fn detail_body(model: DetailViewModel) -> AnyView {
     let Some(detail) = model.product else {
         return view! { <p class="shop__tagline">"Product not found."</p> }.into_any();
     };
+    let listed = detail.is_listed();
     let variants = detail.variants.clone();
     view! {
         <article>
             <header class="shop__hero">
                 <h1 class="shop__title">{detail.name.clone()}</h1>
-                <p class="shop__tagline">{detail.slug.clone()}</p>
+                <p class="shop__tagline">{format!("{} · {}", detail.slug, detail.id)}</p>
+                {(!listed).then(|| view! {
+                    <p class="shop__tagline" role="status">"This product is not listed in the catalog."</p>
+                })}
             </header>
             {detail.description.map_or_else(
                 || ().into_any(),

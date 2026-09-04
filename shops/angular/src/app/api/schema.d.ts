@@ -228,6 +228,8 @@ export interface components {
         };
         /** @description JSON body for `GET /healthz`. */
         HealthResponse: {
+            /** @description Serenade kernel integration marker from the `rustashop` crate. */
+            kernel: string;
             /** @description Liveness status. */
             status: string;
         };
@@ -275,7 +277,7 @@ export interface components {
             lines: components["schemas"]["OrderLineResponse"][];
             /** @description Human-readable number. */
             number: string;
-            /** @description Payment stub (`pending` until a PSP is wired). */
+            /** @description Payment status (`pending` at checkout; no provider attached yet). */
             payment_status: string;
             /** @description Fulfillment state. */
             state: string;

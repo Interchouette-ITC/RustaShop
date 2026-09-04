@@ -13,6 +13,7 @@ no_autoreload = false
 wasm_opt = "version_132"
 
 # Same shape as Angular `proxy.conf.js`: browser `/api/*` → Actix (strip `/api`).
+# Default matches Makefile `API_BIND` / `RUSTASHOP_BIND` (`127.0.0.1:8080`).
 [[proxy]]
 rewrite = "/api/"
 backend = "http://127.0.0.1:8080/"

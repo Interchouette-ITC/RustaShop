@@ -2108,12 +2108,6 @@ dependencies = [
 [[package]]
 name = "rustashop"
 version = "0.1.0"
-dependencies = [
- "rustashop-domain",
- "serde",
- "thiserror",
- "tokio",
-]
 
 [[package]]
 name = "rustashop-api"
@@ -2152,10 +2146,6 @@ name = "rustashop-mcp"
 version = "0.1.0"
 dependencies = [
  "rustashop",
- "rustashop-domain",
- "serde",
- "thiserror",
- "tokio",
 ]
 
 [[package]]

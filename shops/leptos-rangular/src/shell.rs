@@ -3,7 +3,7 @@ use leptos_router::components::A;
 
 use crate::cart::use_cart;
 
-/// Thin shop chrome (Angular `shop_shell` still uses routerLink; host nav until that is portable).
+/// Leptos shop chrome (nav + cart badge). Markup/SCSS for Angular `shop_shell` live in `templates/default`.
 #[component]
 pub fn ShopShell(children: Children) -> impl IntoView {
     let cart = use_cart();
