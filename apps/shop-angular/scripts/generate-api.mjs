@@ -8,9 +8,11 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { performance } from 'node:perf_hooks';
 
 const packageDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const outFile = join(packageDir, 'src', 'app', 'api', 'schema.d.ts');
+const outRel = 'src/app/api/schema.d.ts';
+const outFile = join(packageDir, outRel);
 
 function findOpenApiSpec(startDir) {
   let dir = startDir;
@@ -36,5 +38,21 @@ if (!spec) {
 }
 
 const bin = join(packageDir, 'node_modules', '.bin', 'openapi-typescript');
-const result = spawnSync(bin, [spec, '-o', outFile], { stdio: 'inherit' });
-process.exit(result.status === null ? 1 : result.status);
+const started = performance.now();
+const result = spawnSync(bin, [spec, '-o', outFile], {
+  encoding: 'utf8',
+  stdio: ['ignore', 'pipe', 'pipe'],
+});
+if (result.status !== 0) {
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
+  }
+  if (result.stdout) {
+    process.stdout.write(result.stdout);
+  }
+  process.exit(result.status === null ? 1 : result.status);
+}
+
+const ms = (performance.now() - started).toFixed(1);
+console.log(`openapi  openapi.json → ${outRel}  (${ms}ms)`);
+process.exit(0);
