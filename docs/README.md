@@ -94,6 +94,8 @@ Detail: [`../docs-dev/DOMAINS.md`](../docs-dev/DOMAINS.md).
 | ------------------------------------------------ | ----------------------------------------- |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md)             | Crates, HTTP split, request path          |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md)             | Make targets, lint bar, PR habits         |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)       | Community standards                       |
+| [`SECURITY.md`](SECURITY.md)                     | Vulnerability reporting                   |
 | [`../docs-dev/README.md`](../docs-dev/README.md) | Foundations (Wasm, realtime, AI, domains) |
 | [`brand/`](brand/)                               | Brand assets                              |
 
