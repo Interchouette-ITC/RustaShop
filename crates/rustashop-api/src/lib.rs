@@ -32,7 +32,9 @@ pub use carts::{
 };
 pub use checkout::{place_order, OrderLineResponse, OrderResponse};
 pub use health::{healthz, HealthResponse};
-pub use install_env::{run_install_write, InstallWriteOptions, InstallWriteResult};
+pub use install_env::{
+    run_install_write, InstallEnvError, InstallWriteOptions, InstallWriteResult,
+};
 pub use install_fs::{
     install_artefacts_present, shop_root, INSTALL_DIR_NAME, INSTALL_OFF_DIR_NAME, ROOT_ENV,
 };

@@ -67,7 +67,7 @@ pub fn existing_prefix_needs_wipe(root: &Path) -> bool {
 ///
 /// # Errors
 ///
-/// Returns [`InstallEnvError`] when wipe is required, the segment is invalid, or IO fails.
+/// Returns [`crate::InstallEnvError`] when wipe is required, the segment is invalid, or IO fails.
 pub fn run_install_write(
     options: &InstallWriteOptions,
 ) -> Result<InstallWriteResult, InstallEnvError> {
