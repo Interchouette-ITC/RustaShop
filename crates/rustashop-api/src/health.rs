@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 pub struct HealthResponse {
     /// Liveness status.
     pub status: String,
-    /// Serenade kernel integration marker from the `rustashop` crate.
+    /// Serenade kernel integration marker from the `rustashop` crate (`serenade` after boot).
     pub kernel: String,
 }
 

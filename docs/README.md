@@ -35,7 +35,7 @@ AI is on the product map (discovery, shopping agents, catalog assist, pricing, s
 | **UI A**         | `shops/angular` - Angular storefront (catalog, cart, checkout)                                                                                      |
 | **UI B**         | `shops/leptos-rangular` - Leptos + rangular (catalog, product, cart)                                                                                |
 | **Admin**        | `admin/angular` - Angular sample BO (orders table + status PATCH; bearer token)                                                                     |
-| **Framework**    | [Serenade](https://github.com/Interchouette-ITC/Serenade) contracts / kernel wire ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)) |
+| **Framework**    | [Serenade](https://github.com/Interchouette-ITC/Serenade) kernel boot in `rustashop` ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)); Actix still serves commerce HTTP |
 
 Still building toward: one payment provider, WebSocket live surfaces, MCP / agent tools (Axum).
 

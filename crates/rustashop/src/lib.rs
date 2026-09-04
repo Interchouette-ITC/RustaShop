@@ -1,23 +1,189 @@
 //! Application kernel package for rustashop.
 //!
-//! Holds the Serenade integration marker. Domain and HTTP crates boot without
-//! this package until the kernel path is wired ([#49](https://github.com/Interchouette-ITC/rustashop/issues/49)).
+//! Boots a Serenade [`App`] with [`FrameworkBundle`] and
+//! [`RustashopBundle`], then builds the DI container from `config/packages`.
 
-/// Diagnostics marker while Serenade lifecycle is not wired into this package.
+mod bundle;
+
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+
+use serenade_bundle::{build_container, BundleError, FrameworkBundle, FrameworkExtension};
+use serenade_config::Config;
+use serenade_di::Container;
+use serenade_kernel::{App, Application, Environment, KernelPhase};
+
+pub use bundle::{RustashopBundle, RustashopExtension, RUSTASHOP_BUNDLE};
+
+/// Diagnostics marker before [`boot_kernel`] succeeds in this process.
 pub const SERENADE_KERNEL_PENDING: &str = "serenade-pending";
 
+/// Diagnostics marker after a successful [`boot_kernel`] in this process.
+pub const SERENADE_KERNEL_BOOTED: &str = "serenade";
+
+static KERNEL_STATUS: OnceLock<&'static str> = OnceLock::new();
+
+/// Relative packages directory under the shop root.
+pub const PACKAGES_DIR: &str = "config/packages";
+
+/// Environment variable for `APP_ENV` (Serenade / Symfony habit).
+pub const APP_ENV: &str = "APP_ENV";
+
+/// Booted Serenade application plus compiled DI container.
+pub struct RustashopKernel {
+    app: App,
+    config: Config,
+    container: Container,
+}
+
+impl RustashopKernel {
+    /// Active Serenade environment.
+    #[must_use]
+    pub fn environment(&self) -> &Environment {
+        self.app.kernel().environment()
+    }
+
+    /// Registered bundle names in dependency order.
+    #[must_use]
+    pub fn bundle_names(&self) -> Vec<&'static str> {
+        self.app.kernel().bundle_names()
+    }
+
+    /// Kernel lifecycle phase.
+    #[must_use]
+    pub fn phase(&self) -> KernelPhase {
+        self.app.kernel().phase()
+    }
+
+    /// Merged root config snapshot.
+    #[must_use]
+    pub const fn config(&self) -> &Config {
+        &self.config
+    }
+
+    /// Compiled DI container.
+    #[must_use]
+    pub const fn container(&self) -> &Container {
+        &self.container
+    }
+
+    /// Shuts the Serenade application down.
+    ///
+    /// # Errors
+    ///
+    /// Propagates Serenade kernel shutdown failures as [`BundleError`].
+    pub fn shutdown(mut self) -> Result<(), BundleError> {
+        self.app.shutdown()?;
+        Ok(())
+    }
+}
+
 /// Returns the kernel integration status for health and diagnostics surfaces.
+///
+/// Starts as [`SERENADE_KERNEL_PENDING`] until [`boot_kernel`] succeeds once in
+/// this process, then [`SERENADE_KERNEL_BOOTED`].
 #[must_use]
-pub const fn kernel_status() -> &'static str {
-    SERENADE_KERNEL_PENDING
+pub fn kernel_status() -> &'static str {
+    KERNEL_STATUS
+        .get()
+        .copied()
+        .unwrap_or(SERENADE_KERNEL_PENDING)
+}
+
+/// Boots Serenade (`FrameworkBundle` + [`RustashopBundle`]) and builds the DI container.
+///
+/// Loads dotenv files under `shop_root`, reads `config/packages` (plus env overlay),
+/// and marks [`kernel_status`] as booted on success.
+///
+/// # Errors
+///
+/// Returns [`BundleError`] when environment parsing, dotenv, bundle registration,
+/// boot, or container compile fails.
+pub fn boot_kernel(shop_root: &Path) -> Result<RustashopKernel, BundleError> {
+    let env_name = std::env::var(APP_ENV).unwrap_or_else(|_| "dev".to_owned());
+    let environment =
+        Environment::from_name(&env_name).map_err(|error| BundleError::Extension {
+            alias: RUSTASHOP_BUNDLE,
+            message: error.to_string(),
+        })?;
+
+    serenade_config::load_dotenv(shop_root, environment.as_str()).map_err(|error| {
+        BundleError::Extension {
+            alias: RUSTASHOP_BUNDLE,
+            message: error.to_string(),
+        }
+    })?;
+
+    let mut app = App::new(environment.clone());
+    app.register_bundle(RustashopBundle)?;
+    app.register_bundle(FrameworkBundle)?;
+    app.boot()?;
+
+    let packages = packages_dir(shop_root);
+    let (config, container) = build_container(
+        Some(packages.as_path()),
+        environment.as_str(),
+        &[&FrameworkExtension, &RustashopExtension],
+    )?;
+
+    let _ = KERNEL_STATUS.set(SERENADE_KERNEL_BOOTED);
+
+    Ok(RustashopKernel {
+        app,
+        config,
+        container,
+    })
+}
+
+/// `shop_root/config/packages`.
+#[must_use]
+pub fn packages_dir(shop_root: &Path) -> PathBuf {
+    shop_root.join(PACKAGES_DIR)
+}
+
+/// Ensures framework and rustashop packages exist under `shop_root` (tests / empty trees).
+///
+/// # Errors
+///
+/// Returns [`std::io::Error`] when directories or files cannot be created.
+pub fn ensure_default_packages(shop_root: &Path) -> std::io::Result<()> {
+    let packages = packages_dir(shop_root);
+    std::fs::create_dir_all(&packages)?;
+    let framework = packages.join("framework.toml");
+    if !framework.is_file() {
+        std::fs::write(&framework, "[framework]\nsecret = \"change-me\"\n")?;
+    }
+    let rustashop = packages.join("rustashop.toml");
+    if !rustashop.is_file() {
+        std::fs::write(&rustashop, "[rustashop]\nname = \"rustashop\"\n")?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serenade_bundle::FRAMEWORK_BUNDLE;
+    use std::fs;
 
     #[test]
-    fn kernel_status_is_pending_marker() {
-        assert_eq!(kernel_status(), SERENADE_KERNEL_PENDING);
+    fn boot_kernel_registers_framework_and_rustashop() {
+        let dir = tempfile_dir("boot");
+        ensure_default_packages(&dir).expect("packages");
+        let kernel = boot_kernel(&dir).expect("boot");
+        assert_eq!(kernel.phase(), KernelPhase::Booted);
+        let names = kernel.bundle_names();
+        assert!(names.contains(&FRAMEWORK_BUNDLE));
+        assert!(names.contains(&RUSTASHOP_BUNDLE));
+        assert_eq!(kernel_status(), SERENADE_KERNEL_BOOTED);
+        kernel.shutdown().expect("shutdown");
+    }
+
+    fn tempfile_dir(label: &str) -> PathBuf {
+        let dir =
+            std::env::temp_dir().join(format!("rustashop-kernel-{label}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("tmpdir");
+        dir
     }
 }
