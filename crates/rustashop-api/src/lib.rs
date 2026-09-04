@@ -102,7 +102,7 @@ pub async fn run() -> std::io::Result<()> {
     let version = env!("CARGO_PKG_VERSION");
     let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "(unset)".to_owned());
 
-    info!("RustaShop API {version}");
+    info!("rustashop API {version}");
     info!("bind: http://{bind} (override with {BIND_ENV})");
     info!("persist: {PERSIST_BACKEND}");
     info!("database: {}", redacted_database_url(&database_url));

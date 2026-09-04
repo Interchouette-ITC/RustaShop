@@ -1,6 +1,6 @@
 # Angular shop (UI track A) - `@rustashop/shop-angular` 0.1.0
 
-Customer **shop** SPA for RustaShop against the Commerce API.
+Customer **shop** SPA for rustashop against the Commerce API.
 
 ## CSS / JS ownership
 

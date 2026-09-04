@@ -4,7 +4,7 @@
 
 The [Wasmer SDK local sandboxes](https://wasmer.io/posts/wasmer-local-sandboxes-for-ai-agents) model embeds runtimes (Python, Node/Edge.js, PHP, Postgres-as-package, and more) **inside** the host application as Wasm-isolated guests: no Docker daemon, fast create, usable from Rust/JS/Python hosts and, for demos, the browser.
 
-For RustaShop this is an **innovation and safety surface**: polyglot execution wrapped around a Rust commerce kernel. It is a separate foundation axis from storefront Wasm and from WIT plugins ([WASM-LAYERS.md](WASM-LAYERS.md)).
+For rustashop this is an **innovation and safety surface**: polyglot execution wrapped around a Rust commerce kernel. It is a separate foundation axis from storefront Wasm and from WIT plugins ([WASM-LAYERS.md](WASM-LAYERS.md)).
 
 ## What we are buying
 
@@ -47,7 +47,7 @@ Wasmer JS + Angular or Leptos shell:
 
 ### 4. Migration and compatibility
 
-Reference PHP trees under local `PHP/` (gitexcluded) inform adapters. Product angle: **execute** carefully wrapped legacy glue during cutover, emit RustaShop domain events. We are not “a PHP host”; we are a **migration runtime** when needed.
+Reference PHP trees under local `PHP/` (gitexcluded) inform adapters. Product angle: **execute** carefully wrapped legacy glue during cutover, emit rustashop domain events. We are not “a PHP host”; we are a **migration runtime** when needed.
 
 ### 5. Composed peripheral runtimes
 

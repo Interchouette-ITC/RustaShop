@@ -1,6 +1,6 @@
 # Domains and deploy surfaces
 
-Product name: **RustaShop**. DNS hostnames stay lowercase (`rustashop.ai`, …).
+Product name: **rustashop**. DNS hostnames stay lowercase (`rustashop.ai`, …).
 
 Operator creates Render services; **no Render Blueprint / service YAML is maintained in this repo** for that hand-off. This note is the product map so DNS, images, and clients stay aligned.
 

@@ -1,6 +1,6 @@
 [package]
 name = "rustashop"
-description = "RustaShop application kernel"
+description = "rustashop application kernel"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

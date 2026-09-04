@@ -14,7 +14,7 @@ export class ShopShell implements OnInit {
   private readonly cartStore = inject(CartStore);
 
   protected readonly lineCount = this.cartStore.lineCount;
-  protected readonly brand = signal('RustaShop');
+  protected readonly brand = signal('rustashop');
 
   ngOnInit(): void {
     rsConsoleWrite({ ns: 'rs:boot', topic: 'shell' });

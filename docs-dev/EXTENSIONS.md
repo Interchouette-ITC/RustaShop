@@ -2,7 +2,7 @@
 
 ## Goal
 
-Give RustaShop a **Meteor-level opinion on extensibility**: modules attach to **stable interfaces**, not by overriding core types. The Wasm Component Model and WIT are the preferred ABI for first-party and third-party commerce plugins.
+Give rustashop a **Meteor-level opinion on extensibility**: modules attach to **stable interfaces**, not by overriding core types. The Wasm Component Model and WIT are the preferred ABI for first-party and third-party commerce plugins.
 
 Implement the ABI **early and scoped** (one or two hooks + harness), not “rewrite the monolith as components.”
 
@@ -67,7 +67,7 @@ Some integrations want **in-process native bindings** (for example Rust host ↔
 
 |        | PyO3 (or similar) connector              | Wasmer Python guest               |
 | ------ | ---------------------------------------- | --------------------------------- |
-| Author | RustaShop / trusted partner              | Merchant, agent, migrator         |
+| Author | rustashop / trusted partner              | Merchant, agent, migrator         |
 | Trust  | First-party                              | Untrusted                         |
 | Use    | Official connectors, shared memory paths | Scripts, experiments, legacy glue |
 

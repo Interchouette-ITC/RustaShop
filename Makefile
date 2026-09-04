@@ -1,4 +1,4 @@
-# RustaShop developer targets
+# rustashop developer targets
 
 SHELL := /bin/bash
 ROOT := $(abspath .)
@@ -22,7 +22,7 @@ SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
 
 help:
-	@echo "RustaShop targets"
+	@echo "rustashop targets"
 	@echo ""
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
@@ -103,7 +103,7 @@ shop-angular:
 		API_STATE=down; API_COLOR='\033[33m'; \
 	fi; \
 	printf '\n'; \
-	printf '  🦀 Rusta\033[38;2;235;65;1mShop\033[0m 🛒\n'; \
+	printf '  🦀 \033[97m\033[1mrusta\033[0m\033[38;2;235;65;1m\033[1mshop\033[0m 🛒\n'; \
 	printf '  \033[2m─────────────────────────────────────\033[0m\n'; \
 	printf '  \033[37mapp\033[0m    shop-angular\n'; \
 	printf '  \033[37mshop\033[0m   http://127.0.0.1:$(SHOP_ANGULAR_PORT)/\n'; \

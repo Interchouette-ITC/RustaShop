@@ -1,4 +1,4 @@
-# RustaShop brand assets (`docs/brand`)
+# rustashop brand assets (`docs/brand`)
 
 Public named copies and **resize-only** size declensions.
 
@@ -51,3 +51,12 @@ Processing rule: **copy + LANCZOS resize only**. No flood-fill, no alpha rewriti
 - Favicon: `favicon-32.png`
 
 Tagline: **Modern commerce. Rust powered.**
+
+## GitHub README wordmark
+
+Theme-aware SVG (black/orange on light, white/orange on dark):
+
+| File | Use |
+| --- | --- |
+| `wordmark-gh-light.svg` | GitHub light (`#gh-light-mode-only`) |
+| `wordmark-gh-dark.svg` | GitHub dark (`#gh-dark-mode-only`) |
