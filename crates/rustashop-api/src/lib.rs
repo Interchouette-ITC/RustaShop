@@ -2,6 +2,7 @@
 
 mod admin_auth;
 mod admin_orders;
+mod admin_products;
 mod carts;
 mod checkout;
 mod error;
@@ -17,6 +18,7 @@ pub use admin_auth::{AdminAuthConfig, ADMIN_TOKEN_ENV, ADMIN_TOKEN_ENV_ALT};
 pub use admin_orders::{
     list_admin_orders, patch_admin_order, OrderListResponse, PatchOrderStatusRequest,
 };
+pub use admin_products::list_admin_products;
 pub use carts::{
     add_cart_line, create_cart, delete_cart_line, get_cart, update_cart_line, CartLineResponse,
     CartResponse, MoneyResponse,
@@ -63,7 +65,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         .service(delete_cart_line)
         .service(place_order)
         .service(list_admin_orders)
-        .service(patch_admin_order);
+        .service(patch_admin_order)
+        .service(list_admin_products);
 }
 
 /// Redacts the password in a Postgres URL for safe logging.
@@ -197,6 +200,7 @@ mod tests {
         assert!(paths.get("/v1/carts").is_some());
         assert!(paths.get("/v1/checkout").is_some());
         assert!(paths.get("/v1/admin/orders").is_some());
+        assert!(paths.get("/v1/admin/products").is_some());
         assert!(paths.get("/healthz").is_some());
     }
 }

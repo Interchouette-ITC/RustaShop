@@ -55,6 +55,7 @@ a:hover {
   gap: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  flex-wrap: wrap;
 }
 
 .admin__mark {
@@ -64,6 +65,23 @@ a:hover {
 
 .admin__name-accent {
   color: var(--rs-orange);
+}
+
+.admin__nav {
+  display: inline-flex;
+  gap: 0.85rem;
+  margin-left: 0.5rem;
+  font-weight: 600;
+}
+
+.admin__nav a {
+  color: #9ca3af;
+}
+
+.admin__nav a.active,
+.admin__nav a:hover {
+  color: #f9fafb;
+  text-decoration: none;
 }
 
 .admin__token {

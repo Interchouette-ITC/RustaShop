@@ -20,6 +20,25 @@ impl SeaOrmCatalogRepository {
         Self { db }
     }
 
+    /// Lists all products for admin (includes disabled), slug order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PersistenceError`] on query failure.
+    pub async fn list_all_products(
+        &self,
+        page: PageRequest,
+    ) -> Result<Vec<Product>, PersistenceError> {
+        let rows = product::Entity::find()
+            .order_by_asc(product::Column::Slug)
+            .limit(u64::from(page.limit))
+            .offset(u64::from(page.offset))
+            .all(&self.db)
+            .await
+            .map_err(|error| internal(&error))?;
+        Ok(rows.into_iter().map(product_from_model).collect())
+    }
+
     /// Lists purchasable variants for a product (SKU order).
     ///
     /// # Errors

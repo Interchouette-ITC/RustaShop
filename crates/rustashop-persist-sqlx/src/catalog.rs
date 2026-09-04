@@ -18,6 +18,27 @@ impl SqlxCatalogRepository {
         Self { pool }
     }
 
+    /// Lists all products for admin (includes disabled), slug order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PersistenceError`] on query failure.
+    pub async fn list_all_products(
+        &self,
+        page: PageRequest,
+    ) -> Result<Vec<Product>, PersistenceError> {
+        let rows = sqlx::query_as::<_, ProductRow>(
+            "SELECT id::text AS id, category_id::text AS category_id, slug, name, description, enabled
+             FROM product ORDER BY slug LIMIT $1 OFFSET $2",
+        )
+        .bind(i64::from(page.limit))
+        .bind(i64::from(page.offset))
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|error| internal(&error))?;
+        Ok(rows.into_iter().map(ProductRow::into_product).collect())
+    }
+
     /// Lists purchasable variants for a product (SKU order).
     ///
     /// # Errors
