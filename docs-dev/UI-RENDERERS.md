@@ -63,7 +63,9 @@ GPUI renderer work belongs primarily in **rangular** (new backend target). rusta
 
 ## Angular track (parallel)
 
-Angular remains **UI option A**: mature SPA under `apps/shop-angular`. Feature parity with the Leptos+rangular track is a **product habit**, not shared code:
+Angular remains **UI option A**: mature SPA under `shops/angular`. Controllers
+differ by stack; **template markup is shared** under `templates/<id>/`
+(rangular subset). Also share:
 
 - Same API types (OpenAPI codegen)
 - Same WS event names
@@ -71,7 +73,11 @@ Angular remains **UI option A**: mature SPA under `apps/shop-angular`. Feature p
 
 ## Leptos + rangular track
 
-Track B is **Leptos as the web host** (CSR wasm today) with **rangular** for Angular-shaped templates/controllers. Make target: `make shop-leptos-rangular`. Path: `apps/shop-leptos-rangular`. It is not “rangular alone”: Leptos is the renderer we want to grow for shop **and**, later, back-office.
+Track B is **Leptos as the web host** (CSR wasm today) with **rangular** Host
+controllers and the same `templates/<id>/` files as Angular. Make target:
+`make shop-leptos-rangular`. Path: `shops/leptos-rangular`. It is not
+“rangular alone”: Leptos is the renderer we want to grow for shop **and**, later,
+back-office.
 
 ## Admin (pluggable)
 
@@ -79,10 +85,10 @@ The back-office is **API-first**. Any SPA that speaks admin OpenAPI + auth may p
 
 ## Make targets (shops)
 
-| Target | Role |
-| --- | --- |
-| `make shop-angular` | Serve Angular shop (port `4242` by default) |
-| `make shop-leptos-rangular` | Serve Leptos+rangular shop (Trunk; port documented in that client) |
+| Target                      | Role                                                    |
+| --------------------------- | ------------------------------------------------------- |
+| `make shop-angular`         | Serve Angular shop (port `4242` by default)             |
+| `make shop-leptos-rangular` | Serve Leptos+rangular shop (Trunk; default port `4181`) |
 
 Product vocabulary: **shop** (not storefront / vitrine).
 
@@ -98,10 +104,10 @@ Product vocabulary: **shop** (not storefront / vitrine).
 
 Upstream rangular work splits into **two blockers** with different blast radius:
 
-| Upstream | Blocks | Does not block |
-| --- | --- | --- |
+| Upstream                                                                                     | Blocks                                                                                            | Does not block                                                                                |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | [rangular #22](https://github.com/Interchouette-ITC/rangular/issues/22) (forms / validators) | Leptos+rangular **checkout**, **admin CRUD**, multi-field UX on **any** renderer (Leptos or GPUI) | API; Angular shop; Leptos+rangular **browse-only** (catalog list/detail, add-to-cart buttons) |
-| [rangular #37](https://github.com/Interchouette-ITC/rangular/issues/37) (GPUI backend) | rangular **native** host only | Leptos web shop; Angular; API |
+| [rangular #37](https://github.com/Interchouette-ITC/rangular/issues/37) (GPUI backend)       | rangular **native** host only                                                                     | Leptos web shop; Angular; API                                                                 |
 
 Suggested order:
 

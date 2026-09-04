@@ -1,0 +1,25 @@
+// Brand tokens: black / white / orange (wordmark: rusta light, shop orange).
+
+$rs-orange: #eb4101;
+$rs-orange-dark: #c43500;
+$rs-ink: #0a0a0a;
+$rs-muted: #6b7280;
+$rs-paper: #ffffff;
+$rs-line: #e5e7eb;
+
+// Bootstrap aliases (primary = brand orange).
+$rs-rust: $rs-orange;
+$rs-rust-dark: $rs-orange-dark;
+
+:root {
+  --rs-orange: #{$rs-orange};
+  --rs-orange-dark: #{$rs-orange-dark};
+  --rs-rust: #{$rs-orange};
+  --rs-rust-dark: #{$rs-orange-dark};
+  --rs-ink: #{$rs-ink};
+  --rs-muted: #{$rs-muted};
+  --rs-paper: #{$rs-paper};
+  --rs-line: #{$rs-line};
+  --rs-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --rs-display: Georgia, "Times New Roman", serif;
+}

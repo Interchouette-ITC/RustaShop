@@ -1,0 +1,16 @@
+{
+  "name": "@rustashop/template-default",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Default rustashop template (HTML/SCSS).",
+  "license": "OSL-3.0",
+  "files": [
+    "**/*.html",
+    "**/*.scss",
+    "Cargo.toml",
+    "lib.rs"
+  ],
+  "exports": {
+    "./*": "./*"
+  }
+}

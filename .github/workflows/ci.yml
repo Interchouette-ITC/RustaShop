@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: apps/shop-angular
+        working-directory: shops/angular
     steps:
       - uses: actions/checkout@v4
       - name: Markdown-only
@@ -123,7 +123,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: apps/shop-angular/package-lock.json
+          cache-dependency-path: shops/angular/package-lock.json
       - name: Makefile shop-angular guards
         if: needs.changes.outputs.code == 'true'
         working-directory: .
