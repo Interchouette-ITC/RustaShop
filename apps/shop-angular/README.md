@@ -1,6 +1,6 @@
 # Angular shop (UI track A) - `@rustashop/shop-angular` 0.1.0
 
-Customer **shop** SPA for RustaShop against the Commerce API.
+Customer **shop** SPA for rustashop against the Commerce API.
 
 ## CSS / JS ownership
 
@@ -52,7 +52,9 @@ npm start
 
 - Dev server host/port: `angular.json` (`127.0.0.1:4242`), not `package.json`.
 - App API base URL: `src/environments/` (`apiBaseUrl`, default `/api` via proxy).
-- HTML / router base: default `/` (`angular.json`). Override: `RUSTASHOP_BASE_HREF=/shop/ make shop-angular`, or `ng serve --base-href /shop/` / `ng build --base-href /shop/`.
+- HTML / router base: default `/` (`angular.json` `baseHref`, `<base href>` in `index.html`).
+  - Production / static: `ng build --base-href /shop/`.
+  - Dev serve under a path: `RUSTASHOP_BASE_HREF=/shop/ make shop-angular` passes `--serve-path` (Angular CLI no longer accepts `--base-href` on `ng serve`).
 - Unit tests: Vitest via `@angular/build:unit-test` (`npm test`).
 - Lint / format: `npm run lint`, `npm run format` / `npm run format:check`.
 

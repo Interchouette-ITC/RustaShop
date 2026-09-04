@@ -1,4 +1,4 @@
-# RustaShop developer targets
+# rustashop developer targets
 
 SHELL := /bin/bash
 ROOT := $(abspath .)
@@ -16,17 +16,17 @@ FORCE ?= 0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
+.PHONY: help check test lint lint-shop-angular format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
 
 help:
-	@echo "RustaShop targets"
+	@echo "rustashop targets"
 	@echo ""
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
-	@echo "  make lint       fmt check + SQL safety test + clippy (workspace + SeaORM features)"
+	@echo "  make lint       fmt check + SQL safety + clippy + shop-angular lint (when node_modules present)"
 	@echo "  make check-sql-safety  cargo test: deny format!-built SQL in persist crates"
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
@@ -64,7 +64,15 @@ format-check:
 check-sql-safety:
 	cd $(ROOT) && $(CARGO) test -p rustashop-persist-sqlx --test sql_safety
 
-lint: format-check check-sql-safety
+# Angular shop eslint. Skips only when node_modules is missing (fresh clone without npm install).
+lint-shop-angular:
+	@if [ ! -d "$(ROOT)/$(SHOP_ANGULAR_DIR)/node_modules" ]; then \
+		echo "skip lint-shop-angular: $(SHOP_ANGULAR_DIR)/node_modules missing (npm install or make shop-angular)"; \
+	else \
+		cd $(ROOT)/$(SHOP_ANGULAR_DIR) && npm run lint; \
+	fi
+
+lint: format-check check-sql-safety lint-shop-angular
 	cd $(ROOT) && $(CARGO) clippy --workspace --all-targets -- $(CLIPPY_FLAGS)
 	cd $(ROOT) && $(CARGO) clippy $(SEAORM_PACKAGES) --all-targets $(SEAORM_FEATURES) -- $(CLIPPY_FLAGS)
 
@@ -79,22 +87,39 @@ openapi:
 
 shop-angular:
 	@if ss -tln | grep -qE ':$(SHOP_ANGULAR_PORT)\\b'; then \
-		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
+		printf '\033[1;31m✗\033[0m  port \033[1m$(SHOP_ANGULAR_PORT)\033[0m busy - stop the other process or set SHOP_ANGULAR_PORT=\n'; \
 		exit 1; \
 	fi
-	@API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^#http://#;s#^http://http://#http://#')}; \
-	echo "shop proxy → $$API_PROXY (override with RUSTASHOP_API_PROXY=... if $(API_BIND) is not RustaShop)"; \
-	if ! curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
-		echo "warning: $${API_PROXY}/healthz failed - start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
-	fi
+	@raw="$${RUSTASHOP_API_PROXY:-$(API_BIND)}"; \
+	case "$$raw" in \
+		http://*|https://*) API_PROXY="$${raw%/}" ;; \
+		*) API_PROXY="http://$${raw%/}" ;; \
+	esac; \
+	BASE_HREF=$${RUSTASHOP_BASE_HREF:-/}; \
+	case "$$BASE_HREF" in /|*/) ;; *) BASE_HREF="$$BASE_HREF/";; esac; \
+	if curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
+		API_STATE=ready; API_COLOR='\033[32m'; \
+	else \
+		API_STATE=down; API_COLOR='\033[33m'; \
+	fi; \
+	printf '\n'; \
+	printf '  🦀 \033[97m\033[1mrusta\033[0m\033[38;2;235;65;1m\033[1mshop\033[0m 🛒\n'; \
+	printf '  \033[2m─────────────────────────────────────\033[0m\n'; \
+	printf '  \033[37mapp\033[0m    shop-angular\n'; \
+	printf '  \033[37mshop\033[0m   http://127.0.0.1:$(SHOP_ANGULAR_PORT)/\n'; \
+	printf '  \033[37mapi\033[0m    %s  %b%s\033[0m\n' "$$API_PROXY" "$$API_COLOR" "$$API_STATE"; \
+	printf '  \033[37mbase\033[0m   %s\n' "$$BASE_HREF"; \
+	printf '\n'; \
+	if [ "$$API_STATE" = down ]; then \
+		printf '  \033[38;2;235;65;1m!\033[0m  API not reachable - \033[1mmake run-api\033[0m (or RUSTASHOP_API_PROXY=…)\n\n'; \
+	fi; \
 	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
 		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
 		npm run generate:api && \
-		BASE_HREF=$${RUSTASHOP_BASE_HREF:-/}; \
-		case "$$BASE_HREF" in /|*/) ;; *) BASE_HREF="$$BASE_HREF/";; esac; \
-		echo "shop base href → $$BASE_HREF"; \
-		RUSTASHOP_API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^http://##;s#^#http://#')} \
-			npm start -- --port $(SHOP_ANGULAR_PORT) --base-href "$$BASE_HREF"
+		SERVE_EXTRA=; \
+		if [ "$$BASE_HREF" != "/" ]; then SERVE_EXTRA="--serve-path $$BASE_HREF"; fi; \
+		printf '  \033[2mstarting ng serve…\033[0m\n\n'; \
+		RUSTASHOP_API_PROXY="$$API_PROXY" npm start -- --port $(SHOP_ANGULAR_PORT) $$SERVE_EXTRA
 
 shop-leptos-rangular:
 	@echo "apps/shop-leptos-rangular is not scaffolded yet (see GitHub #23)"

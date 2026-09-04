@@ -12,25 +12,25 @@ export type RsConsoleNamespace =
   | 'rs:checkout'
   | 'rs:error';
 
-/** Tag colors - one hue per namespace (rust / shop palette). */
+/** Tag colors - brand black / white / orange family (readable on dark console). */
 const NS_TAG_COLOR: Record<RsConsoleNamespace, string> = {
-  'rs:boot': '#00ff9c',
-  'rs:api': '#00e5ff',
-  'rs:catalog': '#ffea00',
-  'rs:cart': '#ff9100',
-  'rs:checkout': '#b388ff',
-  'rs:error': '#ff1744',
+  'rs:boot': '#eb4101',
+  'rs:api': '#f3f4f6',
+  'rs:catalog': '#ff7a33',
+  'rs:cart': '#eb4101',
+  'rs:checkout': '#ff9a5c',
+  'rs:error': '#ff4d4d',
 };
 
-const STYLE_LABEL = 'color:#fff7ed;font-weight:600';
-const STYLE_CLOCK = 'color:#fdba74;font-weight:600';
-const STYLE_MS = 'color:#fbbf24;font-weight:700';
+const STYLE_LABEL = 'color:#f3f4f6;font-weight:600';
+const STYLE_CLOCK = 'color:#9ca3af;font-weight:600';
+const STYLE_MS = 'color:#eb4101;font-weight:700';
 const STYLE_KV = 'color:inherit;font-weight:normal;background:transparent';
 
 /** `%c` CSS for an `[rs:…]` tag pill. */
 export function rsLogTagStyle(ns: RsConsoleNamespace): string {
   const fg = NS_TAG_COLOR[ns];
-  return `color:${fg};font-weight:700;background:#1c1917;padding:0.1em 0.35em;border-radius:0.2em`;
+  return `color:${fg};font-weight:700;background:#0a0a0a;padding:0.1em 0.35em;border-radius:0.2em`;
 }
 
 function formatKvValue(value: unknown): string {

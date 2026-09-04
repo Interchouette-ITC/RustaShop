@@ -1,6 +1,6 @@
 # Three Wasm layers
 
-RustaShop uses WebAssembly in **more than one place**. Collapsing them into a single “we are Wasm” slogan hides different trust models, toolchains, and release cadences. This note keeps the layers separate on purpose.
+rustashop uses WebAssembly in **more than one place**. Collapsing them into a single “we are Wasm” slogan hides different trust models, toolchains, and release cadences. This note keeps the layers separate on purpose.
 
 ## Layer map
 

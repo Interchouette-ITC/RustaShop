@@ -1,10 +1,10 @@
 # UI clients and renderers
 
-RustaShop exposes **one Commerce API** (Actix + OpenAPI + WebSocket). All UIs are clients. This doc names the **UI plane** RustaShop wants: Angular parity **and** rangular with **dual renderers** (web + native GPU).
+rustashop exposes **one Commerce API** (Actix + OpenAPI + WebSocket). All UIs are clients. This doc names the **UI plane** rustashop wants: Angular parity **and** rangular with **dual renderers** (web + native GPU).
 
 ## Ambition (rangular direction)
 
-Similar in spirit to GPUix (“React’s model on GPUI”), RustaShop targets:
+Similar in spirit to GPUix (“React’s model on GPUI”), rustashop targets:
 
 > **Angular-shaped authoring across Rust web (Leptos/DOM) and native GPU (GPUI).**
 
@@ -35,7 +35,7 @@ Tracks A and B are developed **alike** against the same OpenAPI and realtime con
 └───────────────────────┼──────────────────────────────────────┘
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Commerce kernel (Serenade app + Actix API + Axum MCP)       │
+│  Commerce kernel (serenade app + Actix API + Axum MCP)       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -48,7 +48,7 @@ Tracks A and B are developed **alike** against the same OpenAPI and realtime con
 | **CSR wasm** (rangular v0.1 today) | Storefront in browser; Trunk/wasm; demo path exists upstream |
 | **SSR / islands** (later)          | Optional Leptos server for SEO, first paint, admin shells    |
 
-RustaShop does not require Leptos full-stack monolith for the kernel. Leptos serves the **web UI host** when track B ships web surfaces.
+rustashop does not require Leptos full-stack monolith for the kernel. Leptos serves the **web UI host** when track B ships web surfaces.
 
 ## Native host: GPUI + rangular
 
@@ -59,7 +59,7 @@ RustaShop does not require Leptos full-stack monolith for the kernel. Leptos ser
 | **Authoring** | Same rangular templates/controllers where the GPUI backend can compile them |
 | **Not**       | Tauri/webview-only desktop (that remains “web path in a window”)            |
 
-GPUI renderer work belongs primarily in **rangular** (new backend target). RustaShop consumes it for admin and native commerce UX.
+GPUI renderer work belongs primarily in **rangular** (new backend target). rustashop consumes it for admin and native commerce UX.
 
 ## Angular track (parallel)
 
@@ -75,7 +75,7 @@ Track B is **Leptos as the web host** (CSR wasm today) with **rangular** for Ang
 
 ## Admin (pluggable)
 
-The back-office is **API-first**. Any SPA that speaks admin OpenAPI + auth may plug in (Angular, React, Vue, Leptos+rangular, …). RustaShop ships an **Angular sample** for MVP speed; that is not a stack lock. Long-term intent: Leptos+rangular admin once forms (rangular #22) and optionally GPUI (#37) are ready.
+The back-office is **API-first**. Any SPA that speaks admin OpenAPI + auth may plug in (Angular, React, Vue, Leptos+rangular, …). rustashop ships an **Angular sample** for MVP speed; that is not a stack lock. Long-term intent: Leptos+rangular admin once forms (rangular #22) and optionally GPUI (#37) are ready.
 
 ## Make targets (shops)
 
@@ -123,4 +123,4 @@ Suggested order:
 
 - [WASM-LAYERS.md](WASM-LAYERS.md) - wasm roles (UI wasm vs plugins vs sandbox)
 - [rangular SPEC](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) - v0.1 browser-only; GPUI is post-v0.1
-- GitHub: RustaShop UI / shop epics (#7, #8, #6)
+- GitHub: rustashop UI / shop epics (#7, #8, #6)

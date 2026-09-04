@@ -1,6 +1,6 @@
-# RustaShop foundations
+# rustashop foundations
 
-This document frames the **technical identity** of RustaShop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the product README (`docs/README.md`). It names the axes we want the product to grow into so architecture discussions stay durable.
+This document frames the **technical identity** of rustashop for a modern, Wasm-aware commerce kernel. It does not replace the MVP checklist in the product README (`docs/README.md`). It names the axes we want the product to grow into so architecture discussions stay durable.
 
 ## Product identity (short)
 
@@ -18,7 +18,7 @@ GraphQL and columnar/analytics tools may appear later as **API or reporting choi
 
 ## HTTP stack (house pattern)
 
-Sibling products use a **split stack**: a full **Actix-web** kernel for the product API, and a lighter **Axum** surface for MCP and agent tools. RustaShop follows the same cocktail.
+Sibling products use a **split stack**: a full **Actix-web** kernel for the product API, and a lighter **Axum** surface for MCP and agent tools. rustashop follows the same cocktail.
 
 | Surface             | Framework                                               | Owns                                                                 |
 | ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -42,7 +42,7 @@ Guests (Wasm components or sandboxed runtimes) never open the database. The host
 
 ## Three Wasm roles (keep them distinct)
 
-RustaShop is **Wasm-oriented** the way Meteor was **realtime-oriented**: an opinion about defaults, not a claim that every byte runs inside one engine.
+rustashop is **Wasm-oriented** the way Meteor was **realtime-oriented**: an opinion about defaults, not a claim that every byte runs inside one engine.
 
 | Role                   | Typical tech                                                                               | Job                                                                                          |
 | ---------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
@@ -56,7 +56,7 @@ Detail: [WASM-LAYERS.md](WASM-LAYERS.md), [EXTENSIONS.md](EXTENSIONS.md), [WASME
 
 ## Realtime as a first-class axis
 
-Meteor’s habit was: live sync is the default, not an afterthought. RustaShop adopts the same _kind_ of opinion for commerce state that changes during a session.
+Meteor’s habit was: live sync is the default, not an afterthought. rustashop adopts the same _kind_ of opinion for commerce state that changes during a session.
 
 - Push for cart/checkout session, inventory signals, order status, admin feeds.
 - Both UI stacks subscribe to the **same** push channel.
@@ -88,4 +88,4 @@ These axes are product foundation, not a distraction from catalog/cart/checkout.
 
 ## Related GitHub work
 
-Track delivery under epics labeled `area:wasm`, `area:realtime`, `area:extensions`, and `area:ai`. HTTP stack decision: [#47](https://github.com/Interchouette-ITC/RustaShop/issues/47). Link new ADRs here when decisions harden.
+Track delivery under epics labeled `area:wasm`, `area:realtime`, `area:extensions`, and `area:ai`. HTTP stack decision: [#47](https://github.com/Interchouette-ITC/rustashop/issues/47). Link new ADRs here when decisions harden.

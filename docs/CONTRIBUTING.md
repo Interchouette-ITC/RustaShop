@@ -1,6 +1,6 @@
-# Contributing to RustaShop
+# Contributing to rustashop
 
-Thank you for improving RustaShop. This repo is the **commerce product**. Framework work belongs in [Serenade](https://github.com/Interchouette-ITC/Serenade).
+Thank you for improving rustashop. This repo is the **commerce product**. Framework work belongs in [serenade](https://github.com/Interchouette-ITC/Serenade).
 
 ## Before you open a PR
 
@@ -67,8 +67,8 @@ cargo check -p rustashop-persist -p rustashop-api --no-default-features --featur
 ## Issues and epics
 
 - Commerce and product ops: this repo’s GitHub issues / milestones.
-- Framework kernel, DI, HTTP foundation, console: Serenade issues.
-- Kernel wire into RustaShop: [#49](https://github.com/Interchouette-ITC/RustaShop/issues/49).
+- Framework kernel, DI, HTTP foundation, console: serenade issues.
+- Kernel wire into rustashop: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
 
 ## Commits and PRs
 
@@ -76,4 +76,4 @@ Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`, …). PR body: **Summary*
 
 ## Questions
 
-Open a GitHub issue on `Interchouette-ITC/RustaShop` for product design. Framework questions that affect multiple apps go to Serenade.
+Open a GitHub issue on `Interchouette-ITC/rustashop` for product design. Framework questions that affect multiple apps go to serenade.

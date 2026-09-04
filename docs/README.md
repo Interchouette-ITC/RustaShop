@@ -1,7 +1,12 @@
-# **RustaShop**
+# rustashop
 
 <p align="center">
-  <img src="brand/logo-mascot-readme.png" alt="RustaShop mascot: Ferris in a shopping bag with Rust gear" width="320" />
+  <img src="brand/wordmark-gh-dark.svg#gh-dark-mode-only" alt="rustashop" height="56" />
+  <img src="brand/wordmark-gh-light.svg#gh-light-mode-only" alt="rustashop" height="56" />
+</p>
+
+<p align="center">
+  <img src="brand/logo-mascot-readme.png" alt="rustashop mascot: Ferris in a shopping bag with Rust gear" width="320" />
 </p>
 
 <p align="center">
@@ -26,7 +31,7 @@ AI is built into the product map (discovery, shopping agents, catalog assist, pr
 | **Extensions**   | WIT / Component Model plugins; Wasmer sandboxes for polyglot / agents                       |
 | **AI**           | Native tools and agents on the same API + MCP                                               |
 
-We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/RustaShop/issues/29) and [`../docs-dev/`](../docs-dev/).
+We learn from PrestaShop, Sylius, Magento, WooCommerce, and OpenCart without cloning PHP. Case-study notes: GitHub issue [#29](https://github.com/Interchouette-ITC/rustashop/issues/29) and [`../docs-dev/`](../docs-dev/).
 
 ## Domains
 
@@ -71,7 +76,7 @@ Host API against compose Postgres only: `make db-up && make db-migrate && make r
 - [`../docs-dev/README.md`](../docs-dev/README.md) - foundations index (Wasm, realtime, AI, domains)
 - Brand sizes: [`brand/`](brand/)
 
-Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/RustaShop/issues/49).
+Framework: [serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wire: [#49](https://github.com/Interchouette-ITC/rustashop/issues/49).
 
 **rangular** is upstream UI tooling. Template language changes belong there; commerce domain belongs here.
 
@@ -83,12 +88,12 @@ Framework: [Serenade](https://github.com/Interchouette-ITC/Serenade). Kernel wir
 4. Commits and docs in **English**; conventional commits when code lands.
 
 <p align="center">
-  <img src="brand/badge-stack-readme.png" alt="RustaShop stack: Rust API, Angular, rangular" width="480" />
+  <img src="brand/badge-stack-readme.png" alt="rustashop stack: Rust API, Angular, rangular" width="480" />
 </p>
 
 ## Thanks
 
-**RustaShop** will stand on excellent open-source projects and hosts:
+**rustashop** will stand on excellent open-source projects and hosts:
 
 | Project                                                                                   | Role here                                          |
 | ----------------------------------------------------------------------------------------- | -------------------------------------------------- |

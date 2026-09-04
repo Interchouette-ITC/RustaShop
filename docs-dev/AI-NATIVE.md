@@ -1,11 +1,11 @@
 # AI-native commerce
 
-AI is **not** a bolt-on chatbot for RustaShop. It is a first-class product axis across the **Commerce API** and both UI clients (Angular and rangular). Agents, MCP, and autonomous commerce workflows share the same domain, auth, realtime bus, and sandbox rules as the rest of the kernel.
+AI is **not** a bolt-on chatbot for rustashop. It is a first-class product axis across the **Commerce API** and both UI clients (Angular and rangular). Agents, MCP, and autonomous commerce workflows share the same domain, auth, realtime bus, and sandbox rules as the rest of the kernel.
 
 ## Product map
 
 ```text
-RustaShop
+rustashop
 │
 ├── Commerce API
 ├── AI product discovery
@@ -25,7 +25,7 @@ RustaShop
 | **AI-assisted catalog**        | Merchant/admin agents that draft products, media, attributes (human commit)                      |
 | **AI pricing / promotions**    | Propose rules and experiments; host applies after policy checks                                  |
 | **AI customer support**        | Order-aware support with tools into the same API + realtime status                               |
-| **MCP integration**            | Expose RustaShop tools to external agents (and consume upstream MCP where useful)                |
+| **MCP integration**            | Expose rustashop tools to external agents (and consume upstream MCP where useful)                |
 | **Autonomous commerce agents** | Longer-running jobs (restock alerts, repricing drafts, migration assists) behind audit + sandbox |
 
 ## Backend (native)

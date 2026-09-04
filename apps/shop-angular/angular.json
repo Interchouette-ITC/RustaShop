@@ -25,6 +25,11 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "baseHref": "/",
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": ["import", "color-functions", "global-builtin"]
+              }
+            },
             "assets": [
               {
                 "glob": "**/*",

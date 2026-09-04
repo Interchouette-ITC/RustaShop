@@ -1,6 +1,6 @@
-//! `RustaShop` application kernel crate.
+//! `rustashop` application kernel crate.
 //!
-//! Exposes a diagnostics marker until the Serenade application lifecycle is
+//! Exposes a diagnostics marker until the serenade application lifecycle is
 //! wired into this package. Domain and HTTP crates do not depend on that wiring.
 
 /// Diagnostics marker for kernel integration status.

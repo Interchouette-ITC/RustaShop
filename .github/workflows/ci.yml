@@ -68,3 +68,36 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Doc
         run: make doc
+
+  shop-angular:
+    name: shop-angular
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/shop-angular
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/shop-angular/package-lock.json
+      - name: Makefile shop-angular guards
+        working-directory: .
+        run: |
+          # Proxy URL must not double the scheme (regression from sed wrapping).
+          raw='127.0.0.1:8080'
+          case "$raw" in http://*|https://*) p="${raw%/}" ;; *) p="http://${raw%/}" ;; esac
+          test "$p" = "http://127.0.0.1:8080"
+          raw='http://127.0.0.1:8081'
+          case "$raw" in http://*|https://*) p="${raw%/}" ;; *) p="http://${raw%/}" ;; esac
+          test "$p" = "http://127.0.0.1:8081"
+          # ng serve no longer accepts --base-href; Make must not pass it.
+          ! grep -nE 'npm start -- .*--base-href' Makefile
+      - name: Install
+        run: npm ci --no-fund --no-audit
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
