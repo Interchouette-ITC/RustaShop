@@ -63,7 +63,7 @@ GPUI renderer work belongs primarily in **rangular** (new backend target). Rusta
 
 ## Angular track (parallel)
 
-Angular remains **UI option A**: mature SPA under `clients/angular-shop`. Feature parity with the Leptos+rangular track is a **product habit**, not shared code:
+Angular remains **UI option A**: mature SPA under `apps/shop-angular`. Feature parity with the Leptos+rangular track is a **product habit**, not shared code:
 
 - Same API types (OpenAPI codegen)
 - Same WS event names
@@ -71,7 +71,7 @@ Angular remains **UI option A**: mature SPA under `clients/angular-shop`. Featur
 
 ## Leptos + rangular track
 
-Track B is **Leptos as the web host** (CSR wasm today) with **rangular** for Angular-shaped templates/controllers. Make target: `make shop-leptos-rangular`. Path: `clients/leptos-rangular-shop`. It is not “rangular alone”: Leptos is the renderer we want to grow for shop **and**, later, back-office.
+Track B is **Leptos as the web host** (CSR wasm today) with **rangular** for Angular-shaped templates/controllers. Make target: `make shop-leptos-rangular`. Path: `apps/shop-leptos-rangular`. It is not “rangular alone”: Leptos is the renderer we want to grow for shop **and**, later, back-office.
 
 ## Admin (pluggable)
 
@@ -121,6 +121,6 @@ Suggested order:
 
 ## Related
 
-- [WASM-LAYERS.md](WASM-LAYERS.md) — wasm roles (UI wasm vs plugins vs sandbox)
-- [rangular SPEC](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) — v0.1 browser-only; GPUI is post-v0.1
+- [WASM-LAYERS.md](WASM-LAYERS.md) - wasm roles (UI wasm vs plugins vs sandbox)
+- [rangular SPEC](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) - v0.1 browser-only; GPUI is post-v0.1
 - GitHub: RustaShop UI / shop epics (#7, #8, #6)
