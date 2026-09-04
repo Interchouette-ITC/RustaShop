@@ -7,8 +7,11 @@
     "prestart": "npm run template:emit",
     "prebuild": "npm run template:emit",
     "prelint": "npm run template:emit",
+    "pretest": "npm run template:emit",
     "start": "ng serve",
     "build": "ng build",
+    "test": "ng test",
+    "test:coverage": "ng test --coverage --coverage-reporters=lcov --coverage-reporters=text-summary",
     "lint": "ng lint"
   },
   "private": true,
@@ -35,12 +38,15 @@
     "@angular/cli": "^22.1.7",
     "@angular/compiler-cli": "^22.1.5",
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "angular-eslint": "^22.2.0",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
+    "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.69.0"
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.1.11"
   },
   "allowScripts": {
     "@parcel/watcher@2.6.0": true,

@@ -25,7 +25,7 @@ CVE_LITE_CLI := cve-lite-cli@1.33.0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-dev install-cli audit deny audit-npm audit-all
+.PHONY: help check test lint lint-shop-angular lint-admin-angular lint-install format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular admin-angular shop-leptos-rangular install-ui install-dev install-cli audit deny audit-npm audit-all coverage coverage-js
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -35,6 +35,8 @@ help:
 	@echo ""
 	@echo "  make check      cargo check --workspace, then SeaORM features"
 	@echo "  make test       cargo test --workspace, then SeaORM feature tests"
+	@echo "  make coverage   cargo llvm-cov → coverage/lcov.info (needs DATABASE_URL for integration)"
+	@echo "  make coverage-js Vitest coverage for shop, admin, and install → coverage/*-lcov.info"
 	@echo "  make lint       fmt check + SQL safety + clippy + Angular shop/admin lint (when node_modules present)"
 	@echo "  make check-sql-safety  cargo test: deny format!-built SQL in persist crates"
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
@@ -71,6 +73,32 @@ check:
 test:
 	cd $(ROOT) && $(CARGO) test --workspace
 	cd $(ROOT) && $(CARGO) test $(SEAORM_PACKAGES) $(SEAORM_FEATURES)
+
+## Requires `cargo install cargo-llvm-cov`. Writes `coverage/lcov.info`.
+## Uses the stable toolchain so llvm-cov finds instrumented objects.
+## Integration tests need DATABASE_URL (make db-up).
+coverage:
+	cd $(ROOT) && mkdir -p coverage && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov --workspace --lcov --output-path coverage/lcov.info
+	cd $(ROOT) && RUSTUP_TOOLCHAIN=stable $(CARGO) llvm-cov $(SEAORM_PACKAGES) $(SEAORM_FEATURES) --lcov --output-path coverage/lcov-seaorm.info
+
+## Vitest coverage for shop, admin, and install. Writes coverage/*-lcov.info.
+coverage-js:
+	cd $(ROOT) && mkdir -p coverage
+	@set -e; \
+	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
+		npm run test:coverage && \
+		cp -f coverage/shop-angular/lcov.info $(ROOT)/coverage/shop-lcov.info
+	@set -e; \
+	cd $(ROOT)/$(ADMIN_ANGULAR_DIR) && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
+		npm run test:coverage && \
+		cp -f coverage/admin-angular/lcov.info $(ROOT)/coverage/admin-lcov.info
+	@set -e; \
+	cd $(ROOT)/install && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm ci; fi && \
+		npm run test:coverage && \
+		cp -f coverage/lcov.info $(ROOT)/coverage/install-lcov.info
 
 format:
 	cd $(ROOT) && $(CARGO) fmt

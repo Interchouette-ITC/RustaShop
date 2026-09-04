@@ -70,4 +70,32 @@ mod tests {
         let parsed: ProductVariant = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed, variant);
     }
+
+    #[test]
+    fn category_and_product_serde_roundtrip() {
+        let category = Category {
+            id: "c1".to_owned(),
+            parent_id: None,
+            slug: "hoodies".to_owned(),
+            name: "Hoodies".to_owned(),
+        };
+        let product = Product {
+            id: "p1".to_owned(),
+            category_id: Some(category.id.clone()),
+            slug: "classic-hoodie".to_owned(),
+            name: "Classic Hoodie".to_owned(),
+            description: Some("Warm".to_owned()),
+            enabled: true,
+        };
+        let category_json = serde_json::to_string(&category).unwrap();
+        let product_json = serde_json::to_string(&product).unwrap();
+        assert_eq!(
+            serde_json::from_str::<Category>(&category_json).unwrap(),
+            category
+        );
+        assert_eq!(
+            serde_json::from_str::<Product>(&product_json).unwrap(),
+            product
+        );
+    }
 }
