@@ -1,7 +1,7 @@
 //! Integration tests for catalog product HTTP routes.
 
 use actix_web::{test, web, App};
-use rustashop_api::{routes, ProductListResponse, ProductResponse};
+use rustashop_api::{routes, ProductDetailResponse, ProductListResponse};
 use rustashop_persist::CatalogRepository;
 
 const HOODIE_ID: &str = "22222222-2222-2222-2222-222222222221";
@@ -33,9 +33,13 @@ async fn products_list_and_get_seeded_rows() {
         .to_request();
     let get_resp = test::call_service(&app, get_req).await;
     assert!(get_resp.status().is_success());
-    let hoodie: ProductResponse = test::read_body_json(get_resp).await;
+    let hoodie: ProductDetailResponse = test::read_body_json(get_resp).await;
     assert_eq!(hoodie.slug, "hoodie");
     assert_eq!(hoodie.name, "Hoodie");
+    assert!(hoodie
+        .variants
+        .iter()
+        .any(|variant| variant.sku.contains("HOODIE")));
 
     let missing = test::TestRequest::get()
         .uri("/v1/products/00000000-0000-0000-0000-000000000000")

@@ -1,0 +1,17 @@
+// Bootstrap 5 via npm (CSS only). Theme maps to brand tokens.
+// No CDN and no Bootstrap JS bundle - Angular owns interactivity.
+
+@use 'tokens' as *;
+
+$primary: $rs-rust;
+$secondary: $rs-ink;
+$body-bg: $rs-paper;
+$body-color: $rs-ink;
+$link-color: $rs-rust-dark;
+$border-color: $rs-line;
+$font-family-sans-serif: var(--rs-font);
+$border-radius: 0.35rem;
+$enable-shadows: false;
+$enable-gradients: false;
+
+@import 'bootstrap/scss/bootstrap';

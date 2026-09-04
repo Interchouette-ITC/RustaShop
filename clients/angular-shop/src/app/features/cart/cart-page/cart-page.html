@@ -1,0 +1,87 @@
+<section aria-labelledby="cart-heading">
+  <header class="mb-4 d-flex justify-content-between align-items-end gap-2 flex-wrap">
+    <div>
+      <h1 id="cart-heading" class="cart__title mb-1">Cart</h1>
+      <p class="text-muted mb-0">Quantities update against the Commerce API.</p>
+    </div>
+    <a routerLink="/" class="btn btn-outline-secondary btn-sm">Continue shopping</a>
+  </header>
+
+  @if (error(); as message) {
+    <div class="alert alert-warning" role="alert">{{ message }}</div>
+  }
+
+  @if (!cart() && busy()) {
+    <p class="text-muted">Loading cart…</p>
+  } @else if (!cart() || cart()!.lines.length === 0) {
+    <p class="text-muted">Your cart is empty.</p>
+    <a routerLink="/" class="btn btn-primary btn-sm">Browse catalog</a>
+  } @else {
+    <div class="table-responsive border rounded-2 bg-white">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">Qty</th>
+            <th scope="col">Unit</th>
+            <th scope="col">Line</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of cart()!.lines; track line.id) {
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ line.product_name }}</div>
+                <div class="small text-muted">{{ line.variant_sku }}</div>
+              </td>
+              <td style="max-width: 6rem">
+                <input
+                  class="form-control form-control-sm"
+                  type="number"
+                  min="1"
+                  [ngModel]="line.quantity"
+                  (ngModelChange)="setQuantity(line.id, $event)"
+                  [disabled]="busy()"
+                />
+              </td>
+              <td>{{ line.unit_price.amount_minor | rsMoney: line.unit_price.currency }}</td>
+              <td>{{ line.line_total.amount_minor | rsMoney: line.line_total.currency }}</td>
+              <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="remove(line.id)"
+                  [disabled]="busy()"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+      <p class="mb-0 fs-5">
+        Total:
+        <strong>{{
+          cart()!.items_total.amount_minor | rsMoney: cart()!.items_total.currency
+        }}</strong>
+      </p>
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="checkout()"
+        [disabled]="checkingOut() || busy()"
+      >
+        @if (checkingOut()) {
+          Placing order…
+        } @else {
+          Checkout
+        }
+      </button>
+    </div>
+  }
+</section>

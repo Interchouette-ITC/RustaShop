@@ -442,7 +442,7 @@
         "tags": [
           "crate::products"
         ],
-        "summary": "Returns one product by id.",
+        "summary": "Returns one product by id, with variants.",
         "operationId": "get_product",
         "parameters": [
           {
@@ -457,11 +457,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Product",
+            "description": "Product with variants",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProductResponse"
+                  "$ref": "#/components/schemas/ProductDetailResponse"
                 }
               }
             }
@@ -621,14 +621,19 @@
       },
       "ErrorBody": {
         "type": "object",
-        "description": "JSON error body.",
+        "description": "JSON error body (message + stable machine code).",
         "required": [
-          "error"
+          "error",
+          "code"
         ],
         "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable code (`not_found`, `conflict`, …)."
+          },
           "error": {
             "type": "string",
-            "description": "Machine-readable error."
+            "description": "Human-readable error message."
           }
         }
       },
@@ -768,6 +773,56 @@
           }
         }
       },
+      "ProductDetailResponse": {
+        "type": "object",
+        "description": "Product detail including purchasable variants.",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "enabled",
+          "variants"
+        ],
+        "properties": {
+          "category_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional category id."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional long description."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the product is offered for sale."
+          },
+          "id": {
+            "type": "string",
+            "description": "Stable identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "slug": {
+            "type": "string",
+            "description": "Unique URL slug."
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantResponse"
+            },
+            "description": "Purchasable SKUs for this product."
+          }
+        }
+      },
       "ProductListResponse": {
         "type": "object",
         "description": "List payload for `GET /v1/products`.",
@@ -786,7 +841,7 @@
       },
       "ProductResponse": {
         "type": "object",
-        "description": "Product JSON returned by catalog routes.",
+        "description": "Product JSON returned by list routes (no variants).",
         "required": [
           "id",
           "slug",
@@ -823,6 +878,47 @@
           "slug": {
             "type": "string",
             "description": "Unique URL slug."
+          }
+        }
+      },
+      "ProductVariantResponse": {
+        "type": "object",
+        "description": "Variant JSON nested under product detail.",
+        "required": [
+          "id",
+          "product_id",
+          "sku",
+          "price",
+          "stock_quantity"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional variant label."
+          },
+          "price": {
+            "$ref": "#/components/schemas/MoneyResponse",
+            "description": "Unit price."
+          },
+          "product_id": {
+            "type": "string",
+            "description": "Parent product id."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Unique stock-keeping unit."
+          },
+          "stock_quantity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Available stock quantity."
           }
         }
       },

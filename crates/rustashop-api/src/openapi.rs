@@ -11,7 +11,9 @@ use crate::carts::{
 use crate::checkout::{CheckoutRequest, OrderLineResponse, OrderResponse};
 use crate::error::ErrorBody;
 use crate::health::HealthResponse;
-use crate::products::{ProductListResponse, ProductResponse};
+use crate::products::{
+    ProductDetailResponse, ProductListResponse, ProductResponse, ProductVariantResponse,
+};
 
 /// Generated `OpenAPI` document.
 #[derive(OpenApi)]
@@ -31,6 +33,8 @@ use crate::products::{ProductListResponse, ProductResponse};
     components(schemas(
         HealthResponse,
         ProductResponse,
+        ProductDetailResponse,
+        ProductVariantResponse,
         ProductListResponse,
         CartResponse,
         CartLineResponse,

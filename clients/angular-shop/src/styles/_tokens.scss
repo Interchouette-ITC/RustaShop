@@ -1,0 +1,20 @@
+// Brand tokens for the Angular shop (restrained RustaShop palette).
+// Bootstrap theme maps onto these via `_bootstrap.scss`.
+
+$rs-rust: #b45309;
+$rs-rust-dark: #92400e;
+$rs-ink: #1c1917;
+$rs-muted: #57534e;
+$rs-paper: #fafaf9;
+$rs-line: #e7e5e4;
+
+:root {
+  --rs-rust: #{$rs-rust};
+  --rs-rust-dark: #{$rs-rust-dark};
+  --rs-ink: #{$rs-ink};
+  --rs-muted: #{$rs-muted};
+  --rs-paper: #{$rs-paper};
+  --rs-line: #{$rs-line};
+  --rs-font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --rs-display: Georgia, 'Times New Roman', serif;
+}

@@ -1,0 +1,27 @@
+<div class="shell">
+  <header class="shell__bar border-bottom">
+    <div class="container shell__inner">
+      <a routerLink="/" class="shell__brand text-decoration-none">
+        <img class="shell__mark" src="brand/seal-crab-64.png" width="32" height="32" alt="" />
+        <span class="shell__name">{{ brand() }}</span>
+      </a>
+      <nav class="shell__nav" aria-label="Shop">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+          >Catalog</a
+        >
+        <a routerLink="/cart" routerLinkActive="active">
+          Cart
+          @if (lineCount() > 0) {
+            <span class="badge text-bg-primary ms-1">{{ lineCount() }}</span>
+          }
+        </a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell__main container py-4">
+    <router-outlet />
+  </main>
+  <footer class="shell__foot border-top py-3">
+    <div class="container text-muted small">Commerce API shop (Angular)</div>
+  </footer>
+</div>

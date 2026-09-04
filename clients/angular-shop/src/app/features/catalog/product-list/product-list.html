@@ -1,0 +1,33 @@
+<section aria-labelledby="catalog-heading">
+  <header class="mb-4">
+    <h1 id="catalog-heading" class="catalog__title">Catalog</h1>
+    <p class="text-muted mb-0">Seeded demo products from the Commerce API.</p>
+  </header>
+
+  @if (error(); as message) {
+    <div class="alert alert-warning" role="alert">{{ message }}</div>
+  } @else if (loading()) {
+    <p class="text-muted">Loading products…</p>
+  } @else if (products().length === 0) {
+    <p class="text-muted">No products yet. Migrate and seed the database, then refresh.</p>
+  } @else {
+    <div class="row g-3">
+      @for (product of products(); track product.id) {
+        <div class="col-12 col-md-6 col-lg-4">
+          <article class="catalog__item h-100 p-3 border rounded-2 bg-white">
+            <h2 class="h5 mb-1">
+              <a [routerLink]="['/products', product.id]">{{ product.name }}</a>
+            </h2>
+            <p class="small text-muted mb-2">{{ product.slug }}</p>
+            @if (product.description; as description) {
+              <p class="mb-3 small">{{ description }}</p>
+            }
+            <a class="btn btn-sm btn-outline-primary" [routerLink]="['/products', product.id]"
+              >View</a
+            >
+          </article>
+        </div>
+      }
+    </div>
+  }
+</section>

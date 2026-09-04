@@ -1,0 +1,24 @@
+<section aria-labelledby="checkout-heading">
+  <h1 id="checkout-heading" class="checkout__title">Order placed</h1>
+
+  @if (missing()) {
+    <div class="alert alert-warning" role="alert">
+      No order details in this session. Place a new order from the cart.
+    </div>
+    <a routerLink="/cart" class="btn btn-outline-secondary btn-sm">Back to cart</a>
+  } @else if (order(); as order) {
+    <div class="border rounded-2 bg-white p-3 mb-3">
+      <p class="mb-1">
+        Order id: <code>{{ order.id }}</code>
+      </p>
+      <p class="mb-1">
+        Number: <strong>{{ order.number }}</strong>
+      </p>
+      <p class="mb-1">State: {{ order.state }} · Payment: {{ order.payment_status }}</p>
+      <p class="mb-0 fs-5">
+        Total: <strong>{{ order.total.amount_minor | rsMoney: order.total.currency }}</strong>
+      </p>
+    </div>
+    <a routerLink="/" class="btn btn-primary btn-sm">Back to catalog</a>
+  }
+</section>
