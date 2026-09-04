@@ -3097,6 +3097,7 @@ version = "0.1.0"
 dependencies = [
  "rustashop-persist-seaorm",
  "rustashop-persist-sqlx",
+ "sqlx",
  "thiserror 2.0.20",
  "tokio",
 ]
