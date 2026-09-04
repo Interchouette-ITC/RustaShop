@@ -5,6 +5,8 @@ shops/**/target/
 .env
 .env.*
 !.env.example
+install/node_modules/
+install/dist/
 assets/
 shops/**/node_modules/
 shops/**/dist/

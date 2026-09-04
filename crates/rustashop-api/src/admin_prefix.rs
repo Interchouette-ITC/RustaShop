@@ -16,6 +16,7 @@ const RESERVED: &[&str] = &[
     "healthz",
     "openapi.json",
     "swagger-ui",
+    "install",
 ];
 
 /// Single URI segment for operator routes (`/v1/{this}/orders`, …).

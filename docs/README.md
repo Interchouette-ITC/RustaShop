@@ -60,6 +60,8 @@ Swagger UI: `http://127.0.0.1:8080/swagger-ui/`. Do not bind port `8080` twice.
 ```bash
 make shop-angular            # http://127.0.0.1:4242/
 make admin-angular           # http://127.0.0.1:4250/ (paste RUSTASHOP_ADMIN_API_TOKEN)
+make install-ui              # build install/ Vite+Vue → install/dist (API serves /install when present)
+make install-cli             # write opaque admin prefix + token into .env; then `mv install install.off`
 make shop-leptos-rangular    # http://127.0.0.1:4181/
 ```
 
