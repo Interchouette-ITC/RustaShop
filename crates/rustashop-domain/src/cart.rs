@@ -265,7 +265,7 @@ impl Cart {
     }
 
     /// Marks the cart as converted to an order.
-    pub fn mark_checked_out(&mut self) {
+    pub const fn mark_checked_out(&mut self) {
         self.status = CartStatus::CheckedOut;
     }
 }

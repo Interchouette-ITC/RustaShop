@@ -50,7 +50,7 @@ pub async fn execute_fragment(pool: &PgPool, sql: &str) -> Result<(), Persistenc
     assert_raw_sql_allowed()?;
     ensure_param(sql)?;
     eprintln!("WARNING: {ALLOW_RAW_SQL_ENV} enabled; executing raw SQL fragment");
-    sqlx::query(sql)
+    sqlx::query(sqlx::AssertSqlSafe(sql.to_owned()))
         .execute(pool)
         .await
         .map_err(|error| PersistenceError::Internal {
