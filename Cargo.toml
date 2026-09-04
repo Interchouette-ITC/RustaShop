@@ -26,6 +26,10 @@ rustashop-persist = { path = "crates/rustashop-persist", version = "0.1.0", defa
 rustashop-persist-sqlx = { path = "crates/rustashop-persist-sqlx", version = "0.1.0" }
 rustashop-persist-seaorm = { path = "crates/rustashop-persist-seaorm", version = "0.1.0" }
 serenade-contracts = { git = "https://github.com/Interchouette-ITC/Serenade.git", branch = "dev" }
+serenade-kernel = { git = "https://github.com/Interchouette-ITC/Serenade.git", branch = "dev" }
+serenade-bundle = { git = "https://github.com/Interchouette-ITC/Serenade.git", branch = "dev" }
+serenade-config = { git = "https://github.com/Interchouette-ITC/Serenade.git", branch = "dev" }
+serenade-di = { git = "https://github.com/Interchouette-ITC/Serenade.git", branch = "dev" }
 actix-web = "4"
 actix-files = "0.6"
 serde = { version = "1", features = ["derive"] }

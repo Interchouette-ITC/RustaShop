@@ -8,7 +8,7 @@ pub const MCP_CRATE: &str = "rustashop-mcp";
 
 /// Kernel integration status from the `rustashop` application package.
 #[must_use]
-pub const fn kernel_status() -> &'static str {
+pub fn kernel_status() -> &'static str {
     rustashop::kernel_status()
 }
 
@@ -19,6 +19,10 @@ mod tests {
     #[test]
     fn crate_marker_and_kernel_status() {
         assert_eq!(MCP_CRATE, "rustashop-mcp");
-        assert_eq!(kernel_status(), rustashop::SERENADE_KERNEL_PENDING);
+        let status = kernel_status();
+        assert!(
+            status == rustashop::SERENADE_KERNEL_PENDING
+                || status == rustashop::SERENADE_KERNEL_BOOTED
+        );
     }
 }

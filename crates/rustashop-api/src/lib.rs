@@ -134,10 +134,20 @@ pub async fn run() -> std::io::Result<()> {
     info!("bind: http://{bind} (override with {BIND_ENV})");
     info!("persist: {PERSIST_BACKEND}");
     info!("database: {}", redacted_database_url(&database_url));
+
+    let root = shop_root();
+    let kernel = rustashop::boot_kernel(&root)
+        .map_err(|error| std::io::Error::other(format!("serenade kernel boot failed: {error}")))?;
+    info!(
+        "serenade: env={} bundles={:?} status={}",
+        kernel.environment(),
+        kernel.bundle_names(),
+        rustashop::kernel_status()
+    );
+
     info!("health: http://{bind}/healthz");
     info!("openapi: http://{bind}/openapi.json");
     info!("swagger: http://{bind}/swagger-ui/");
-    let root = shop_root();
     if install_artefacts_present(&root) {
         info!(
             "install: serving /install from {}/{INSTALL_DIR_NAME}/dist (rename to {INSTALL_OFF_DIR_NAME} after success)",
@@ -185,7 +195,11 @@ pub async fn run() -> std::io::Result<()> {
     .map_err(|error| bind_error(&bind, &error))?;
 
     info!("listening on http://{bind}");
-    server.run().await
+    let result = server.run().await;
+    if let Err(error) = kernel.shutdown() {
+        tracing::warn!("serenade kernel shutdown: {error}");
+    }
+    result
 }
 
 #[cfg(test)]

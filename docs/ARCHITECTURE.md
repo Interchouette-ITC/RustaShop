@@ -26,13 +26,13 @@ Shop markup/SCSS: `templates/shop/default/`. Hosts: `shops/angular`, `shops/lept
 Admin markup/SCSS: `templates/admin/default/`. Host: `admin/angular`.
 Kinds (`shop` | `admin`) must not be mixed; see [`../templates/README.md`](../templates/README.md).
 
-Serenade kernel wire (`rustashop` crate) lands when framework HTTP + bundles are ready. Until then the app boots Actix directly with persist + domain.
+Serenade boots in the `rustashop` crate (`FrameworkBundle` + `RustashopBundle`, `config/packages`). Actix still owns the commerce HTTP surface until a later listen migration.
 
 ## Crates (today)
 
 | Crate | Role |
 | --- | --- |
-| `rustashop` | App kernel name marker for Serenade path/git wire |
+| `rustashop` | App kernel: Serenade boot + DI container (`config/packages`) |
 | `rustashop-domain` | Money, Product, Variant, Category, Cart, Order (no ORM types) |
 | `rustashop-persist` | Facade: `persist-sqlx` (default) or `persist-seaorm` |
 | `rustashop-persist-sqlx` | SQLx migrations, catalog/cart/order repos, migrate binary |

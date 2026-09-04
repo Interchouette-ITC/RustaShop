@@ -8,5 +8,11 @@ authors.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[dependencies]
+serenade-bundle = { workspace = true }
+serenade-config = { workspace = true }
+serenade-di = { workspace = true }
+serenade-kernel = { workspace = true }
+
 [lints]
 workspace = true
