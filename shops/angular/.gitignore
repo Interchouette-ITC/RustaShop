@@ -41,3 +41,8 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Generated from templates/default (template:emit) — not beside controllers
+src/generated/*.ng.ts
+src/components/**/*.ng.ts
+src/components/**/*.scss

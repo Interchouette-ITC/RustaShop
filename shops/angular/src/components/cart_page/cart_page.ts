@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 
 import { CartStore, CheckoutService, formatApiError } from '@rustashop/shop-core';
 import { MoneyPipe } from '@rustashop/shop-shared';
+import { template as cartPageTpl, styles as cartPageStyles } from '@generated/cart_page.ng';
 
 @Component({
   selector: 'rs-cart-page',
   imports: [RouterLink, FormsModule, MoneyPipe],
-  templateUrl: './cart-page.html',
-  styleUrl: './cart-page.scss',
+  template: cartPageTpl,
+  styles: cartPageStyles,
 })
 export class CartPage implements OnInit {
   private readonly cartStore = inject(CartStore);

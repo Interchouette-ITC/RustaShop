@@ -4,7 +4,7 @@ use rangular_host::{Host, HostError, Value};
 
 include!(concat!(env!("OUT_DIR"), "/rangular/product_card_view.rs"));
 
-/// One catalog tile from the shared theme (`templates/<theme>/product_card`).
+/// One catalog tile from the shared template (`templates/<id>/product_card`).
 #[component]
 pub fn ProductCardPanel(
     name: String,

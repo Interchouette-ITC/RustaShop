@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 
 import { CartStore, CatalogStore, formatApiError } from '@rustashop/shop-core';
 import { MoneyPipe } from '@rustashop/shop-shared';
+import { template as productDetailTpl, styles as productDetailStyles } from '@generated/product_detail.ng';
 
 @Component({
   selector: 'rs-product-detail',
   imports: [RouterLink, FormsModule, MoneyPipe],
-  templateUrl: './product-detail.html',
-  styleUrl: './product-detail.scss',
+  template: productDetailTpl,
+  styles: productDetailStyles,
 })
 export class ProductDetailPage implements OnInit {
   private readonly catalog = inject(CatalogStore);

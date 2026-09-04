@@ -2,12 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 
 import { CatalogStore } from '@rustashop/shop-core';
 import { ProductCard } from '@rustashop/shop-shared';
+import { template as productListTpl, styles as productListStyles } from '@generated/product_list.ng';
 
 @Component({
   selector: 'rs-product-list',
   imports: [ProductCard],
-  templateUrl: './product-list.html',
-  styleUrl: './product-list.scss',
+  template: productListTpl,
+  styles: productListStyles,
 })
 export class ProductListPage implements OnInit {
   private readonly catalog = inject(CatalogStore);

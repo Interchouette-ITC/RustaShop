@@ -1,13 +1,12 @@
 import { Component, Input } from '@angular/core';
 
-/**
- * Compact catalog tile. Markup/styles: `templates/default/product_card`
- * (shared with the Leptos shop). Controller stays in this host.
- */
+import { template as productCardTpl, styles as productCardStyles } from '@generated/product_card.ng';
+
+/** Compact catalog tile. Markup: `@rustashop/template-default`. */
 @Component({
   selector: 'rs-product-card',
-  templateUrl: '../../../../../../../templates/default/product_card/product_card.html',
-  styleUrl: './product-card.scss',
+  template: productCardTpl,
+  styles: productCardStyles,
 })
 export class ProductCard {
   @Input({ required: true }) name!: string;

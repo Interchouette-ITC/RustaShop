@@ -19,3 +19,4 @@ rangular-host = { git = "https://github.com/Interchouette-ITC/rangular.git", bra
 [build-dependencies]
 rangular-aot = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
 rangular-css = { git = "https://github.com/Interchouette-ITC/rangular.git", branch = "dev" }
+rustashop-template-default = { path = "../../templates/default" }

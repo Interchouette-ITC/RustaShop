@@ -7,7 +7,7 @@ $rs-muted: #6b7280;
 $rs-paper: #ffffff;
 $rs-line: #e5e7eb;
 
-// Bootstrap theme aliases (primary = brand orange).
+// Bootstrap aliases (primary = brand orange).
 $rs-rust: $rs-orange;
 $rs-rust-dark: $rs-orange-dark;
 
@@ -20,6 +20,6 @@ $rs-rust-dark: $rs-orange-dark;
   --rs-muted: #{$rs-muted};
   --rs-paper: #{$rs-paper};
   --rs-line: #{$rs-line};
-  --rs-font: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --rs-display: Georgia, 'Times New Roman', serif;
+  --rs-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --rs-display: Georgia, "Times New Roman", serif;
 }

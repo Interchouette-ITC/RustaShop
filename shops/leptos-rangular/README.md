@@ -1,7 +1,7 @@
 # Leptos + rangular shop (track B)
 
 Customer shop host: **Leptos** CSR (Trunk / wasm) with **rangular** controllers and
-shared theme files under `templates/<theme>/`. Same Commerce API as the Angular shop.
+shared template files under `templates/<id>/`. Same Commerce API as the Angular shop.
 
 ## Run
 
@@ -19,14 +19,15 @@ cd shops/leptos-rangular && trunk build --release
 ```
 
 Port override: `make shop-leptos-rangular SHOP_LEPTOS_PORT=3000`.
-Theme override: `RUSTASHOP_THEME=default` (default).
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
-| `../../templates/<theme>/` | Shared `.html` / `.scss` (designer surface) |
-| `src/components/<name>/` | Rust Host controllers (same stem as theme) |
-| `build.rs` | AOT + SCSS from the theme → `style/components.generated.css` |
+| `../../templates/<id>/` | Shared `.html` / `.scss` |
+| `src/components/<name>/` | Rust controllers |
+| `style/main.css` | Host-only chrome (temporary catalog page) |
+| `style-generated/components.css` | From `build.rs` (template SCSS) |
+| `build.rs` | rangular AOT + SCSS compile |
 
 rangular crates come from git `Interchouette-ITC/rangular` branch `dev`.

@@ -3,22 +3,21 @@ use std::path::{Path, PathBuf};
 
 fn main() {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let theme = std::env::var("RUSTASHOP_THEME").unwrap_or_else(|_| "default".to_owned());
-    let theme_root = manifest.join("../../templates").join(&theme);
-    let css_out = manifest.join("style/components.generated.css");
+    let template_root = rustashop_template_default::root();
+    let template_id = rustashop_template_default::id();
+    std::fs::create_dir_all(manifest.join("style-generated")).expect("create style-generated");
+    let css_out = manifest.join("style-generated/components.css");
     let out_dir = Path::new(&std::env::var("OUT_DIR").expect("OUT_DIR")).join("rangular");
     std::fs::create_dir_all(&out_dir).expect("create rangular OUT_DIR");
 
-    println!("cargo:rerun-if-changed=../../templates/{theme}");
-    println!("cargo:rerun-if-env-changed=RUSTASHOP_THEME");
+    println!("cargo:rerun-if-changed={}", template_root.display());
 
-    // (theme component dir name, generated view fn name)
     let panels = [("product_card", "product_card_view")];
 
     let mut css =
-        String::from("/* Generated from theme SCSS - do not edit. */\n@layer components {\n");
+        String::from("/* Generated from template SCSS - do not edit. */\n@layer components {\n");
     for (dir, fn_name) in panels {
-        compile_theme_panel(&theme_root, &theme, &out_dir, &mut css, dir, fn_name);
+        compile_template_panel(template_id, &out_dir, &mut css, dir, fn_name);
     }
     css.push_str("}\n");
 
@@ -27,22 +26,24 @@ fn main() {
     });
 }
 
-fn compile_theme_panel(
-    theme_root: &Path,
-    theme: &str,
+fn compile_template_panel(
+    template_id: &str,
     out_dir: &Path,
     css: &mut String,
     dir: &str,
     fn_name: &str,
 ) {
-    let panel_dir = theme_root.join(dir);
-    append_scss(css, dir, &panel_dir.join(format!("{dir}.scss")));
+    append_scss(
+        css,
+        dir,
+        &rustashop_template_default::component_file(dir, "scss"),
+    );
 
-    let html_path = panel_dir.join(format!("{dir}.html"));
+    let html_path = rustashop_template_default::component_file(dir, "html");
     let html = std::fs::read_to_string(&html_path).unwrap_or_else(|err| {
         panic!("read {}: {err}", html_path.display());
     });
-    let source = format!("templates/{theme}/{dir}/{dir}.html");
+    let source = format!("templates/{template_id}/{dir}/{dir}.html");
     let aot = rangular_aot::compile_named(&html, &source, fn_name);
     assert!(aot.ok(), "{dir}.html: {:?}", aot.issues);
     let rs_path = out_dir.join(format!("{fn_name}.rs"));

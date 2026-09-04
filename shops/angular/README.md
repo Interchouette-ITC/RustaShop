@@ -4,16 +4,19 @@ Customer **shop** SPA for rustashop against the Commerce API.
 
 ## CSS / JS ownership
 
-Front-end styling and shop JS live in **this package** (npm dependencies + `src/styles/`).
+Designers edit **`templates/default`**. This host only owns controllers and the
+`bootstrap` npm dep that Sass resolves when compiling the template package.
 
-| Concern                | Owner                                                         |
-| ---------------------- | ------------------------------------------------------------- |
-| Bootstrap CSS (themed) | Angular shop (`bootstrap` npm + `src/styles/_bootstrap.scss`) |
-| Brand tokens           | Angular shop (`src/styles/_tokens.scss`)                      |
-| Interactive UI         | Angular components (no Bootstrap JS CDN)                      |
-| Commerce API           | CSS-agnostic; no shop CSS/JS ownership                        |
+| Concern              | Owner                                                             |
+| -------------------- | ----------------------------------------------------------------- |
+| Bootstrap + tokens   | `@rustashop/template-default` (`bootstrap.scss`, `tokens.scss`)   |
+| Global chrome        | `@rustashop/template-default` (`shop.scss`)                       |
+| Component markup/CSS | `@rustashop/template-default` (`<id>/<id>.html` + `.scss`)        |
+| Interactive UI       | Angular controllers under `src/components/` (no Bootstrap JS CDN) |
+| Commerce API         | CSS-agnostic                                                      |
 
-No CDN tags in `index.html`. The SPA owns its CSS/JS bundles (same role as a Webpack Encore-style frontend package).
+No CDN tags in `index.html`. Controllers use `@generated/<id>.ng` (from
+`npm run template:emit` → `scripts/emit-template.mjs`).
 
 ## Layout (Nx-ready folders + path aliases)
 

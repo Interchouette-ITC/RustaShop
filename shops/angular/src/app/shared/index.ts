@@ -1,3 +1,3 @@
 export { MoneyPipe } from './pipes/money.pipe';
-export { ProductCard } from './ui/product-card/product-card';
-export { ShopShell } from './layout/shop-shell';
+export { ProductCard } from '../../components/product_card/product_card';
+export { ShopShell } from '../../components/shop_shell/shop_shell';

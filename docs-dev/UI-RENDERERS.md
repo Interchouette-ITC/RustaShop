@@ -64,19 +64,17 @@ GPUI renderer work belongs primarily in **rangular** (new backend target). rusta
 ## Angular track (parallel)
 
 Angular remains **UI option A**: mature SPA under `shops/angular`. Controllers
-differ by stack; **theme markup is shared** under `templates/<theme>/`
+differ by stack; **template markup is shared** under `templates/<id>/`
 (rangular subset). Also share:
 
 - Same API types (OpenAPI codegen)
 - Same WS event names
 - Same MVP flows (browse → cart → checkout)
 
-See `templates/README.md` and `shops/README.md`.
-
 ## Leptos + rangular track
 
 Track B is **Leptos as the web host** (CSR wasm today) with **rangular** Host
-controllers and the same `templates/<theme>/` files as Angular. Make target:
+controllers and the same `templates/<id>/` files as Angular. Make target:
 `make shop-leptos-rangular`. Path: `shops/leptos-rangular`. It is not
 “rangular alone”: Leptos is the renderer we want to grow for shop **and**, later,
 back-office.

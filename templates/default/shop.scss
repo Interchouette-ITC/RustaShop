@@ -1,4 +1,7 @@
-@use './styles/bootstrap';
+// Global shop chrome for template "default".
+// Bootstrap tokens + page shell. Hosts load this as the app stylesheet entry.
+
+@use 'bootstrap';
 
 body {
   margin: 0;

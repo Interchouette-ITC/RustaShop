@@ -2,13 +2,15 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { CartStore } from '@rustashop/shop-core';
-import { rsConsoleWrite } from '../../core/logging/rs-console';
+import { template as shopShellTpl, styles as shopShellStyles } from '@generated/shop_shell.ng';
+
+import { rsConsoleWrite } from '../../app/core/logging/rs-console';
 
 @Component({
   selector: 'rs-shop-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './shop-shell.html',
-  styleUrl: './shop-shell.scss',
+  template: shopShellTpl,
+  styles: shopShellStyles,
 })
 export class ShopShell implements OnInit {
   private readonly cartStore = inject(CartStore);

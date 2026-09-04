@@ -3,12 +3,13 @@ import { Router, RouterLink } from '@angular/router';
 
 import type { OrderResponse } from '@rustashop/shop-api';
 import { MoneyPipe } from '@rustashop/shop-shared';
+import { template as checkoutPageTpl, styles as checkoutPageStyles } from '@generated/checkout_page.ng';
 
 @Component({
   selector: 'rs-checkout-page',
   imports: [RouterLink, MoneyPipe],
-  templateUrl: './checkout-page.html',
-  styleUrl: './checkout-page.scss',
+  template: checkoutPageTpl,
+  styles: checkoutPageStyles,
 })
 export class CheckoutPage {
   private readonly router = inject(Router);
@@ -19,7 +20,8 @@ export class CheckoutPage {
 
 function readOrder(router: Router): OrderResponse | null {
   const fromNav = router.getCurrentNavigation()?.extras.state?.['order'] as
-    OrderResponse | undefined;
+    | OrderResponse
+    | undefined;
   if (fromNav) {
     return fromNav;
   }

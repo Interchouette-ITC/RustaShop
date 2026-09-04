@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { ShopShell } from './shared/layout/shop-shell';
+import { ShopShell } from '../components/shop_shell/shop_shell';
 
 export const routes: Routes = [
   {
@@ -10,23 +10,21 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/catalog/product-list/product-list').then((m) => m.ProductListPage),
+          import('../components/product_list/product_list').then((m) => m.ProductListPage),
       },
       {
         path: 'products/:id',
         loadComponent: () =>
-          import('./features/catalog/product-detail/product-detail').then(
-            (m) => m.ProductDetailPage,
-          ),
+          import('../components/product_detail/product_detail').then((m) => m.ProductDetailPage),
       },
       {
         path: 'cart',
-        loadComponent: () => import('./features/cart/cart-page/cart-page').then((m) => m.CartPage),
+        loadComponent: () => import('../components/cart_page/cart_page').then((m) => m.CartPage),
       },
       {
         path: 'checkout/:orderId',
         loadComponent: () =>
-          import('./features/checkout/checkout-page/checkout-page').then((m) => m.CheckoutPage),
+          import('../components/checkout_page/checkout_page').then((m) => m.CheckoutPage),
       },
       { path: '**', redirectTo: '' },
     ],

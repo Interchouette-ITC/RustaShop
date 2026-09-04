@@ -26,7 +26,7 @@
             "inlineStyleLanguage": "scss",
             "baseHref": "/",
             "stylePreprocessorOptions": {
-              "includePaths": ["../../templates/default"],
+              "includePaths": ["node_modules/@rustashop/template-default", "node_modules"],
               "sass": {
                 "silenceDeprecations": ["import", "color-functions", "global-builtin"]
               }
@@ -37,7 +37,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["node_modules/@rustashop/template-default/shop.scss"]
           },
           "configurations": {
             "production": {
@@ -100,11 +100,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html",
-              "../../templates/default/**/*.html"
-            ]
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
           }
         }
       }
