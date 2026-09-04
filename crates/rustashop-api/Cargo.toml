@@ -57,6 +57,9 @@ utoipa-swagger-ui = { workspace = true }
 
 [dev-dependencies]
 actix-web = { workspace = true }
+insta = { workspace = true }
+rstest = { workspace = true }
+serde_json = { workspace = true }
 
 [lints]
 workspace = true

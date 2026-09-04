@@ -63,6 +63,20 @@ Default DSN: `postgres://rustashop:rustashop@127.0.0.1:5432/rustashop`.
 
 Do not add `#[allow(clippy::too_many_arguments)]`, `too_many_lines`, or `dead_code`. Fix with structs, helpers, or by wiring/removing unused items.
 
+Before opening or updating a PR, run the full local gate (`make ci`: lint, test, doc, audit, deny). Integration tests need Postgres (`make db-up`).
+
+## Rust test DX
+
+Runner stays **`cargo test`** (via `make test` / `make ci`). Prefer these workspace `dev-dependencies` when they fit:
+
+| Crate | Use for |
+| --- | --- |
+| **rstest** | Parametrized cases and fixtures |
+| **mockall** | Sync trait doubles when a real collaborator is heavy |
+| **insta** | Stable JSON / text snapshots (`*.snap` committed; `*.snap.new` gitignored) |
+
+HTTP integration style stays in `crates/rustashop-api/tests/` (Actix `test`).
+
 ## Persistence features
 
 Default build uses `persist-sqlx`. SeaORM path:

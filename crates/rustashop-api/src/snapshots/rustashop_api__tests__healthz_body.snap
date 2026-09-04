@@ -1,0 +1,8 @@
+---
+source: crates/rustashop-api/src/lib.rs
+expression: body
+---
+{
+  "status": "ok",
+  "kernel": "serenade-pending"
+}

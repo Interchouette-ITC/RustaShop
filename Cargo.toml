@@ -60,6 +60,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "ansi"] }
 utoipa = { version = "5", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "9", features = ["actix-web", "vendored"] }
+rstest = "0.26"
+mockall = "0.13"
+insta = { version = "1", features = ["json"] }
 
 [workspace.lints.rust]
 missing_docs = "deny"

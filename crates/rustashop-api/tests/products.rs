@@ -24,9 +24,11 @@ async fn products_list_and_get_seeded_rows() {
     let list_req = test::TestRequest::get().uri("/v1/products").to_request();
     let list_resp = test::call_service(&app, list_req).await;
     assert!(list_resp.status().is_success());
-    let list: ProductListResponse = test::read_body_json(list_resp).await;
+    let mut list: ProductListResponse = test::read_body_json(list_resp).await;
     assert_eq!(list.items.len(), 3);
     assert!(list.items.iter().any(|item| item.slug == "hoodie"));
+    list.items.sort_by(|left, right| left.slug.cmp(&right.slug));
+    insta::assert_json_snapshot!("products_list_seeded", list);
 
     let get_req = test::TestRequest::get()
         .uri(&format!("/v1/products/{HOODIE_ID}"))

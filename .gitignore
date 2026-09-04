@@ -16,3 +16,4 @@ shops/**/.angular/
 shops/**/coverage/
 shops/angular/.vscode/
 admin/**/coverage/
+*.snap.new
