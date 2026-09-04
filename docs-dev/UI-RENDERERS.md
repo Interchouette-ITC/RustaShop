@@ -63,17 +63,34 @@ GPUI renderer work belongs primarily in **rangular** (new backend target). Rusta
 
 ## Angular track (parallel)
 
-Angular remains **UI option A**: mature ecosystem, separate repo under `clients/angular-*`. Feature parity with rangular track is a **product habit**, not shared code:
+Angular remains **UI option A**: mature SPA under `clients/angular-shop`. Feature parity with the Leptos+rangular track is a **product habit**, not shared code:
 
 - Same API types (OpenAPI codegen)
 - Same WS event names
 - Same MVP flows (browse → cart → checkout)
 
+## Leptos + rangular track
+
+Track B is **Leptos as the web host** (CSR wasm today) with **rangular** for Angular-shaped templates/controllers. Make target: `make shop-leptos-rangular`. Path: `clients/leptos-rangular-shop`. It is not “rangular alone”: Leptos is the renderer we want to grow for shop **and**, later, back-office.
+
+## Admin (pluggable)
+
+The back-office is **API-first**. Any SPA that speaks admin OpenAPI + auth may plug in (Angular, React, Vue, Leptos+rangular, …). RustaShop ships an **Angular sample** for MVP speed; that is not a stack lock. Long-term intent: Leptos+rangular admin once forms (rangular #22) and optionally GPUI (#37) are ready.
+
+## Make targets (shops)
+
+| Target | Role |
+| --- | --- |
+| `make shop-angular` | Serve Angular shop (port `4242` by default) |
+| `make shop-leptos-rangular` | Serve Leptos+rangular shop (Trunk; port documented in that client) |
+
+Product vocabulary: **shop** (not storefront / vitrine).
+
 ## Domains map (reminder)
 
 | Host                    | Typical UI                                     |
 | ----------------------- | ---------------------------------------------- |
-| `rustashop.io` / `.dev` | Angular or rangular **web** (Leptos)           |
+| `rustashop.io` / `.dev` | Angular or Leptos+rangular **shop**            |
 | Desktop installer       | rangular **native** (GPUI)                     |
 | `rustashop.app`         | Ionic / mobile (later; likely Angular-aligned) |
 
@@ -83,29 +100,27 @@ Upstream rangular work splits into **two blockers** with different blast radius:
 
 | Upstream | Blocks | Does not block |
 | --- | --- | --- |
-| [rangular #22](https://github.com/Interchouette-ITC/rangular/issues/22) (forms / validators) | rangular **checkout**, **admin CRUD**, multi-field UX on **any** renderer (Leptos or GPUI) | API; Angular track; rangular **browse-only** (catalog list/detail, add-to-cart buttons) |
-| [rangular #37](https://github.com/Interchouette-ITC/rangular/issues/37) (GPUI backend) | rangular **native** host only | rangular web (Leptos); Angular; API |
-
-**#22 blocks more RustaShop than #37** if the MVP includes checkout or admin on track B. v0.1 only has `required` / banana `[(prop)]` — enough for a seed field, not commerce forms ([rangular #22](https://github.com/Interchouette-ITC/rangular/issues/22)).
+| [rangular #22](https://github.com/Interchouette-ITC/rangular/issues/22) (forms / validators) | Leptos+rangular **checkout**, **admin CRUD**, multi-field UX on **any** renderer (Leptos or GPUI) | API; Angular shop; Leptos+rangular **browse-only** (catalog list/detail, add-to-cart buttons) |
+| [rangular #37](https://github.com/Interchouette-ITC/rangular/issues/37) (GPUI backend) | rangular **native** host only | Leptos web shop; Angular; API |
 
 Suggested order:
 
-1. **Commerce API** MVP on Serenade + Actix (#2, #49, #47)
-2. **rangular #22** (at least Host helpers + control state) — before rangular checkout/admin
-3. **rangular web** browse + cart (Leptos CSR) on API stub
-4. **rangular #37** (GPUI) — native admin/desktop
-5. **Angular** clients in parallel (forms ship with Angular; not blocked by #22)
-
-If checkout must ship early on track B, **#22 before #37**. If native GPUI is the priority, **#37** can run in parallel with #22 (forms must land on both backends eventually).
+1. **Commerce API** MVP (landed through cart/checkout)
+2. **Angular shop** (#21 scaffold, #22 pages) - stable SPA path
+3. **rangular #22** (forms) - unlocks Leptos+rangular checkout **and** future BO
+4. **Leptos+rangular shop** browse + cart (#23, #24)
+5. **Admin API** + pluggable SPA sample (#6); Angular sample first, Leptos+rangular BO later
+6. **rangular #37** (GPUI) - native admin/desktop
 
 ## Non-goals (early)
 
 - One binary that is both Actix API and Leptos SSR for everything
-- GPUI storefront before admin proves the native renderer
-- Forking Angular inside RustaShop
+- GPUI shop before admin proves the native renderer
+- Mandating Angular (or any single SPA framework) for admin
+- Forking Angular inside the Rust crates
 
 ## Related
 
 - [WASM-LAYERS.md](WASM-LAYERS.md) — wasm roles (UI wasm vs plugins vs sandbox)
 - [rangular SPEC](https://github.com/Interchouette-ITC/rangular/blob/dev/docs/SPEC.md) — v0.1 browser-only; GPUI is post-v0.1
-- GitHub: RustaShop UI renderer epic (see issues)
+- GitHub: RustaShop UI / shop epics (#7, #8, #6)

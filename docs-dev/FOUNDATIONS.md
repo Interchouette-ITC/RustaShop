@@ -7,7 +7,7 @@ This document frames the **technical identity** of RustaShop for a modern, Wasm-
 | Pillar            | Opinion                                                                                                                                                                                  |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Core**          | One Rust commerce kernel: catalog, cart, checkout, orders, money as integers, inventory, payments, webhooks                                                                              |
-| **Clients**       | Angular **or** rangular on one API; rangular → Leptos (web) + GPUI (native). See [UI-RENDERERS.md](UI-RENDERERS.md)                                                                      |
+| Clients       | Angular **shop** or Leptos+rangular **shop** on one API; rangular → Leptos (web) + GPUI (native). See [UI-RENDERERS.md](UI-RENDERERS.md) |
 | **AI native**     | Discovery, shopping agents, catalog assist, pricing/promos, support, MCP, and autonomous jobs are product surfaces on that API - not a side app ([AI-NATIVE.md](AI-NATIVE.md))           |
 | **Live state**    | WebSocket (then optionally WebTransport) is first-class for shop and admin live updates; REST/OpenAPI for bootstrap, clear mutations, and inbound provider webhooks                      |
 | **Extensibility** | Stable interfaces: OpenAPI for UIs; WIT / Component Model for plugins; optional sandboxed polyglot scripts for merchants, migrations, and agents                                         |

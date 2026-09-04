@@ -31,13 +31,15 @@ Integration tests need Postgres (`make db-up`). Prefer Docker for the database.
 | `make test` | workspace tests, then SeaORM feature tests |
 | `make doc` | rustdoc (`-D warnings`) |
 | `make openapi` | write `openapi/openapi.json` from utoipa |
+| `make shop-angular` | serve Angular shop (`clients/angular-shop`, port 4242) |
+| `make shop-leptos-rangular` | serve Leptos+rangular shop (when client lands) |
 | `make run-api` | Actix API on host (`RUSTASHOP_BIND`, default `127.0.0.1:8080`) |
 | `make db-up` | Postgres only via compose |
 | `make stack-up` | Postgres + migrate + API image |
 | `make db-migrate` | SQLx migrations |
 | `make db-migrate-seaorm` | SeaORM migrations |
-| `make db-seed` | catalog seed SQL |
-| `make db-reset` | drop public schema and re-run SQLx migrations |
+| `make db-seed` | catalog seed SQL (idempotent; does not wipe) |
+| `make db-reset` | **DESTROYS** schema `public` then migrates; requires `CONFIRM=YES` |
 
 Default DSN: `postgres://rustashop:rustashop@127.0.0.1:5432/rustashop`.
 

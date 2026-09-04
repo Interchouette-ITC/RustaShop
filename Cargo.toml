@@ -40,3 +40,8 @@ utoipa-swagger-ui = { version = "9", features = ["actix-web", "vendored"] }
 
 [workspace.lints.rust]
 missing_docs = "deny"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

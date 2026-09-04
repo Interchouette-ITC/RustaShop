@@ -8,10 +8,14 @@ RUSTDOCFLAGS ?= -D warnings
 API_BIND ?= 127.0.0.1:8080
 DATABASE_URL ?= postgres://rustashop:rustashop@127.0.0.1:5432/rustashop
 OPENAPI_OUT ?= openapi/openapi.json
+SHOP_ANGULAR_DIR := clients/angular-shop
+SHOP_ANGULAR_PORT ?= 4242
+# Set FORCE=1 to re-run npm install even when node_modules exists.
+FORCE ?= 0
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check test lint format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up
+.PHONY: help check test lint format format-check check-sql-safety doc doc-open openapi run-api clean db-up db-down db-psql db-wait db-migrate db-migrate-seaorm db-seed db-reset stack-up shop-angular shop-leptos-rangular
 
 SEAORM_PACKAGES := -p rustashop-persist -p rustashop-api
 SEAORM_FEATURES := --no-default-features --features persist-seaorm
@@ -26,6 +30,8 @@ help:
 	@echo "  make doc        rustdoc for all crates (-D warnings)"
 	@echo "  make doc-open   build docs and open in browser"
 	@echo "  make openapi    write $(OPENAPI_OUT) from utoipa"
+	@echo "  make shop-angular  serve Angular shop ($(SHOP_ANGULAR_DIR), port $(SHOP_ANGULAR_PORT); FORCE=1 reinstalls)"
+	@echo "  make shop-leptos-rangular  serve Leptos+rangular shop (when client lands)"
 	@echo "  make format     cargo fmt"
 	@echo "  make run-api    start Actix API on the host (RUSTASHOP_BIND, default $(API_BIND))"
 	@echo "  make db-up      start Postgres via docker compose"
@@ -34,11 +40,11 @@ help:
 	@echo "  make db-psql    psql shell (needs db-up)"
 	@echo "  make db-migrate run SQLx migrations (needs db-up, DATABASE_URL)"
 	@echo "  make db-migrate-seaorm run SeaORM migrations (needs db-up, DATABASE_URL)"
-	@echo "  make db-seed    load catalog seed (needs db-up, migrated schema)"
-	@echo "  make db-reset   drop public schema and re-run migrations"
+	@echo "  make db-seed    load catalog seed (idempotent; never drops data)"
+	@echo "  make db-reset   DROP SCHEMA public + migrate (requires CONFIRM=YES)"
 	@echo "  make clean      cargo clean"
 	@echo ""
-	@echo "Overrides: API_BIND=$(API_BIND)"
+	@echo "Overrides: API_BIND=$(API_BIND) SHOP_ANGULAR_PORT=$(SHOP_ANGULAR_PORT) RUSTASHOP_API_PROXY FORCE=$(FORCE) CONFIRM="
 
 check:
 	cd $(ROOT) && $(CARGO) check --workspace
@@ -70,6 +76,26 @@ doc-open: doc
 openapi:
 	cd $(ROOT) && $(CARGO) run -p rustashop-api --bin rustashop-openapi -- $(OPENAPI_OUT)
 
+shop-angular:
+	@if ss -tln | grep -qE ':$(SHOP_ANGULAR_PORT)\\b'; then \
+		echo "port $(SHOP_ANGULAR_PORT) already in use; stop the other process or set SHOP_ANGULAR_PORT="; \
+		exit 1; \
+	fi
+	@API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^#http://#;s#^http://http://#http://#')}; \
+	echo "shop proxy → $$API_PROXY (override with RUSTASHOP_API_PROXY=... if $(API_BIND) is not RustaShop)"; \
+	if ! curl -sf "$${API_PROXY}/healthz" >/dev/null; then \
+		echo "warning: $${API_PROXY}/healthz failed — start the API (make run-api) or point RUSTASHOP_API_PROXY at it"; \
+	fi
+	cd $(ROOT)/$(SHOP_ANGULAR_DIR) && \
+		if [ "$(FORCE)" = "1" ] || [ ! -d node_modules ]; then npm install --no-fund --no-audit; fi && \
+		npm run generate:api && \
+		RUSTASHOP_API_PROXY=$${RUSTASHOP_API_PROXY:-http://$$(echo $(API_BIND) | sed 's#^http://##;s#^#http://#')} \
+			npm start -- --port $(SHOP_ANGULAR_PORT)
+
+shop-leptos-rangular:
+	@echo "clients/leptos-rangular-shop is not scaffolded yet (see GitHub #23)"
+	@exit 1
+
 run-api:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) RUSTASHOP_BIND=$${RUSTASHOP_BIND:-$(API_BIND)} $(CARGO) run -p rustashop-api
 
@@ -96,9 +122,24 @@ db-migrate-seaorm:
 	cd $(ROOT) && DATABASE_URL=$(DATABASE_URL) $(CARGO) run -p rustashop-persist-seaorm --bin rustashop-seaorm-migrate
 
 db-seed:
+	@echo "Seeding catalog (idempotent; does not wipe the database)"
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop < db/seeds/catalog.sql
 
+# Destroys ALL tables and data in the rustashop database, then re-migrates.
+# Refuses unless CONFIRM=YES (example: CONFIRM=YES make db-reset).
 db-reset:
+	@if [ "$(CONFIRM)" != "YES" ]; then \
+		echo ""; \
+		echo "REFUSING: make db-reset DROPS SCHEMA public CASCADE."; \
+		echo "That deletes every table and all data in database 'rustashop'."; \
+		echo "This is not undoable from Make."; \
+		echo ""; \
+		echo "If you really want that, run:"; \
+		echo "  CONFIRM=YES make db-reset"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "CONFIRM=YES: dropping schema public and re-running migrations..."
 	cd $(ROOT) && docker compose exec -T postgres psql -U rustashop -d rustashop -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 	@$(MAKE) db-migrate
 

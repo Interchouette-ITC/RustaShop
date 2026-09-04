@@ -5,3 +5,7 @@
 .env.*
 !.env.example
 assets/
+clients/**/node_modules/
+clients/**/dist/
+clients/**/.angular/
+clients/angular-shop/.vscode/

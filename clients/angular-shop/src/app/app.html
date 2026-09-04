@@ -1,0 +1,37 @@
+<main class="shop">
+  <header class="shop__header">
+    <h1>{{ title() }}</h1>
+    <p class="shop__tagline">Angular shop (track A) against the Commerce API</p>
+  </header>
+
+  @if (error(); as message) {
+    <p class="shop__error" role="alert">{{ message }}</p>
+  }
+
+  <section class="shop__panel" aria-labelledby="health-heading">
+    <h2 id="health-heading">API health</h2>
+    @if (healthStatus(); as status) {
+      <p>
+        <code>/healthz</code>: <strong>{{ status }}</strong>
+      </p>
+    } @else if (!error()) {
+      <p>Checking…</p>
+    }
+  </section>
+
+  <section class="shop__panel" aria-labelledby="catalog-heading">
+    <h2 id="catalog-heading">Catalog</h2>
+    @if (products().length === 0 && !error()) {
+      <p>No products yet (start the API, migrate, and seed).</p>
+    } @else {
+      <ul class="shop__list">
+        @for (product of products(); track product.id) {
+          <li>
+            <span class="shop__name">{{ product.name }}</span>
+            <span class="shop__slug">{{ product.slug }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</main>
