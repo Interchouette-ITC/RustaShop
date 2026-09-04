@@ -110,4 +110,4 @@ Thank you to their maintainers and communities.
 
 ## License
 
-To be decided before first release. Interchouette-ITC projects often use **Apache-2.0**; this repo will align with org policy when code is added.
+Apache-2.0. See [`LICENSE`](../LICENSE).
