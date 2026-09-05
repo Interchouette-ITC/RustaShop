@@ -245,27 +245,51 @@ mod tests {
 #[cfg(all(test, feature = "persist-sqlx"))]
 mod catalog_error_tests {
     use super::*;
-    use rustashop_persist_sqlx::SqlxCatalogRepository;
+    use rustashop_persist_sqlx::{migrate, seed_catalog, SqlxCatalogRepository};
     use sqlx::postgres::PgPoolOptions;
 
+    const HOODIE_ID: &str = "22222222-2222-2222-2222-222222222221";
+    const SCHEMA_LOCK: i64 = 874_521;
+
     #[tokio::test]
-    async fn maps_nul_and_closed_pool_errors() {
-        let Ok(url) = std::env::var("DATABASE_URL") else {
-            eprintln!("skip: DATABASE_URL is not set");
-            return;
-        };
+    async fn maps_nul_variant_and_closed_pool_errors() {
+        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
         let pool = PgPoolOptions::new()
             .max_connections(1)
             .connect(&url)
             .await
             .expect("connect");
+        sqlx::query("SELECT pg_advisory_lock($1)")
+            .bind(SCHEMA_LOCK)
+            .execute(&pool)
+            .await
+            .expect("lock");
+        sqlx::query("DROP SCHEMA public CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop");
+        sqlx::query("CREATE SCHEMA public")
+            .execute(&pool)
+            .await
+            .expect("create");
+        migrate(&pool).await.expect("migrate");
+        seed_catalog(&pool).await.expect("seed");
         let catalog = SqlxCatalogRepository::new(pool.clone());
+
         let nul = get_product_response(&catalog, "a\0b").await;
         assert_eq!(nul.status(), 422);
+
+        sqlx::query("DROP TABLE product_variant CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop variants");
+        let variants = get_product_response(&catalog, HOODIE_ID).await;
+        assert_eq!(variants.status(), 500);
+
         pool.close().await;
         let list = list_products_response(&catalog, &ListProductsQuery::default()).await;
         assert_eq!(list.status(), 500);
-        let get = get_product_response(&catalog, "22222222-2222-2222-2222-222222222221").await;
+        let get = get_product_response(&catalog, HOODIE_ID).await;
         assert_eq!(get.status(), 500);
     }
 }
