@@ -8,6 +8,7 @@ use serenade_contracts::{CartRepository, PersistenceError};
 const HOODIE_VARIANT: &str = "33333333-3333-3333-3333-333333333331";
 const MUG_VARIANT: &str = "33333333-3333-3333-3333-333333333332";
 const SCHEMA_LOCK: i64 = 874_521;
+const CUSTOMER_ID: &str = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 
 async fn exclusive_repo() -> Option<(DatabaseConnection, SeaOrmCatalogRepository)> {
     let Ok(url) = std::env::var("DATABASE_URL") else {
@@ -334,5 +335,138 @@ async fn cart_save_preserves_line_id_and_rejects_bad_ids() {
         repo.find_variant_for_cart("not-a-uuid").await,
         Err(PersistenceError::InvalidInput { .. })
     ));
+
+    let mut bad_customer = with_line.clone();
+    bad_customer.customer_id = Some("not-a-uuid".into());
+    assert!(matches!(
+        repo.save_cart(&bad_customer).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+    let mut bad_line = with_line;
+    bad_line.lines[0].id = "bad-line-id".into();
+    assert!(matches!(
+        repo.save_cart(&bad_line).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
     unlock(&db).await;
+}
+
+#[tokio::test]
+async fn checkout_copies_and_clears_customer_id() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+    insert_customer(&db).await;
+    let mut cart = cart_with_hoodie(&repo).await;
+    cart.customer_id = Some(CUSTOMER_ID.to_owned());
+    repo.save_cart(&cart).await.expect("save customer");
+    let loaded = repo
+        .find_cart_by_id(&cart.id)
+        .await
+        .expect("reload")
+        .expect("cart");
+    assert_eq!(loaded.customer_id.as_deref(), Some(CUSTOMER_ID));
+
+    let order = repo
+        .checkout_cart(&cart.id, Some("seaorm-customer-key"))
+        .await
+        .expect("checkout");
+    assert_eq!(order.customer_id.as_deref(), Some(CUSTOMER_ID));
+    assert_eq!(
+        repo.get_order(&order.id)
+            .await
+            .expect("get")
+            .customer_id
+            .as_deref(),
+        Some(CUSTOMER_ID)
+    );
+
+    let mut open = cart_with_hoodie(&repo).await;
+    open.customer_id = Some(CUSTOMER_ID.to_owned());
+    repo.save_cart(&open).await.expect("set");
+    open.customer_id = None;
+    repo.save_cart(&open).await.expect("clear");
+    let after = repo
+        .find_cart_by_id(&open.id)
+        .await
+        .expect("reload clear")
+        .expect("cart");
+    assert!(after.customer_id.is_none());
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn checkout_concurrent_same_cart_same_key() {
+    let Some((db, repo)) = race_repo().await else {
+        return;
+    };
+    let cart = cart_with_hoodie(&repo).await;
+    let key = "seaorm-race-same-cart";
+    let (a, b) = tokio::join!(
+        repo.checkout_cart(&cart.id, Some(key)),
+        repo.checkout_cart(&cart.id, Some(key)),
+    );
+    let a = a.expect("checkout a");
+    let b = b.expect("checkout b");
+    assert_eq!(a.id, b.id);
+    let count = count_orders_by_key(&db, key).await;
+    assert_eq!(count, 1);
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn checkout_concurrent_two_carts_same_key() {
+    let Some((db, repo)) = race_repo().await else {
+        return;
+    };
+    let cart_a = cart_with_hoodie(&repo).await;
+    let cart_b = cart_with_hoodie(&repo).await;
+    let key = "seaorm-race-two-carts";
+    let (a, b) = tokio::join!(
+        repo.checkout_cart(&cart_a.id, Some(key)),
+        repo.checkout_cart(&cart_b.id, Some(key)),
+    );
+    let a = a.expect("checkout a");
+    let b = b.expect("checkout b");
+    assert_eq!(a.id, b.id);
+    let count = count_orders_by_key(&db, key).await;
+    assert_eq!(count, 1);
+    unlock(&db).await;
+}
+
+async fn insert_customer(db: &DatabaseConnection) {
+    db.execute_unprepared(&format!(
+        "INSERT INTO customer (id, email) VALUES ('{CUSTOMER_ID}', 'buyer@example.com')"
+    ))
+    .await
+    .expect("insert customer");
+}
+
+async fn count_orders_by_key(db: &DatabaseConnection, key: &str) -> u64 {
+    use rustashop_persist_seaorm::entities::commerce_order;
+    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    commerce_order::Entity::find()
+        .filter(commerce_order::Column::IdempotencyKey.eq(key))
+        .count(db)
+        .await
+        .expect("count")
+}
+
+async fn race_repo() -> Option<(DatabaseConnection, SeaOrmCatalogRepository)> {
+    let Ok(url) = std::env::var("DATABASE_URL") else {
+        eprintln!("skip: DATABASE_URL is not set");
+        return None;
+    };
+    let mut options = ConnectOptions::new(url);
+    options.max_connections(4);
+    let db = Database::connect(options).await.expect("connect");
+    db.execute_unprepared(&format!("SELECT pg_advisory_lock({SCHEMA_LOCK})"))
+        .await
+        .expect("lock");
+    db.execute_unprepared("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+        .await
+        .expect("reset");
+    migrate(&db).await.expect("migrate");
+    seed_catalog(&db).await.expect("seed");
+    Some((db.clone(), SeaOrmCatalogRepository::new(db)))
 }
