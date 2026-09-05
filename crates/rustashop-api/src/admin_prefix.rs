@@ -48,16 +48,11 @@ impl AdminApiPrefix {
     /// `[A-Za-z0-9][A-Za-z0-9_-]{0,63}`.
     pub fn parse(raw: &str) -> Result<Self, String> {
         let segment = raw.trim();
-        if segment.is_empty() {
-            return Err("empty".to_owned());
-        }
         if segment.len() > 64 {
             return Err("longer than 64 characters".to_owned());
         }
         let mut chars = segment.chars();
-        let Some(first) = chars.next() else {
-            return Err("empty".to_owned());
-        };
+        let first = chars.next().ok_or_else(|| "empty".to_owned())?;
         if !first.is_ascii_alphanumeric() {
             return Err("must start with ASCII alphanumeric".to_owned());
         }
@@ -113,6 +108,9 @@ pub fn configure_admin_routes(cfg: &mut actix_web::web::ServiceConfig, prefix: &
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static ADMIN_PREFIX_ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[rstest::rstest]
     #[case::default_admin("admin", "/v1/admin", "/v1/admin/products")]
@@ -141,6 +139,7 @@ mod tests {
 
     #[test]
     fn from_env_defaults_to_admin() {
+        let _guard = ADMIN_PREFIX_ENV_LOCK.lock().expect("lock");
         // SAFETY: test isolates admin prefix env.
         unsafe {
             std::env::remove_var(ADMIN_API_PREFIX_ENV);
@@ -160,6 +159,7 @@ mod tests {
 
     #[test]
     fn from_env_panics_on_invalid() {
+        let _guard = ADMIN_PREFIX_ENV_LOCK.lock().expect("lock");
         unsafe {
             std::env::set_var(ADMIN_API_PREFIX_ENV, "products");
         }

@@ -475,6 +475,120 @@ async fn find_cart_and_order_reject_corrupt_rows() {
     unlock(&pool).await;
 }
 
+#[tokio::test]
+async fn checkout_rejects_overflow_line_total() {
+    let Some((pool, repo)) = exclusive_repo().await else {
+        return;
+    };
+    let cart = cart_with_hoodie(&repo).await;
+    sqlx::query(
+        "UPDATE cart_line SET unit_price_minor = $1, quantity = 2 WHERE cart_id = $2::uuid",
+    )
+    .bind(i64::MAX)
+    .bind(&cart.id)
+    .execute(&pool)
+    .await
+    .expect("overflow price");
+    let err = repo
+        .checkout_cart(&cart.id, None)
+        .await
+        .expect_err("overflow");
+    assert!(matches!(err, PersistenceError::InvalidInput { .. }));
+    unlock(&pool).await;
+}
+
+#[tokio::test]
+async fn checkout_checked_out_cart_returns_existing_order_in_txn() {
+    let Some((pool, repo)) = race_repo().await else {
+        return;
+    };
+    let cart = cart_with_hoodie(&repo).await;
+    let key = "sqlx-checked-out-in-txn";
+    let mut hold = pool.begin().await.expect("begin hold");
+    sqlx::query("SELECT id FROM cart WHERE id = $1::uuid FOR UPDATE")
+        .bind(&cart.id)
+        .fetch_one(&mut *hold)
+        .await
+        .expect("lock cart");
+
+    let cart_id = cart.id.clone();
+    let pool_clone = pool.clone();
+    let join = tokio::spawn(async move {
+        let repo = SqlxCatalogRepository::new(pool_clone);
+        repo.checkout_cart(&cart_id, Some(key)).await
+    });
+    // Hold the row lock until checkout is blocked on FOR UPDATE.
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+
+    sqlx::query(
+        r#"INSERT INTO "order" (
+            number, cart_id, state, currency, items_total_minor, total_minor,
+            idempotency_key, placed_at
+        ) VALUES (
+            'RS-hold-checked', $1::uuid, 'placed', 'EUR', 100, 100, $2, NOW()
+        )"#,
+    )
+    .bind(&cart.id)
+    .bind(key)
+    .execute(&mut *hold)
+    .await
+    .expect("insert order");
+    sqlx::query("UPDATE cart SET status = 'checked_out' WHERE id = $1::uuid")
+        .bind(&cart.id)
+        .execute(&mut *hold)
+        .await
+        .expect("mark checked out");
+    hold.commit().await.expect("commit hold");
+
+    let order = join.await.expect("join").expect("checkout");
+    assert_eq!(order.idempotency_key.as_deref(), Some(key));
+    unlock(&pool).await;
+}
+
+#[tokio::test]
+async fn checkout_recovers_unique_idempotency_conflict() {
+    let Some((pool, repo)) = race_repo().await else {
+        return;
+    };
+    let cart_a = cart_with_hoodie(&repo).await;
+    let cart_b = cart_with_hoodie(&repo).await;
+    let key = "sqlx-unique-recover";
+    let mut hold = pool.begin().await.expect("begin hold");
+    sqlx::query(
+        r#"INSERT INTO "order" (
+            number, cart_id, state, currency, items_total_minor, total_minor,
+            idempotency_key, placed_at
+        ) VALUES (
+            'RS-hold-unique', $1::uuid, 'placed', 'EUR', 100, 100, $2, NOW()
+        )"#,
+    )
+    .bind(&cart_a.id)
+    .bind(key)
+    .execute(&mut *hold)
+    .await
+    .expect("insert uncommitted order");
+
+    let cart_b_id = cart_b.id.clone();
+    let pool_clone = pool.clone();
+    let join = tokio::spawn(async move {
+        let repo = SqlxCatalogRepository::new(pool_clone);
+        repo.checkout_cart(&cart_b_id, Some(key)).await
+    });
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    hold.commit().await.expect("commit hold");
+
+    let order = join.await.expect("join").expect("recover");
+    assert_eq!(order.idempotency_key.as_deref(), Some(key));
+    let count: i64 =
+        sqlx::query_scalar(r#"SELECT COUNT(*)::bigint FROM "order" WHERE idempotency_key = $1"#)
+            .bind(key)
+            .fetch_one(&pool)
+            .await
+            .expect("count");
+    assert_eq!(count, 1);
+    unlock(&pool).await;
+}
+
 async fn insert_customer(pool: &PgPool) {
     sqlx::query("INSERT INTO customer (id, email) VALUES ($1::uuid, $2)")
         .bind(CUSTOMER_ID)

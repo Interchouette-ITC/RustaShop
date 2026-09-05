@@ -97,23 +97,18 @@ impl SeaOrmCatalogRepository {
                 txn.commit().await.map_err(|error| internal(&error))?;
                 Ok(order)
             }
-            Err(error)
-                if matches!(
-                    error,
-                    PersistenceError::Conflict {
-                        constraint: "idempotency_key"
-                    }
-                ) =>
-            {
-                txn.rollback().await.ok();
-                if let Some(key) = idempotency_key {
-                    find_order_by_key(&self.db, key).await?.ok_or(error)
-                } else {
-                    Err(error)
-                }
-            }
             Err(error) => {
                 txn.rollback().await.ok();
+                if let Some(key) = idempotency_key {
+                    if matches!(
+                        error,
+                        PersistenceError::Conflict {
+                            constraint: "idempotency_key"
+                        }
+                    ) {
+                        return find_order_by_key(&self.db, key).await?.ok_or(error);
+                    }
+                }
                 Err(error)
             }
         }
@@ -207,9 +202,7 @@ async fn insert_order_lines<C: ConnectionTrait>(
     for line in &cart.lines {
         let line_total = line
             .line_total()
-            .map_err(|error| PersistenceError::InvalidInput {
-                message: error.to_string(),
-            })?;
+            .expect("line totals already validated by items_total");
         order_line::ActiveModel {
             id: Set(Uuid::new_v4()),
             order_id: Set(order_id),
@@ -365,9 +358,7 @@ mod helper_tests {
 
     #[tokio::test]
     async fn load_helpers_map_internal_when_order_tables_missing() {
-        let Ok(url) = std::env::var("DATABASE_URL") else {
-            return;
-        };
+        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
         let mut options = ConnectOptions::new(url);
         options.max_connections(2);
         let db = Database::connect(options).await.expect("connect");

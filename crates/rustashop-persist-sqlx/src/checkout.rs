@@ -165,16 +165,13 @@ impl SqlxCatalogRepository {
                 tx.commit().await.map_err(|error| internal(&error))?;
                 Ok(order)
             }
-            Err(error) if is_conflict_unique(&error) => {
-                tx.rollback().await.ok();
-                if let Some(key) = idempotency_key {
-                    find_order_by_key(&self.pool, key).await?.ok_or(error)
-                } else {
-                    Err(error)
-                }
-            }
             Err(error) => {
                 tx.rollback().await.ok();
+                if let Some(key) = idempotency_key {
+                    if is_conflict_unique(&error) {
+                        return find_order_by_key(&self.pool, key).await?.ok_or(error);
+                    }
+                }
                 Err(error)
             }
         }
@@ -283,9 +280,7 @@ async fn insert_order_lines(
     for line in &cart.lines {
         let line_total = line
             .line_total()
-            .map_err(|error| PersistenceError::InvalidInput {
-                message: error.to_string(),
-            })?;
+            .expect("line totals already validated by items_total");
         sqlx::query(
             "INSERT INTO order_line (
                 order_id, variant_id, quantity, unit_price_minor, line_total_minor,
@@ -566,9 +561,7 @@ mod helper_tests {
 
     #[tokio::test]
     async fn load_helpers_map_internal_when_order_tables_missing() {
-        let Ok(url) = std::env::var("DATABASE_URL") else {
-            return;
-        };
+        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
         let pool = sqlx::postgres::PgPoolOptions::new()
             .max_connections(2)
             .connect(&url)

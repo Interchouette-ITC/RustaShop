@@ -150,9 +150,8 @@ fn upsert_env_file(path: &Path, pairs: &[(&str, &str)]) -> Result<(), std::io::E
     for &(key, value) in pairs {
         contents = upsert_key(&contents, key, value);
     }
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    fs::create_dir_all(parent)?;
     fs::write(path, contents)?;
     Ok(())
 }
@@ -162,15 +161,14 @@ fn upsert_key(contents: &str, key: &str, value: &str) -> String {
     let mut replaced = false;
     for line in contents.lines() {
         let trimmed = line.trim();
-        if let Some((k, _)) = trimmed.split_once('=') {
-            if k.trim() == key {
-                out.push_str(key);
-                out.push('=');
-                out.push_str(value);
-                out.push('\n');
-                replaced = true;
-                continue;
-            }
+        let existing_key = trimmed.split_once('=').map(|(k, _)| k.trim());
+        if existing_key == Some(key) {
+            out.push_str(key);
+            out.push('=');
+            out.push_str(value);
+            out.push('\n');
+            replaced = true;
+            continue;
         }
         out.push_str(line);
         out.push('\n');
