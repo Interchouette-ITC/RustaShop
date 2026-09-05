@@ -8,6 +8,7 @@ mod carts;
 mod checkout;
 mod error;
 mod health;
+mod http_front;
 mod install_env;
 mod install_fs;
 mod install_routes;
@@ -30,7 +31,8 @@ pub use carts::{
     CartResponse, MoneyResponse,
 };
 pub use checkout::{place_order, OrderLineResponse, OrderResponse};
-pub use health::{healthz, HealthResponse};
+pub use health::{health_json_body, healthz, HealthResponse};
+pub use http_front::{commerce_http_kernel, configure_serenade_front, serenade_dispatch};
 pub use install_env::{
     run_install_write, InstallEnvError, InstallWriteOptions, InstallWriteResult,
 };
@@ -57,13 +59,14 @@ pub fn bind_address() -> String {
 
 /// Registers HTTP routes on `cfg` (admin prefix from env / local default).
 pub fn routes(cfg: &mut web::ServiceConfig) {
-    configure_routes(cfg, &AdminApiPrefix::from_env());
+    configure_app(cfg, &AdminApiPrefix::from_env());
 }
 
 /// Registers HTTP routes with an explicit operator API prefix.
+///
+/// `GET /healthz` is registered separately via [`configure_serenade_front`].
 pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPrefix) {
-    cfg.service(healthz)
-        .service(openapi_json)
+    cfg.service(openapi_json)
         .service(swagger_ui())
         .service(list_products)
         .service(get_product)
@@ -75,6 +78,12 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPre
         .service(place_order);
     configure_admin_routes(cfg, admin_prefix);
     install_routes::configure_install_from_env(cfg);
+}
+
+/// Registers Serenade front routes then leftover Actix commerce routes.
+pub fn configure_app(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPrefix) {
+    configure_serenade_front(cfg);
+    configure_routes(cfg, admin_prefix);
 }
 
 #[cfg(test)]
@@ -108,7 +117,12 @@ mod tests {
 
     #[actix_web::test]
     async fn healthz_returns_ok_json() {
-        let app = test::init_service(App::new().configure(routes)).await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(commerce_http_kernel()))
+                .configure(routes),
+        )
+        .await;
         let req = test::TestRequest::get().uri("/healthz").to_request();
         let resp = test::call_service(&app, req).await;
 
@@ -122,7 +136,12 @@ mod tests {
 
     #[actix_web::test]
     async fn swagger_ui_serves_html() {
-        let app = test::init_service(App::new().configure(routes)).await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(commerce_http_kernel()))
+                .configure(routes),
+        )
+        .await;
         let req = test::TestRequest::get().uri("/swagger-ui/").to_request();
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
@@ -130,7 +149,12 @@ mod tests {
 
     #[actix_web::test]
     async fn openapi_json_lists_product_paths() {
-        let app = test::init_service(App::new().configure(routes)).await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(commerce_http_kernel()))
+                .configure(routes),
+        )
+        .await;
         let req = test::TestRequest::get().uri("/openapi.json").to_request();
         let resp = test::call_service(&app, req).await;
         assert!(resp.status().is_success());
@@ -149,8 +173,9 @@ mod tests {
         let prefix = AdminApiPrefix::parse("bk-test1").expect("prefix");
         let app = test::init_service(
             App::new()
+                .app_data(web::Data::new(commerce_http_kernel()))
                 .app_data(web::Data::new(AdminAuthConfig::from_token("tok")))
-                .configure(|cfg| configure_routes(cfg, &prefix)),
+                .configure(|cfg| configure_app(cfg, &prefix)),
         )
         .await;
 
@@ -175,10 +200,14 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("rs-no-install-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).expect("mkdir");
-        let app = test::init_service(App::new().configure(|cfg| {
-            install_routes::configure_install(cfg, &dir);
-            cfg.service(healthz);
-        }))
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(commerce_http_kernel()))
+                .configure(|cfg| {
+                    install_routes::configure_install(cfg, &dir);
+                    configure_serenade_front(cfg);
+                }),
+        )
         .await;
         let req = test::TestRequest::get()
             .uri("/install/api/status")

@@ -1,6 +1,5 @@
 //! Liveness probe.
 
-use actix_web::{get, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -13,16 +12,32 @@ pub struct HealthResponse {
     pub kernel: String,
 }
 
-/// `GET /healthz` handler.
+impl HealthResponse {
+    /// Current liveness payload.
+    #[must_use]
+    pub fn ok() -> Self {
+        Self {
+            status: "ok".to_owned(),
+            kernel: rustashop::kernel_status().to_owned(),
+        }
+    }
+}
+
+/// Serialized JSON body for Serenade / Actix health responses.
+///
+/// # Panics
+///
+/// Panics only if `HealthResponse` fails to serialize (it cannot for this type).
+#[must_use]
+pub fn health_json_body() -> Vec<u8> {
+    serde_json::to_vec(&HealthResponse::ok()).expect("HealthResponse serializes")
+}
+
+/// `GET /healthz` `OpenAPI` path (served by the Serenade HTTP front controller).
 #[utoipa::path(
     get,
     path = "/healthz",
     responses((status = 200, description = "Process is up", body = HealthResponse))
 )]
-#[get("/healthz")]
-pub async fn healthz() -> impl Responder {
-    HttpResponse::Ok().json(HealthResponse {
-        status: "ok".to_owned(),
-        kernel: rustashop::kernel_status().to_owned(),
-    })
-}
+#[allow(clippy::missing_const_for_fn)]
+pub fn healthz() {}
