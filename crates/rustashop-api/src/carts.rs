@@ -124,6 +124,13 @@ fn parse_json_body<T: for<'de> Deserialize<'de>>(body: &[u8]) -> Result<T, ApiEr
     serde_json::from_slice(body).map_err(|error| ApiError::Unprocessable(error.to_string()))
 }
 
+fn respond_cart(status: u16, result: Result<CartResponse, ApiError>) -> Response {
+    match result {
+        Ok(body) => json_response(status, &body),
+        Err(error) => api_error_json_response(&error),
+    }
+}
+
 async fn reload_cart(store: &CatalogRepository, id: &str) -> Result<CartResponse, ApiError> {
     let cart = store
         .find_cart_by_id(id)
@@ -148,10 +155,7 @@ pub async fn create_cart_response(catalog: &CatalogRepository, body: &[u8]) -> R
         Err(error) => return api_error_json_response(&ApiError::from_domain(&error)),
     };
     match catalog.create_cart(&currency).await {
-        Ok(cart) => match CartResponse::try_from_cart(cart) {
-            Ok(body) => json_response(201, &body),
-            Err(error) => api_error_json_response(&error),
-        },
+        Ok(cart) => respond_cart(201, CartResponse::try_from_cart(cart)),
         Err(error) => api_error_json_response(&ApiError::from_persist(&error)),
     }
 }
@@ -161,10 +165,7 @@ pub async fn get_cart_response(catalog: &CatalogRepository, id: &str) -> Respons
     if let Err(error) = ensure_request_param(id) {
         return api_error_json_response(&error);
     }
-    match reload_cart(catalog, id).await {
-        Ok(body) => json_response(200, &body),
-        Err(error) => api_error_json_response(&error),
-    }
+    respond_cart(200, reload_cart(catalog, id).await)
 }
 
 /// Adds a line (merges quantity when the variant is already present).
@@ -209,10 +210,7 @@ pub async fn add_cart_line_response(
     if let Err(error) = catalog.save_cart(&cart).await {
         return api_error_json_response(&ApiError::from_persist(&error));
     }
-    match reload_cart(catalog, cart_id).await {
-        Ok(body) => json_response(200, &body),
-        Err(error) => api_error_json_response(&error),
-    }
+    respond_cart(200, reload_cart(catalog, cart_id).await)
 }
 
 /// Updates a line quantity.
@@ -243,10 +241,7 @@ pub async fn update_cart_line_response(
     if let Err(error) = catalog.save_cart(&cart).await {
         return api_error_json_response(&ApiError::from_persist(&error));
     }
-    match reload_cart(catalog, cart_id).await {
-        Ok(body) => json_response(200, &body),
-        Err(error) => api_error_json_response(&error),
-    }
+    respond_cart(200, reload_cart(catalog, cart_id).await)
 }
 
 /// Removes a line.
@@ -272,10 +267,7 @@ pub async fn delete_cart_line_response(
     if let Err(error) = catalog.save_cart(&cart).await {
         return api_error_json_response(&ApiError::from_persist(&error));
     }
-    match reload_cart(catalog, cart_id).await {
-        Ok(body) => json_response(200, &body),
-        Err(error) => api_error_json_response(&error),
-    }
+    respond_cart(200, reload_cart(catalog, cart_id).await)
 }
 
 /// `POST /v1/carts` `OpenAPI` path (served by the Serenade HTTP front controller).
@@ -365,6 +357,37 @@ mod stub_tests {
         update_cart_line();
         delete_cart_line();
     }
+
+    #[test]
+    fn respond_cart_maps_errors() {
+        let response = respond_cart(201, Err(ApiError::NotFound));
+        assert_eq!(response.status(), 404);
+    }
+
+    #[test]
+    fn try_from_cart_maps_currency_mismatch() {
+        use rustashop_domain::{CartStatus, Money};
+
+        let eur = Currency::new("EUR").expect("EUR");
+        let usd = Currency::new("USD").expect("USD");
+        let cart = Cart {
+            id: "c".into(),
+            customer_id: None,
+            token: "t".into(),
+            status: CartStatus::Open,
+            currency: eur,
+            lines: vec![CartLine {
+                id: "l".into(),
+                cart_id: "c".into(),
+                variant_id: "v".into(),
+                quantity: 1,
+                unit_price: Money::new(100, usd),
+                product_name: "p".into(),
+                variant_sku: "s".into(),
+            }],
+        };
+        assert!(CartResponse::try_from_cart(cart).is_err());
+    }
 }
 
 #[cfg(all(test, feature = "persist-sqlx"))]
@@ -374,10 +397,12 @@ mod cart_response_tests {
     use sqlx::postgres::PgPoolOptions;
 
     const HOODIE_VARIANT: &str = "33333333-3333-3333-3333-333333333331";
+    const MUG_VARIANT: &str = "33333333-3333-3333-3333-333333333332";
+    const MISSING_CART: &str = "11111111-1111-1111-1111-111111111111";
     // Shared with other rustashop-api lib tests that reset `public`.
     const SCHEMA_LOCK: i64 = 874_521;
 
-    async fn seeded() -> SqlxCatalogRepository {
+    async fn seeded() -> (SqlxCatalogRepository, sqlx::PgPool) {
         let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -399,15 +424,18 @@ mod cart_response_tests {
             .expect("create");
         migrate(&pool).await.expect("migrate");
         seed_catalog(&pool).await.expect("seed");
-        SqlxCatalogRepository::new(pool)
+        (SqlxCatalogRepository::new(pool.clone()), pool)
     }
 
     #[tokio::test]
-    async fn covers_validation_and_not_found_paths() {
-        let catalog = seeded().await;
+    async fn covers_validation_not_found_and_persist_errors() {
+        let (catalog, pool) = seeded().await;
 
         let bad_json = create_cart_response(&catalog, b"not-json").await;
         assert_eq!(bad_json.status(), 422);
+
+        let nul_currency = create_cart_response(&catalog, br#"{"currency":"a\u0000b"}"#).await;
+        assert_eq!(nul_currency.status(), 422);
 
         let bad_currency = create_cart_response(&catalog, br#"{"currency":"EURO"}"#).await;
         assert_eq!(bad_currency.status(), 422);
@@ -415,7 +443,7 @@ mod cart_response_tests {
         let nul_id = get_cart_response(&catalog, "a\0b").await;
         assert_eq!(nul_id.status(), 422);
 
-        let missing = get_cart_response(&catalog, "11111111-1111-1111-1111-111111111111").await;
+        let missing = get_cart_response(&catalog, MISSING_CART).await;
         assert_eq!(missing.status(), 404);
 
         let created = create_cart_response(&catalog, br#"{"currency":"EUR"}"#).await;
@@ -425,6 +453,30 @@ mod cart_response_tests {
         let bad_line = add_cart_line_response(&catalog, &cart.id, b"{").await;
         assert_eq!(bad_line.status(), 422);
 
+        let nul_cart = add_cart_line_response(
+            &catalog,
+            "a\0b",
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":1}}"#).as_bytes(),
+        )
+        .await;
+        assert_eq!(nul_cart.status(), 422);
+
+        let nul_variant = add_cart_line_response(
+            &catalog,
+            &cart.id,
+            br#"{"variant_id":"a\u0000b","quantity":1}"#,
+        )
+        .await;
+        assert_eq!(nul_variant.status(), 422);
+
+        let missing_cart = add_cart_line_response(
+            &catalog,
+            MISSING_CART,
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":1}}"#).as_bytes(),
+        )
+        .await;
+        assert_eq!(missing_cart.status(), 404);
+
         let unknown_variant = add_cart_line_response(
             &catalog,
             &cart.id,
@@ -433,27 +485,114 @@ mod cart_response_tests {
         .await;
         assert_eq!(unknown_variant.status(), 404);
 
+        let bad_qty = add_cart_line_response(
+            &catalog,
+            &cart.id,
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":0}}"#).as_bytes(),
+        )
+        .await;
+        assert_eq!(bad_qty.status(), 422);
+
         let added = add_cart_line_response(
             &catalog,
             &cart.id,
-            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":1}}"#).as_bytes(),
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":2000000000}}"#).as_bytes(),
         )
         .await;
         assert_eq!(added.status(), 200);
-        let with_line: CartResponse = serde_json::from_slice(added.body()).expect("line");
-        let line_id = &with_line.lines[0].id;
 
-        let bad_patch = update_cart_line_response(&catalog, &cart.id, line_id, b"x").await;
+        let overflow = add_cart_line_response(
+            &catalog,
+            &cart.id,
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":2000000000}}"#).as_bytes(),
+        )
+        .await;
+        assert_eq!(overflow.status(), 422);
+
+        let with_line: CartResponse = serde_json::from_slice(
+            add_cart_line_response(
+                &catalog,
+                &cart.id,
+                format!(r#"{{"variant_id":"{MUG_VARIANT}","quantity":1}}"#).as_bytes(),
+            )
+            .await
+            .body(),
+        )
+        .expect("mug");
+        let line_id = with_line
+            .lines
+            .iter()
+            .find(|line| line.variant_id == MUG_VARIANT)
+            .expect("mug line")
+            .id
+            .clone();
+
+        let nul_update_cart =
+            update_cart_line_response(&catalog, "a\0b", &line_id, br#"{"quantity":2}"#).await;
+        assert_eq!(nul_update_cart.status(), 422);
+
+        let nul_update_line =
+            update_cart_line_response(&catalog, &cart.id, "a\0b", br#"{"quantity":2}"#).await;
+        assert_eq!(nul_update_line.status(), 422);
+
+        let bad_patch = update_cart_line_response(&catalog, &cart.id, &line_id, b"x").await;
         assert_eq!(bad_patch.status(), 422);
+
+        let missing_update =
+            update_cart_line_response(&catalog, MISSING_CART, &line_id, br#"{"quantity":2}"#).await;
+        assert_eq!(missing_update.status(), 404);
 
         let missing_line =
             update_cart_line_response(&catalog, &cart.id, "no-line", br#"{"quantity":2}"#).await;
         assert_eq!(missing_line.status(), 404);
 
-        let deleted = delete_cart_line_response(&catalog, &cart.id, line_id).await;
-        assert_eq!(deleted.status(), 200);
+        let nul_delete_cart = delete_cart_line_response(&catalog, "a\0b", &line_id).await;
+        assert_eq!(nul_delete_cart.status(), 422);
 
-        let delete_missing = delete_cart_line_response(&catalog, &cart.id, line_id).await;
-        assert_eq!(delete_missing.status(), 404);
+        let nul_delete_line = delete_cart_line_response(&catalog, &cart.id, "a\0b").await;
+        assert_eq!(nul_delete_line.status(), 422);
+
+        let missing_delete = delete_cart_line_response(&catalog, MISSING_CART, &line_id).await;
+        assert_eq!(missing_delete.status(), 404);
+
+        sqlx::query("DROP TABLE product_variant CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop variants");
+        let variant_persist = add_cart_line_response(
+            &catalog,
+            &cart.id,
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":1}}"#).as_bytes(),
+        )
+        .await;
+        assert_eq!(variant_persist.status(), 500);
+
+        sqlx::query("DROP TABLE cart_line CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop lines");
+        let save_fail =
+            update_cart_line_response(&catalog, &cart.id, &line_id, br#"{"quantity":3}"#).await;
+        // find may 500 first, or save 500; either is the persist Err arm.
+        assert_eq!(save_fail.status(), 500);
+
+        let delete_fail = delete_cart_line_response(&catalog, &cart.id, &line_id).await;
+        assert_eq!(delete_fail.status(), 500);
+
+        pool.close().await;
+        let create_closed = create_cart_response(&catalog, br#"{}"#).await;
+        assert_eq!(create_closed.status(), 500);
+        let add_closed = add_cart_line_response(
+            &catalog,
+            &cart.id,
+            format!(r#"{{"variant_id":"{HOODIE_VARIANT}","quantity":1}}"#).as_bytes(),
+        )
+        .await;
+        assert_eq!(add_closed.status(), 500);
+        let update_closed =
+            update_cart_line_response(&catalog, &cart.id, &line_id, br#"{"quantity":1}"#).await;
+        assert_eq!(update_closed.status(), 500);
+        let delete_closed = delete_cart_line_response(&catalog, &cart.id, &line_id).await;
+        assert_eq!(delete_closed.status(), 500);
     }
 }

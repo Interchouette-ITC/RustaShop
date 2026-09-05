@@ -224,5 +224,13 @@ mod checkout_response_tests {
 
         let nul = place_order_response(&catalog, br#"{"cart_id":"a\u0000b"}"#, Some("k")).await;
         assert_eq!(nul.status(), 422);
+
+        let nul_key = place_order_response(
+            &catalog,
+            br#"{"cart_id":"11111111-1111-1111-1111-111111111111"}"#,
+            Some("a\0b"),
+        )
+        .await;
+        assert_eq!(nul_key.status(), 422);
     }
 }
