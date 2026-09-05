@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MigrateError","PersistenceBackend"],"fn":["catalog_from_env","migrate_from_env","selected_backend"],"struct":["CatalogRepository","PersistenceFactory"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["INIT_SQL"],"struct":["Migrator"]};

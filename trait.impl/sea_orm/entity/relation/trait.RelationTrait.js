@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["rustashop_persist_seaorm",[["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/cart/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::cart::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/cart_line/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::cart_line::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/category/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::category::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/commerce_order/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::commerce_order::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/customer/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::customer::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/order_line/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::order_line::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/product/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::product::Relation\">Relation</a>",0],["impl RelationTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/product_variant/enum.Relation.html\" title=\"enum rustashop_persist_seaorm::entities::product_variant::Relation\">Relation</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1660]}

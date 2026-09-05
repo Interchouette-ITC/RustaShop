@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["rustashop_persist_seaorm",[["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/cart/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::cart::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/cart_line/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::cart_line::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/category/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::category::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/commerce_order/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::commerce_order::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/customer/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::customer::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/order_line/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::order_line::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/product/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::product::Column\">Column</a>",0],["impl ColumnTrait for <a class=\"enum\" href=\"rustashop_persist_seaorm/entities/product_variant/enum.Column.html\" title=\"enum rustashop_persist_seaorm::entities::product_variant::Column\">Column</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1596]}

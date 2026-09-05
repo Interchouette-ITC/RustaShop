@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["rustashop_persist_seaorm",[["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/cart/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::cart::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/cart_line/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::cart_line::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/category/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::category::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/commerce_order/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::commerce_order::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/customer/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::customer::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/order_line/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::order_line::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/product/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::product::Entity\">Entity</a>",0],["impl EntityName for <a class=\"struct\" href=\"rustashop_persist_seaorm/entities/product_variant/struct.Entity.html\" title=\"struct rustashop_persist_seaorm::entities::product_variant::Entity\">Entity</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1636]}

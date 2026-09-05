@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["APP_ENV","PACKAGES_DIR","RUSTASHOP_BUNDLE","SERENADE_KERNEL_BOOTED","SERENADE_KERNEL_PENDING"],"fn":["boot_kernel","ensure_default_packages","kernel_status","packages_dir"],"struct":["RustashopBundle","RustashopExtension","RustashopKernel"]};

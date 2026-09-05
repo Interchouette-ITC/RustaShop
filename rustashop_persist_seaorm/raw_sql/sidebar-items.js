@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ALLOW_RAW_SQL_ENV"],"fn":["assert_raw_sql_allowed","execute_fragment","raw_sql_allowed"]};

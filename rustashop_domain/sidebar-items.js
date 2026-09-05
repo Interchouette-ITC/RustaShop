@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PAYMENT_STATUS_PENDING"],"enum":["CartStatus","DomainError","OrderState"],"struct":["Cart","CartLine","Category","Currency","Money","Order","OrderLine","Product","ProductVariant"]};
