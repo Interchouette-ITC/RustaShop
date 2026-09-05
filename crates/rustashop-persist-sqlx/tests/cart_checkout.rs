@@ -433,7 +433,7 @@ async fn find_cart_and_order_reject_corrupt_rows() {
     };
     let currency = Currency::new("EUR").expect("EUR");
     let cart = repo.create_cart(&currency).await.expect("create");
-    sqlx::query("UPDATE cart SET currency = 'ZZZ' WHERE id = $1::uuid")
+    sqlx::query("UPDATE cart SET currency = '12A' WHERE id = $1::uuid")
         .bind(&cart.id)
         .execute(&pool)
         .await
@@ -444,6 +444,10 @@ async fn find_cart_and_order_reject_corrupt_rows() {
     ));
 
     let cart2 = repo.create_cart(&currency).await.expect("create2");
+    sqlx::query("ALTER TABLE cart DROP CONSTRAINT IF EXISTS cart_status_check")
+        .execute(&pool)
+        .await
+        .expect("drop status check");
     sqlx::query("UPDATE cart SET status = 'nope' WHERE id = $1::uuid")
         .bind(&cart2.id)
         .execute(&pool)

@@ -442,7 +442,7 @@ async fn find_cart_and_order_reject_corrupt_rows() {
     let currency = Currency::new("EUR").expect("EUR");
     let cart = repo.create_cart(&currency).await.expect("create");
     db.execute_unprepared(&format!(
-        "UPDATE cart SET currency = 'ZZZ' WHERE id = '{}'",
+        "UPDATE cart SET currency = '12A' WHERE id = '{}'",
         cart.id
     ))
     .await
@@ -453,6 +453,9 @@ async fn find_cart_and_order_reject_corrupt_rows() {
     ));
 
     let cart2 = repo.create_cart(&currency).await.expect("create2");
+    db.execute_unprepared("ALTER TABLE cart DROP CONSTRAINT IF EXISTS cart_status_check")
+        .await
+        .expect("drop status check");
     db.execute_unprepared(&format!(
         "UPDATE cart SET status = 'nope' WHERE id = '{}'",
         cart2.id
