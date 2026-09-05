@@ -157,4 +157,22 @@ mod tests {
             std::env::remove_var(ADMIN_API_PREFIX_ENV);
         }
     }
+
+    #[test]
+    fn from_env_panics_on_invalid() {
+        unsafe {
+            std::env::set_var(ADMIN_API_PREFIX_ENV, "products");
+        }
+        let panicked = std::panic::catch_unwind(AdminApiPrefix::from_env).is_err();
+        unsafe {
+            std::env::remove_var(ADMIN_API_PREFIX_ENV);
+        }
+        assert!(panicked, "invalid prefix must panic");
+    }
+
+    #[test]
+    fn resource_path_strips_leading_slash() {
+        let prefix = AdminApiPrefix::parse("admin").expect("admin");
+        assert_eq!(prefix.resource_path("/orders"), "/v1/admin/orders");
+    }
 }

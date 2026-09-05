@@ -219,6 +219,32 @@ mod tests {
         }
     }
 
+    #[test]
+    fn boot_kernel_rejects_missing_packages() {
+        let _guard = APP_ENV_LOCK.lock().expect("lock");
+        unsafe {
+            std::env::remove_var(APP_ENV);
+        }
+        let dir = tempfile_dir("no-packages");
+        assert!(boot_kernel(&dir).is_err(), "missing packages must fail");
+    }
+
+    #[test]
+    fn boot_kernel_rejects_bad_dotenv() {
+        let _guard = APP_ENV_LOCK.lock().expect("lock");
+        unsafe {
+            std::env::remove_var(APP_ENV);
+        }
+        let dir = tempfile_dir("bad-dotenv");
+        ensure_default_packages(&dir).expect("packages");
+        fs::write(
+            dir.join(".env"),
+            "BAD_LINE_WITHOUT_EQUALS\nFOO=\"unterminated\n",
+        )
+        .expect("dotenv");
+        assert!(boot_kernel(&dir).is_err(), "malformed dotenv must fail");
+    }
+
     fn tempfile_dir(label: &str) -> PathBuf {
         use std::sync::atomic::{AtomicU64, Ordering};
         static N: AtomicU64 = AtomicU64::new(0);

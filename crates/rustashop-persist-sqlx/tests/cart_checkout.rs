@@ -426,6 +426,55 @@ async fn checkout_concurrent_two_carts_same_key() {
     unlock(&pool).await;
 }
 
+#[tokio::test]
+async fn find_cart_and_order_reject_corrupt_rows() {
+    let Some((pool, repo)) = exclusive_repo().await else {
+        return;
+    };
+    let currency = Currency::new("EUR").expect("EUR");
+    let cart = repo.create_cart(&currency).await.expect("create");
+    sqlx::query("UPDATE cart SET currency = '12A' WHERE id = $1::uuid")
+        .bind(&cart.id)
+        .execute(&pool)
+        .await
+        .expect("corrupt currency");
+    assert!(matches!(
+        repo.find_cart_by_id(&cart.id).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+
+    let cart2 = repo.create_cart(&currency).await.expect("create2");
+    sqlx::query("ALTER TABLE cart DROP CONSTRAINT IF EXISTS cart_status_check")
+        .execute(&pool)
+        .await
+        .expect("drop status check");
+    sqlx::query("UPDATE cart SET status = 'nope' WHERE id = $1::uuid")
+        .bind(&cart2.id)
+        .execute(&pool)
+        .await
+        .expect("corrupt status");
+    assert!(matches!(
+        repo.find_cart_by_id(&cart2.id).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+
+    let with_line = cart_with_hoodie(&repo).await;
+    let order = repo
+        .checkout_cart(&with_line.id, Some("sqlx-corrupt-order"))
+        .await
+        .expect("checkout");
+    sqlx::query(r#"UPDATE "order" SET currency = 'ZZ' WHERE id = $1::uuid"#)
+        .bind(&order.id)
+        .execute(&pool)
+        .await
+        .expect("corrupt order");
+    assert!(matches!(
+        repo.get_order(&order.id).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+    unlock(&pool).await;
+}
+
 async fn insert_customer(pool: &PgPool) {
     sqlx::query("INSERT INTO customer (id, email) VALUES ($1::uuid, $2)")
         .bind(CUSTOMER_ID)

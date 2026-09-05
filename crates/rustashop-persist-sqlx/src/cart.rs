@@ -305,4 +305,56 @@ mod tests {
         assert_eq!(cart.id, "c1");
         assert_eq!(cart.lines.len(), 0);
     }
+
+    #[test]
+    fn cart_from_rows_rejects_bad_currency_and_status() {
+        assert!(matches!(
+            cart_from_rows(
+                CartRow {
+                    id: "c1".into(),
+                    customer_id: None,
+                    token: "tok".into(),
+                    currency: "ZZ".into(),
+                    status: "open".into(),
+                },
+                vec![],
+            ),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        assert!(matches!(
+            cart_from_rows(
+                CartRow {
+                    id: "c1".into(),
+                    customer_id: None,
+                    token: "tok".into(),
+                    currency: "EUR".into(),
+                    status: "nope".into(),
+                },
+                vec![],
+            ),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        assert!(matches!(
+            cart_from_rows(
+                CartRow {
+                    id: "c1".into(),
+                    customer_id: None,
+                    token: "tok".into(),
+                    currency: "EUR".into(),
+                    status: "open".into(),
+                },
+                vec![CartLineRow {
+                    id: "l1".into(),
+                    cart_id: "c1".into(),
+                    variant_id: "v1".into(),
+                    quantity: 1,
+                    unit_price_minor: 100,
+                    currency: "ZZ".into(),
+                    product_name: "Mug".into(),
+                    variant_sku: "MUG".into(),
+                }],
+            ),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+    }
 }

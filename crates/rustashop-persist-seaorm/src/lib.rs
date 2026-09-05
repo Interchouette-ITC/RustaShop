@@ -45,7 +45,7 @@ pub async fn seed_catalog(connection: &DatabaseConnection) -> Result<(), sea_orm
 ///
 /// Returns [`MigrateError`] when the URL is missing or the database is unreachable.
 pub async fn catalog_from_env() -> Result<SeaOrmCatalogRepository, MigrateError> {
-    let url = std::env::var("DATABASE_URL").map_err(|_| MigrateError::MissingDatabaseUrl)?;
+    let url = require_database_url(std::env::var("DATABASE_URL"))?;
     let mut options = ConnectOptions::new(url);
     options.max_connections(5);
     let connection = Database::connect(options).await?;
@@ -58,10 +58,16 @@ pub async fn catalog_from_env() -> Result<SeaOrmCatalogRepository, MigrateError>
 ///
 /// Returns [`MigrateError`] when the database is unreachable or migrations fail.
 pub async fn migrate_from_env() -> Result<(), MigrateError> {
-    let url = std::env::var("DATABASE_URL").map_err(|_| MigrateError::MissingDatabaseUrl)?;
+    let url = require_database_url(std::env::var("DATABASE_URL"))?;
     let connection = Database::connect(&url).await?;
     migrate(&connection).await?;
     Ok(())
+}
+
+fn require_database_url(
+    result: Result<String, std::env::VarError>,
+) -> Result<String, MigrateError> {
+    result.map_err(|_| MigrateError::MissingDatabaseUrl)
 }
 
 /// Migration runner errors.
@@ -82,5 +88,17 @@ mod tests {
     #[test]
     fn init_sql_mirror_is_non_empty() {
         assert_ne!(migration::INIT_SQL.trim(), "");
+    }
+
+    #[test]
+    fn require_database_url_maps_missing() {
+        assert!(matches!(
+            require_database_url(Err(std::env::VarError::NotPresent)),
+            Err(MigrateError::MissingDatabaseUrl)
+        ));
+        assert_eq!(
+            require_database_url(Ok("postgres://x".into())).unwrap(),
+            "postgres://x"
+        );
     }
 }

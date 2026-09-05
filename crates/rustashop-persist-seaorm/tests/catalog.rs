@@ -143,3 +143,24 @@ async fn seaorm_catalog_category_parent_paths() {
     assert_eq!(roots.len(), 1);
     unlock(&db).await;
 }
+
+#[tokio::test]
+async fn list_variants_rejects_corrupt_currency() {
+    let Some((db, repo)) = exclusive_catalog().await else {
+        return;
+    };
+    db.execute_unprepared(&format!(
+        "UPDATE product_variant SET currency = 'ZZ' WHERE product_id = '{HOODIE_PRODUCT}'"
+    ))
+    .await
+    .expect("corrupt");
+    let err = repo
+        .list_variants_for_product(HOODIE_PRODUCT)
+        .await
+        .expect_err("bad currency");
+    assert!(matches!(
+        err,
+        serenade_contracts::PersistenceError::Internal { .. }
+    ));
+    unlock(&db).await;
+}
