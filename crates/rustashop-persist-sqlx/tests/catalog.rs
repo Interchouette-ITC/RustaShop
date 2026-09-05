@@ -155,3 +155,24 @@ async fn sqlx_catalog_category_parent_paths() {
     assert_eq!(children.len(), 1);
     unlock(&pool).await;
 }
+
+#[tokio::test]
+async fn list_variants_rejects_corrupt_currency() {
+    let Some((pool, repo)) = exclusive_catalog().await else {
+        return;
+    };
+    sqlx::query("UPDATE product_variant SET currency = 'ZZ' WHERE product_id = $1::uuid")
+        .bind(HOODIE_PRODUCT)
+        .execute(&pool)
+        .await
+        .expect("corrupt");
+    let err = repo
+        .list_variants_for_product(HOODIE_PRODUCT)
+        .await
+        .expect_err("bad currency");
+    assert!(matches!(
+        err,
+        serenade_contracts::PersistenceError::Internal { .. }
+    ));
+    unlock(&pool).await;
+}

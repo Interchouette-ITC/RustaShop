@@ -434,6 +434,54 @@ async fn checkout_concurrent_two_carts_same_key() {
     unlock(&db).await;
 }
 
+#[tokio::test]
+async fn find_cart_and_order_reject_corrupt_rows() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+    let currency = Currency::new("EUR").expect("EUR");
+    let cart = repo.create_cart(&currency).await.expect("create");
+    db.execute_unprepared(&format!(
+        "UPDATE cart SET currency = 'ZZZ' WHERE id = '{}'",
+        cart.id
+    ))
+    .await
+    .expect("corrupt currency");
+    assert!(matches!(
+        repo.find_cart_by_id(&cart.id).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+
+    let cart2 = repo.create_cart(&currency).await.expect("create2");
+    db.execute_unprepared(&format!(
+        "UPDATE cart SET status = 'nope' WHERE id = '{}'",
+        cart2.id
+    ))
+    .await
+    .expect("corrupt status");
+    assert!(matches!(
+        repo.find_cart_by_id(&cart2.id).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+
+    let with_line = cart_with_hoodie(&repo).await;
+    let order = repo
+        .checkout_cart(&with_line.id, Some("seaorm-corrupt-order"))
+        .await
+        .expect("checkout");
+    db.execute_unprepared(&format!(
+        r#"UPDATE "order" SET currency = 'ZZ' WHERE id = '{}'"#,
+        order.id
+    ))
+    .await
+    .expect("corrupt order");
+    assert!(matches!(
+        repo.get_order(&order.id).await,
+        Err(PersistenceError::InvalidInput { .. })
+    ));
+    unlock(&db).await;
+}
+
 async fn insert_customer(db: &DatabaseConnection) {
     db.execute_unprepared(&format!(
         "INSERT INTO customer (id, email) VALUES ('{CUSTOMER_ID}', 'buyer@example.com')"

@@ -88,6 +88,10 @@ mod tests {
         let db = sea_orm::Database::connect(options).await.expect("connect");
         execute_fragment(&db, "SELECT 1").await.expect("execute");
         assert!(execute_fragment(&db, "SELECT 1\0").await.is_err());
+        let bad = execute_fragment(&db, "SELECT FROM")
+            .await
+            .expect_err("bad sql");
+        assert!(matches!(bad, PersistenceError::Internal { .. }));
 
         unsafe {
             std::env::remove_var(ALLOW_RAW_SQL_ENV);

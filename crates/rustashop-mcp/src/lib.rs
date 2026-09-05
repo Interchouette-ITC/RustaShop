@@ -19,10 +19,6 @@ mod tests {
     #[test]
     fn crate_marker_and_kernel_status() {
         assert_eq!(MCP_CRATE, "rustashop-mcp");
-        let status = kernel_status();
-        assert!(
-            status == rustashop::SERENADE_KERNEL_PENDING
-                || status == rustashop::SERENADE_KERNEL_BOOTED
-        );
+        assert_eq!(kernel_status(), rustashop::kernel_status());
     }
 }

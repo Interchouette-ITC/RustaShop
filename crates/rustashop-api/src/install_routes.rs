@@ -242,6 +242,32 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
     }
 
+    #[actix_web::test]
+    #[allow(clippy::await_holding_lock)]
+    async fn configure_install_from_env_registers_when_dist_present() {
+        let _guard = crate::install_env::INSTALL_PROCESS_ENV_LOCK
+            .lock()
+            .expect("lock");
+        let dir = tempfile_dir("from-env");
+        let index = install_dist_index(&dir);
+        fs::create_dir_all(index.parent().expect("parent")).expect("mkdir");
+        fs::write(&index, "<!doctype html>").expect("write");
+        unsafe {
+            std::env::set_var(crate::install_fs::ROOT_ENV, &dir);
+            std::env::remove_var(crate::install_env::ENV_FILE_ENV);
+        }
+        let app = test::init_service(App::new().configure(configure_install_from_env)).await;
+        let req = test::TestRequest::get()
+            .uri("/install/api/status")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+        unsafe {
+            std::env::remove_var(crate::install_fs::ROOT_ENV);
+        }
+        let _ = fs::remove_dir_all(&dir);
+    }
+
     fn tempfile_dir(label: &str) -> std::path::PathBuf {
         use std::sync::atomic::{AtomicU64, Ordering};
         static N: AtomicU64 = AtomicU64::new(0);

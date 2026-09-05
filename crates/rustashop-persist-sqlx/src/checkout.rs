@@ -448,6 +448,71 @@ mod helper_tests {
     }
 
     #[test]
+    fn cart_from_rows_rejects_bad_currency() {
+        assert!(matches!(
+            cart_from_rows(
+                CartRow {
+                    id: "c1".into(),
+                    customer_id: None,
+                    token: "t".into(),
+                    currency: "ZZ".into(),
+                    status: "open".into(),
+                },
+                vec![],
+            ),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+    }
+
+    #[test]
+    fn order_from_rows_rejects_bad_currency() {
+        assert!(matches!(
+            order_from_rows(
+                OrderRow {
+                    id: "o1".into(),
+                    number: "RS-1".into(),
+                    customer_id: None,
+                    cart_id: Some("c1".into()),
+                    state: "placed".into(),
+                    currency: "ZZ".into(),
+                    items_total_minor: 200,
+                    total_minor: 200,
+                    idempotency_key: None,
+                },
+                vec![],
+            ),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        assert!(matches!(
+            order_from_rows(
+                OrderRow {
+                    id: "o1".into(),
+                    number: "RS-1".into(),
+                    customer_id: None,
+                    cart_id: Some("c1".into()),
+                    state: "placed".into(),
+                    currency: "EUR".into(),
+                    items_total_minor: 200,
+                    total_minor: 200,
+                    idempotency_key: None,
+                },
+                vec![OrderLineRow {
+                    id: "ol1".into(),
+                    order_id: "o1".into(),
+                    variant_id: Some("v1".into()),
+                    quantity: 2,
+                    unit_price_minor: 100,
+                    line_total_minor: 200,
+                    currency: "ZZ".into(),
+                    product_name: "Mug".into(),
+                    variant_sku: "MUG".into(),
+                }],
+            ),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+    }
+
+    #[test]
     fn order_from_rows_builds_pending_order() {
         let order = order_from_rows(
             OrderRow {

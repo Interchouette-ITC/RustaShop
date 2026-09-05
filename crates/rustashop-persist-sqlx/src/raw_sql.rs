@@ -87,6 +87,10 @@ mod tests {
             .expect("connect");
         execute_fragment(&pool, "SELECT 1").await.expect("execute");
         assert!(execute_fragment(&pool, "SELECT 1\0").await.is_err());
+        let bad = execute_fragment(&pool, "SELECT FROM")
+            .await
+            .expect_err("bad sql");
+        assert!(matches!(bad, PersistenceError::Internal { .. }));
 
         unsafe {
             std::env::remove_var(ALLOW_RAW_SQL_ENV);

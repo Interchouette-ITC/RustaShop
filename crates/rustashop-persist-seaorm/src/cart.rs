@@ -267,4 +267,48 @@ mod tests {
     fn seaorm_catalog_implements_cart_repository() {
         assert_cart_repo::<SeaOrmCatalogRepository>();
     }
+
+    fn sample_cart(currency: &str, status: &str) -> cart::Model {
+        let now = chrono::Utc::now().into();
+        cart::Model {
+            id: Uuid::nil(),
+            customer_id: None,
+            token: "tok".into(),
+            currency: currency.into(),
+            status: status.into(),
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn cart_from_models_rejects_bad_currency_and_status() {
+        assert!(matches!(
+            cart_from_models(sample_cart("ZZ", "open"), vec![]),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        assert!(matches!(
+            cart_from_models(sample_cart("EUR", "nope"), vec![]),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        let now = chrono::Utc::now().into();
+        let line = cart_line::Model {
+            id: Uuid::nil(),
+            cart_id: Uuid::nil(),
+            variant_id: Uuid::nil(),
+            quantity: 1,
+            unit_price_minor: 100,
+            currency: "ZZ".into(),
+            product_name: "Mug".into(),
+            variant_sku: "MUG".into(),
+            created_at: now,
+            updated_at: now,
+        };
+        assert!(matches!(
+            cart_from_models(sample_cart("EUR", "open"), vec![line]),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        let ok = cart_from_models(sample_cart("EUR", "open"), vec![]).expect("ok");
+        assert_eq!(ok.currency.as_str(), "EUR");
+    }
 }

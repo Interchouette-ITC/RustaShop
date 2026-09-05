@@ -49,7 +49,7 @@ pub async fn seed_catalog(pool: &PgPool) -> Result<(), sqlx::Error> {
 ///
 /// Returns [`MigrateError`] when the URL is missing or the database is unreachable.
 pub async fn catalog_from_env() -> Result<SqlxCatalogRepository, MigrateError> {
-    let url = std::env::var("DATABASE_URL").map_err(|_| MigrateError::MissingDatabaseUrl)?;
+    let url = require_database_url(std::env::var("DATABASE_URL"))?;
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
         .connect(&url)
@@ -63,13 +63,19 @@ pub async fn catalog_from_env() -> Result<SqlxCatalogRepository, MigrateError> {
 ///
 /// Returns [`MigrateError`] when the database is unreachable or migrations fail.
 pub async fn migrate_from_env() -> Result<(), MigrateError> {
-    let url = std::env::var("DATABASE_URL").map_err(|_| MigrateError::MissingDatabaseUrl)?;
+    let url = require_database_url(std::env::var("DATABASE_URL"))?;
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(1)
         .connect(&url)
         .await?;
     migrate(&pool).await?;
     Ok(())
+}
+
+fn require_database_url(
+    result: Result<String, std::env::VarError>,
+) -> Result<String, MigrateError> {
+    result.map_err(|_| MigrateError::MissingDatabaseUrl)
 }
 
 /// Migration runner errors.
@@ -84,4 +90,21 @@ pub enum MigrateError {
     /// Underlying `SQLx` migration error.
     #[error(transparent)]
     Migrate(#[from] sqlx::migrate::MigrateError),
+}
+
+#[cfg(test)]
+mod env_tests {
+    use super::*;
+
+    #[test]
+    fn require_database_url_maps_missing() {
+        assert!(matches!(
+            require_database_url(Err(std::env::VarError::NotPresent)),
+            Err(MigrateError::MissingDatabaseUrl)
+        ));
+        assert_eq!(
+            require_database_url(Ok("postgres://x".into())).unwrap(),
+            "postgres://x"
+        );
+    }
 }

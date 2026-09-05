@@ -41,6 +41,9 @@ mod tests {
 
     #[test]
     fn accepts_clean_opt() {
+        assert_eq!(ensure_param("ok").unwrap(), "ok");
         assert_eq!(ensure_param_opt(None::<&str>).unwrap(), None);
+        assert_eq!(ensure_param_opt(Some("ok")).unwrap(), Some("ok"));
+        assert!(ensure_param_opt(Some("a\0b")).is_err());
     }
 }

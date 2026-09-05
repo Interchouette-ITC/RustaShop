@@ -264,4 +264,43 @@ mod tests {
         }
         let _ = fs::remove_dir_all(&dir);
     }
+
+    #[test]
+    fn existing_prefix_needs_wipe_false_when_missing_or_default() {
+        let dir =
+            std::env::temp_dir().join(format!("rustashop-env-wipe-false-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("mkdir");
+        assert!(!existing_prefix_needs_wipe(&dir));
+        fs::write(
+            dir.join(".env"),
+            format!("{ADMIN_API_PREFIX_ENV}={DEFAULT_ADMIN_API_PREFIX}\n"),
+        )
+        .expect("write");
+        assert!(!existing_prefix_needs_wipe(&dir));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn run_install_write_rejects_invalid_folder() {
+        let _guard = INSTALL_PROCESS_ENV_LOCK.lock().expect("lock");
+        let dir =
+            std::env::temp_dir().join(format!("rustashop-env-bad-folder-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("mkdir");
+        unsafe {
+            std::env::set_var(crate::install_fs::ROOT_ENV, &dir);
+            std::env::remove_var(ENV_FILE_ENV);
+        }
+        let err = run_install_write(&InstallWriteOptions {
+            admin_folder: Some("carts".into()),
+            wipe_confirmed: false,
+        })
+        .expect_err("invalid");
+        assert!(matches!(err, InstallEnvError::InvalidPrefix(_)));
+        unsafe {
+            std::env::remove_var(crate::install_fs::ROOT_ENV);
+        }
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

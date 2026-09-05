@@ -317,4 +317,48 @@ mod helper_tests {
         )));
         assert!(!is_unique_violation(&DbErr::Custom("other".into())));
     }
+
+    fn sample_order(currency: &str) -> commerce_order::Model {
+        let now = chrono::Utc::now().into();
+        commerce_order::Model {
+            id: Uuid::nil(),
+            number: "RS-1".into(),
+            customer_id: None,
+            cart_id: None,
+            state: "placed".into(),
+            currency: currency.into(),
+            items_total_minor: 100,
+            total_minor: 100,
+            idempotency_key: None,
+            created_at: now,
+            updated_at: now,
+            placed_at: Some(now),
+        }
+    }
+
+    #[test]
+    fn order_from_models_rejects_bad_currency() {
+        assert!(matches!(
+            order_from_models(sample_order("ZZ"), vec![]),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+        let now = chrono::Utc::now().into();
+        let line = order_line::Model {
+            id: Uuid::nil(),
+            order_id: Uuid::nil(),
+            variant_id: None,
+            quantity: 1,
+            unit_price_minor: 100,
+            line_total_minor: 100,
+            currency: "ZZ".into(),
+            product_name: "Mug".into(),
+            variant_sku: "MUG".into(),
+            created_at: now,
+            updated_at: now,
+        };
+        assert!(matches!(
+            order_from_models(sample_order("EUR"), vec![line]),
+            Err(PersistenceError::InvalidInput { .. })
+        ));
+    }
 }
