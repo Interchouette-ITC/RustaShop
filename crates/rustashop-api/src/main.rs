@@ -3,8 +3,9 @@
 use actix_web::{web, App, HttpServer};
 use rustashop_api::{
     bind_address, commerce_http_kernel, configure_app, install_artefacts_present, shop_root,
-    AdminApiPrefix, AdminAuthConfig, ADMIN_API_PREFIX_ENV, ADMIN_TOKEN_ENV, ADMIN_TOKEN_ENV_ALT,
-    BIND_ENV, DEFAULT_ADMIN_API_PREFIX, INSTALL_DIR_NAME, INSTALL_OFF_DIR_NAME,
+    AdminApiPrefix, AdminAuthConfig, CommerceFrontConfig, ADMIN_API_PREFIX_ENV, ADMIN_TOKEN_ENV,
+    ADMIN_TOKEN_ENV_ALT, BIND_ENV, DEFAULT_ADMIN_API_PREFIX, INSTALL_DIR_NAME,
+    INSTALL_OFF_DIR_NAME,
 };
 use tracing::{error, info};
 use tracing_subscriber::{fmt, EnvFilter};
@@ -120,13 +121,16 @@ async fn run() -> std::io::Result<()> {
         info!("admin: custom API prefix active ({ADMIN_API_PREFIX_ENV})");
     }
 
-    let http_kernel = web::Data::new(commerce_http_kernel(Some(catalog.clone())));
+    let http_kernel = web::Data::new(commerce_http_kernel(CommerceFrontConfig {
+        catalog: Some(catalog.clone()),
+        admin_auth: admin_auth.clone(),
+        admin_prefix: admin_prefix.as_str().to_owned(),
+        install_root: Some(root.clone()),
+    }));
     let server = HttpServer::new(move || {
         let prefix = admin_prefix.clone();
         App::new()
             .app_data(http_kernel.clone())
-            .app_data(web::Data::new(catalog.clone()))
-            .app_data(web::Data::new(admin_auth.clone()))
             .configure(move |cfg| configure_app(cfg, &prefix))
     })
     .bind(&bind)

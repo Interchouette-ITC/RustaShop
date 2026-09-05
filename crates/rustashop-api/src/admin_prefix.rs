@@ -90,20 +90,9 @@ impl AdminApiPrefix {
     }
 }
 
-/// Registers operator routes under `/v1/{prefix}/…`.
-pub fn configure_admin_routes(cfg: &mut actix_web::web::ServiceConfig, prefix: &AdminApiPrefix) {
-    use actix_web::web;
-
-    use crate::admin_orders::{list_admin_orders, patch_admin_order};
-    use crate::admin_products::list_admin_products;
-
-    cfg.service(
-        web::scope(&prefix.scope_path())
-            .service(list_admin_orders)
-            .service(patch_admin_order)
-            .service(list_admin_products),
-    );
-}
+/// No-op: admin JSON is registered on the Serenade front ([`crate::configure_serenade_front`]).
+#[allow(clippy::missing_const_for_fn)]
+pub fn configure_admin_routes(_cfg: &mut actix_web::web::ServiceConfig, _prefix: &AdminApiPrefix) {}
 
 #[cfg(test)]
 mod tests {
@@ -183,7 +172,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn configure_admin_routes_registers_scope() {
+    async fn configure_admin_routes_is_noop() {
         use actix_web::{test, App};
         let prefix = AdminApiPrefix::parse("opsfolder1").expect("prefix");
         let app =
@@ -193,7 +182,6 @@ mod tests {
             .uri("/v1/opsfolder1/orders")
             .to_request();
         let resp = test::call_service(&app, req).await;
-        // Route exists (auth/app state may 500/401/404); not 404 from missing scope.
-        assert_ne!(resp.status().as_u16(), 404);
+        assert_eq!(resp.status().as_u16(), 404);
     }
 }

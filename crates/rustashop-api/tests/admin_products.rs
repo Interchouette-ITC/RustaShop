@@ -1,7 +1,9 @@
 //! Integration tests for admin product HTTP (#102).
 
 use actix_web::{test, web, App};
-use rustashop_api::{commerce_http_kernel, routes, AdminAuthConfig, ProductListResponse};
+use rustashop_api::{
+    commerce_http_kernel, routes, AdminAuthConfig, CommerceFrontConfig, ProductListResponse,
+};
 use rustashop_persist::CatalogRepository;
 
 const SCHEMA_LOCK: i64 = 874_520;
@@ -16,9 +18,11 @@ async fn admin_products_require_bearer_and_list() {
     let catalog = exclusive_seeded_catalog().await;
     let app = test::init_service(
         App::new()
-            .app_data(web::Data::new(commerce_http_kernel(Some(catalog.clone()))))
-            .app_data(web::Data::new(catalog))
-            .app_data(web::Data::new(AdminAuthConfig::from_token(ADMIN_TOKEN)))
+            .app_data(web::Data::new(commerce_http_kernel(CommerceFrontConfig {
+                catalog: Some(catalog),
+                admin_auth: AdminAuthConfig::from_token(ADMIN_TOKEN),
+                ..CommerceFrontConfig::test_default()
+            })))
             .configure(routes),
     )
     .await;

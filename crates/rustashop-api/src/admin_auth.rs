@@ -1,10 +1,6 @@
 //! Admin bearer token gate for `/v1/{admin_api_prefix}/*`.
 
-use std::future::{ready, Ready};
-
-use actix_web::dev::Payload;
-use actix_web::http::header::AUTHORIZATION;
-use actix_web::{FromRequest, HttpRequest};
+use serenade_http::Headers;
 
 use crate::error::ApiError;
 
@@ -63,23 +59,11 @@ impl AdminAuthConfig {
     }
 }
 
-/// `Authorization: Bearer …` value extracted for admin routes.
-pub struct AdminBearer(pub Option<String>);
-
-impl FromRequest for AdminBearer {
-    type Error = actix_web::Error;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(request: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        ready(Ok(Self(bearer_token(request))))
-    }
-}
-
-fn bearer_token(request: &HttpRequest) -> Option<String> {
-    request
-        .headers()
-        .get(AUTHORIZATION)
-        .and_then(|value| value.to_str().ok())
+/// Reads `Authorization: Bearer …` from Serenade request headers.
+#[must_use]
+pub fn bearer_from_headers(headers: &Headers) -> Option<String> {
+    headers
+        .get("authorization")
         .and_then(|value| value.strip_prefix("Bearer "))
         .map(str::trim)
         .filter(|value| !value.is_empty())
@@ -128,5 +112,16 @@ mod tests {
             config.authorize_bearer(presented),
             Err(ApiError::Unauthorized)
         ));
+    }
+
+    #[test]
+    fn bearer_from_headers_reads_authorization() {
+        let mut headers = Headers::new();
+        headers.insert("Authorization", "Bearer tok");
+        assert_eq!(bearer_from_headers(&headers).as_deref(), Some("tok"));
+        assert_eq!(bearer_from_headers(&Headers::new()), None);
+        let mut blank = Headers::new();
+        blank.insert("authorization", "Bearer   ");
+        assert_eq!(bearer_from_headers(&blank), None);
     }
 }
