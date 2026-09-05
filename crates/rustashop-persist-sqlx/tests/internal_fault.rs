@@ -189,3 +189,118 @@ async fn closed_pool_surfaces_internal_on_begin() {
     reset_schema(&fresh).await;
     unlock(&fresh).await;
 }
+
+async fn expect_checkout_internal(repo: &SqlxCatalogRepository, cart_id: &str, label: &str) {
+    let err = repo.checkout_cart(cart_id, None).await.expect_err(label);
+    assert_internal(&err);
+}
+
+async fn install_reject_cart_update_trigger(pool: &PgPool) {
+    sqlx::query(
+        r"
+CREATE OR REPLACE FUNCTION rustashop_reject_cart_update() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'fault: cart update blocked';
+END;
+$$ LANGUAGE plpgsql;
+",
+    )
+    .execute(pool)
+    .await
+    .expect("fn");
+    sqlx::query(
+        r"
+CREATE TRIGGER rustashop_reject_cart_update
+  BEFORE UPDATE ON cart
+  FOR EACH ROW EXECUTE FUNCTION rustashop_reject_cart_update()
+",
+    )
+    .execute(pool)
+    .await
+    .expect("trigger");
+}
+
+async fn install_fail_commit_trigger(pool: &PgPool) {
+    sqlx::query(
+        r"
+CREATE OR REPLACE FUNCTION rustashop_fail_commit() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'fault: deferred commit blocked';
+END;
+$$ LANGUAGE plpgsql;
+",
+    )
+    .execute(pool)
+    .await
+    .expect("fn commit");
+    sqlx::query(
+        r"
+CREATE CONSTRAINT TRIGGER rustashop_fail_commit
+  AFTER UPDATE ON cart
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW
+  EXECUTE FUNCTION rustashop_fail_commit()
+",
+    )
+    .execute(pool)
+    .await
+    .expect("constraint trigger");
+}
+
+#[tokio::test]
+async fn staged_checkout_faults_hit_deeper_internal_arms() {
+    let Some((pool, repo)) = exclusive_repo().await else {
+        return;
+    };
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    sqlx::query("DROP TABLE cart_line CASCADE")
+        .execute(&pool)
+        .await
+        .expect("drop cart_line");
+    expect_checkout_internal(&repo, &cart.id, "cart_line gone").await;
+    reset_schema(&pool).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    sqlx::query(r#"DROP TABLE "order" CASCADE"#)
+        .execute(&pool)
+        .await
+        .expect("drop order");
+    expect_checkout_internal(&repo, &cart.id, "order gone").await;
+    assert_internal(
+        &repo
+            .list_orders(PageRequest::first(5))
+            .await
+            .expect_err("list orders"),
+    );
+    assert_internal(
+        &repo
+            .update_order_state(
+                "00000000-0000-0000-0000-000000000001",
+                rustashop_domain::OrderState::Paid,
+            )
+            .await
+            .expect_err("update order"),
+    );
+    reset_schema(&pool).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    sqlx::query("DROP TABLE order_line CASCADE")
+        .execute(&pool)
+        .await
+        .expect("drop order_line");
+    expect_checkout_internal(&repo, &cart.id, "order_line gone").await;
+    reset_schema(&pool).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    install_reject_cart_update_trigger(&pool).await;
+    expect_checkout_internal(&repo, &cart.id, "cart update blocked").await;
+    reset_schema(&pool).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    install_fail_commit_trigger(&pool).await;
+    expect_checkout_internal(&repo, &cart.id, "deferred commit").await;
+    reset_schema(&pool).await;
+
+    unlock(&pool).await;
+}
