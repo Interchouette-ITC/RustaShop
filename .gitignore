@@ -17,3 +17,7 @@ shops/**/coverage/
 shops/angular/.vscode/
 admin/**/coverage/
 *.snap.new
+
+# Generated rustdoc copy (rebuild with `make doc`)
+/docs/api-rust/**
+!/docs/api-rust/README.md
