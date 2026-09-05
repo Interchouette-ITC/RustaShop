@@ -230,7 +230,7 @@ async fn insert_order_lines<C: ConnectionTrait>(
     Ok(())
 }
 
-async fn mark_cart_checked_out<C: ConnectionTrait>(
+pub(crate) async fn mark_cart_checked_out<C: ConnectionTrait>(
     db: &C,
     cart_uuid: Uuid,
     cart_id: &str,
@@ -251,7 +251,7 @@ async fn mark_cart_checked_out<C: ConnectionTrait>(
     Ok(())
 }
 
-async fn find_order_by_key<C: ConnectionTrait>(
+pub(crate) async fn find_order_by_key<C: ConnectionTrait>(
     db: &C,
     key: &str,
 ) -> Result<Option<Order>, PersistenceError> {
@@ -390,12 +390,57 @@ mod helper_tests {
             .expect("drop order");
         let err = load_order(&db, Uuid::nil()).await.expect_err("order");
         assert!(matches!(err, PersistenceError::Internal { .. }));
+        let err = find_order_by_key(&db, "any-key")
+            .await
+            .expect_err("find key");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
 
         db.execute_unprepared("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
             .await
             .expect("cleanup");
         crate::migrate(&db).await.expect("migrate again");
         crate::seed_catalog(&db).await.expect("seed");
+
+        let missing = Uuid::new_v4();
+        let err = load_order(&db, missing).await.expect_err("order not found");
+        assert!(matches!(
+            err,
+            PersistenceError::NotFound {
+                entity: "order",
+                ..
+            }
+        ));
+        let err = mark_cart_checked_out(
+            &db,
+            missing,
+            &missing.to_string(),
+            chrono::Utc::now().into(),
+        )
+        .await
+        .expect_err("cart not found");
+        assert!(matches!(
+            err,
+            PersistenceError::NotFound { entity: "cart", .. }
+        ));
+
+        db.execute_unprepared("DROP TABLE cart CASCADE")
+            .await
+            .expect("drop cart");
+        let err = mark_cart_checked_out(
+            &db,
+            missing,
+            &missing.to_string(),
+            chrono::Utc::now().into(),
+        )
+        .await
+        .expect_err("cart table gone");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+
+        db.execute_unprepared("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+            .await
+            .expect("cleanup2");
+        crate::migrate(&db).await.expect("migrate final");
+        crate::seed_catalog(&db).await.expect("seed final");
         db.execute_unprepared("SELECT pg_advisory_unlock(874532)")
             .await
             .expect("unlock");
