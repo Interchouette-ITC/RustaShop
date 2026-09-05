@@ -47,6 +47,8 @@ sea-orm = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serenade-contracts = { workspace = true }
+serenade-http = { workspace = true }
+serenade-http-actix = { workspace = true }
 sqlx = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
