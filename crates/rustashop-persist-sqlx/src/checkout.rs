@@ -325,7 +325,7 @@ async fn find_order_by_key(pool: &PgPool, key: &str) -> Result<Option<Order>, Pe
     Ok(Some(order_from_rows(row, lines)?))
 }
 
-async fn find_order_by_key_tx(
+pub(crate) async fn find_order_by_key_tx(
     tx: &mut Transaction<'_, Postgres>,
     key: &str,
 ) -> Result<Option<Order>, PersistenceError> {
@@ -346,7 +346,7 @@ async fn find_order_by_key_tx(
     Ok(Some(order_from_rows(row, lines)?))
 }
 
-async fn load_order_tx(
+pub(crate) async fn load_order_tx(
     tx: &mut Transaction<'_, Postgres>,
     order_id: &str,
 ) -> Result<Order, PersistenceError> {
@@ -364,7 +364,7 @@ async fn load_order_tx(
     order_from_rows(row, lines)
 }
 
-async fn load_order_lines_tx(
+pub(crate) async fn load_order_lines_tx(
     tx: &mut Transaction<'_, Postgres>,
     order_id: &str,
 ) -> Result<Vec<OrderLineRow>, PersistenceError> {
@@ -562,5 +562,78 @@ mod helper_tests {
     fn internal_maps_message() {
         let err = internal(&sqlx::Error::Protocol("boom".into()));
         assert!(matches!(err, PersistenceError::Internal { .. }));
+    }
+
+    #[tokio::test]
+    async fn load_helpers_map_internal_when_order_tables_missing() {
+        let Ok(url) = std::env::var("DATABASE_URL") else {
+            return;
+        };
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(2)
+            .connect(&url)
+            .await
+            .expect("connect");
+        sqlx::query("SELECT pg_advisory_lock($1)")
+            .bind(874_531_i64)
+            .execute(&pool)
+            .await
+            .expect("lock");
+        sqlx::query("DROP SCHEMA public CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop");
+        sqlx::query("CREATE SCHEMA public")
+            .execute(&pool)
+            .await
+            .expect("create");
+        crate::migrate(&pool).await.expect("migrate");
+
+        sqlx::query("DROP TABLE order_line CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop order_line");
+        let err = load_order_lines_pool(&pool, "00000000-0000-0000-0000-000000000001")
+            .await
+            .expect_err("lines pool");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+
+        let mut tx = pool.begin().await.expect("begin");
+        let err = load_order_lines_tx(&mut tx, "00000000-0000-0000-0000-000000000001")
+            .await
+            .expect_err("lines tx");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+        let _ = tx.rollback().await;
+
+        sqlx::query(r#"DROP TABLE "order" CASCADE"#)
+            .execute(&pool)
+            .await
+            .expect("drop order");
+        let mut tx = pool.begin().await.expect("begin");
+        let err = load_order_tx(&mut tx, "00000000-0000-0000-0000-000000000001")
+            .await
+            .expect_err("load order");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+        let err = find_order_by_key_tx(&mut tx, "missing-key")
+            .await
+            .expect_err("find key tx");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+        let _ = tx.rollback().await;
+
+        sqlx::query("DROP SCHEMA public CASCADE")
+            .execute(&pool)
+            .await
+            .expect("cleanup drop");
+        sqlx::query("CREATE SCHEMA public")
+            .execute(&pool)
+            .await
+            .expect("cleanup create");
+        crate::migrate(&pool).await.expect("migrate again");
+        crate::seed_catalog(&pool).await.expect("seed");
+        sqlx::query("SELECT pg_advisory_unlock($1)")
+            .bind(874_531_i64)
+            .execute(&pool)
+            .await
+            .expect("unlock");
     }
 }

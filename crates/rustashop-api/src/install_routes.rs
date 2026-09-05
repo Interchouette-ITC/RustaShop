@@ -244,6 +244,41 @@ mod tests {
 
     #[actix_web::test]
     #[allow(clippy::await_holding_lock)]
+    async fn complete_maps_io_error_to_500() {
+        let _guard = crate::install_env::INSTALL_PROCESS_ENV_LOCK
+            .lock()
+            .expect("lock");
+        let dir = tempfile_dir("complete-io");
+        let index = install_dist_index(&dir);
+        fs::create_dir_all(index.parent().expect("parent")).expect("mkdir");
+        fs::write(&index, "<!doctype html>").expect("write");
+        let blocker = dir.join("env-blocker");
+        fs::write(&blocker, "x").expect("blocker file");
+        let env_path = blocker.join(".env");
+        unsafe {
+            std::env::set_var(crate::install_fs::ROOT_ENV, &dir);
+            std::env::set_var(crate::install_env::ENV_FILE_ENV, &env_path);
+        }
+        let app =
+            test::init_service(App::new().configure(|cfg| configure_install(cfg, &dir))).await;
+        let req = test::TestRequest::post()
+            .uri("/install/api/complete")
+            .set_json(serde_json::json!({
+                "admin_folder": "newfolderok1",
+                "wipe_confirmed": true
+            }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 500);
+        unsafe {
+            std::env::remove_var(crate::install_fs::ROOT_ENV);
+            std::env::remove_var(crate::install_env::ENV_FILE_ENV);
+        }
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[actix_web::test]
+    #[allow(clippy::await_holding_lock)]
     async fn configure_install_from_env_registers_when_dist_present() {
         let _guard = crate::install_env::INSTALL_PROCESS_ENV_LOCK
             .lock()

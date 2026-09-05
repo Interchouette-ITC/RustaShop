@@ -303,4 +303,52 @@ mod tests {
         }
         let _ = fs::remove_dir_all(&dir);
     }
+
+    #[test]
+    fn upsert_env_file_creates_parent_and_appends_missing_newline() {
+        let dir = std::env::temp_dir().join(format!(
+            "rustashop-env-nested-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let nested = dir.join("a").join("b");
+        let path = nested.join(".env");
+        upsert_env_file(&path, &[("FOO", "1")]).expect("write nested");
+        assert!(path.is_file());
+        fs::write(&path, "FOO=1").expect("no trailing newline");
+        upsert_env_file(&path, &[("BAR", "2")]).expect("append");
+        let body = fs::read_to_string(&path).expect("read");
+        assert!(body.contains("FOO=1"));
+        assert!(body.contains("BAR=2"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn run_install_write_maps_io_error() {
+        let _guard = INSTALL_PROCESS_ENV_LOCK.lock().expect("lock");
+        let dir = std::env::temp_dir().join(format!("rustashop-env-io-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("mkdir");
+        let blocker = dir.join("not-a-dir");
+        fs::write(&blocker, "x").expect("file");
+        let env_path = blocker.join(".env");
+        unsafe {
+            std::env::set_var(crate::install_fs::ROOT_ENV, &dir);
+            std::env::set_var(ENV_FILE_ENV, &env_path);
+        }
+        let err = run_install_write(&InstallWriteOptions {
+            admin_folder: Some("newfolderok1".into()),
+            wipe_confirmed: false,
+        })
+        .expect_err("io");
+        assert!(matches!(err, InstallEnvError::Io(_)));
+        unsafe {
+            std::env::remove_var(crate::install_fs::ROOT_ENV);
+            std::env::remove_var(ENV_FILE_ENV);
+        }
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

@@ -149,3 +149,137 @@ async fn dropped_tables_surface_internal_on_reads_and_checkout() {
     reset_schema(&db).await;
     unlock(&db).await;
 }
+
+async fn expect_checkout_internal(repo: &SeaOrmCatalogRepository, cart_id: &str, label: &str) {
+    let err = repo.checkout_cart(cart_id, None).await.expect_err(label);
+    assert_internal(&err);
+}
+
+async fn install_reject_cart_update_trigger(db: &DatabaseConnection) {
+    db.execute_unprepared(
+        r"
+CREATE OR REPLACE FUNCTION rustashop_reject_cart_update() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'fault: cart update blocked';
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER rustashop_reject_cart_update
+  BEFORE UPDATE ON cart
+  FOR EACH ROW EXECUTE FUNCTION rustashop_reject_cart_update();
+",
+    )
+    .await
+    .expect("trigger");
+}
+
+async fn install_fail_commit_trigger(db: &DatabaseConnection) {
+    db.execute_unprepared(
+        r"
+CREATE OR REPLACE FUNCTION rustashop_fail_commit() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'fault: deferred commit blocked';
+END;
+$$ LANGUAGE plpgsql;
+CREATE CONSTRAINT TRIGGER rustashop_fail_commit
+  AFTER UPDATE ON cart
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW
+  EXECUTE FUNCTION rustashop_fail_commit();
+",
+    )
+    .await
+    .expect("constraint trigger");
+}
+
+#[tokio::test]
+async fn staged_checkout_faults_hit_deeper_internal_arms() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    db.execute_unprepared("DROP TABLE cart_line CASCADE")
+        .await
+        .expect("drop cart_line");
+    expect_checkout_internal(&repo, &cart.id, "cart_line gone").await;
+    assert_internal(
+        &repo
+            .save_cart(&cart)
+            .await
+            .expect_err("save without cart_line"),
+    );
+    reset_schema(&db).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    db.execute_unprepared(r#"DROP TABLE "order" CASCADE"#)
+        .await
+        .expect("drop order");
+    expect_checkout_internal(&repo, &cart.id, "order gone").await;
+    assert_internal(
+        &repo
+            .list_orders(PageRequest::first(5))
+            .await
+            .expect_err("list orders"),
+    );
+    assert_internal(
+        &repo
+            .update_order_state(
+                "00000000-0000-0000-0000-000000000001",
+                rustashop_domain::OrderState::Paid,
+            )
+            .await
+            .expect_err("update order"),
+    );
+    reset_schema(&db).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    db.execute_unprepared("DROP TABLE order_line CASCADE")
+        .await
+        .expect("drop order_line");
+    expect_checkout_internal(&repo, &cart.id, "order_line gone").await;
+    reset_schema(&db).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    install_reject_cart_update_trigger(&db).await;
+    expect_checkout_internal(&repo, &cart.id, "cart update blocked").await;
+    reset_schema(&db).await;
+
+    let cart = seed_cart_with_hoodie(&repo).await;
+    install_fail_commit_trigger(&db).await;
+    expect_checkout_internal(&repo, &cart.id, "deferred commit").await;
+    assert_internal(&repo.save_cart(&cart).await.expect_err("save commit"));
+    reset_schema(&db).await;
+
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn closed_db_surfaces_internal_on_begin() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+    let currency = Currency::new("EUR").expect("EUR");
+    let cart = repo.create_cart(&currency).await.expect("create");
+    unlock(&db).await;
+    db.close_by_ref().await.expect("close");
+    assert_internal(
+        &repo
+            .checkout_cart(&cart.id, None)
+            .await
+            .expect_err("closed db checkout"),
+    );
+    assert_internal(&repo.save_cart(&cart).await.expect_err("closed db save"));
+
+    let Ok(url) = std::env::var("DATABASE_URL") else {
+        return;
+    };
+    let mut options = ConnectOptions::new(url);
+    options.max_connections(1);
+    let fresh = Database::connect(options).await.expect("reconnect");
+    fresh
+        .execute_unprepared(&format!("SELECT pg_advisory_lock({SCHEMA_LOCK})"))
+        .await
+        .expect("relock");
+    reset_schema(&fresh).await;
+    unlock(&fresh).await;
+}

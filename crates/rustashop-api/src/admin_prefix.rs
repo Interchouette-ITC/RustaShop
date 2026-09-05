@@ -175,4 +175,25 @@ mod tests {
         let prefix = AdminApiPrefix::parse("admin").expect("admin");
         assert_eq!(prefix.resource_path("/orders"), "/v1/admin/orders");
     }
+
+    #[test]
+    fn rejects_reserved_openapi_and_install() {
+        assert!(AdminApiPrefix::parse("openapi.json").is_err());
+        assert!(AdminApiPrefix::parse("INSTALL").is_err());
+    }
+
+    #[actix_web::test]
+    async fn configure_admin_routes_registers_scope() {
+        use actix_web::{test, App};
+        let prefix = AdminApiPrefix::parse("opsfolder1").expect("prefix");
+        let app =
+            test::init_service(App::new().configure(|cfg| configure_admin_routes(cfg, &prefix)))
+                .await;
+        let req = test::TestRequest::get()
+            .uri("/v1/opsfolder1/orders")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        // Route exists (auth/app state may 500/401/404); not 404 from missing scope.
+        assert_ne!(resp.status().as_u16(), 404);
+    }
 }

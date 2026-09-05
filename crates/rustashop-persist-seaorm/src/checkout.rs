@@ -299,6 +299,7 @@ pub(crate) async fn load_order_lines<C: ConnectionTrait>(
 #[cfg(test)]
 mod helper_tests {
     use super::*;
+    use sea_orm::{ConnectOptions, Database};
 
     #[test]
     fn money_and_parse_uuid() {
@@ -360,5 +361,43 @@ mod helper_tests {
             order_from_models(sample_order("EUR"), vec![line]),
             Err(PersistenceError::InvalidInput { .. })
         ));
+    }
+
+    #[tokio::test]
+    async fn load_helpers_map_internal_when_order_tables_missing() {
+        let Ok(url) = std::env::var("DATABASE_URL") else {
+            return;
+        };
+        let mut options = ConnectOptions::new(url);
+        options.max_connections(2);
+        let db = Database::connect(options).await.expect("connect");
+        db.execute_unprepared("SELECT pg_advisory_lock(874532)")
+            .await
+            .expect("lock");
+        db.execute_unprepared("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+            .await
+            .expect("reset");
+        crate::migrate(&db).await.expect("migrate");
+
+        db.execute_unprepared("DROP TABLE order_line CASCADE")
+            .await
+            .expect("drop lines");
+        let err = load_order_lines(&db, Uuid::nil()).await.expect_err("lines");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+
+        db.execute_unprepared(r#"DROP TABLE "order" CASCADE"#)
+            .await
+            .expect("drop order");
+        let err = load_order(&db, Uuid::nil()).await.expect_err("order");
+        assert!(matches!(err, PersistenceError::Internal { .. }));
+
+        db.execute_unprepared("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+            .await
+            .expect("cleanup");
+        crate::migrate(&db).await.expect("migrate again");
+        crate::seed_catalog(&db).await.expect("seed");
+        db.execute_unprepared("SELECT pg_advisory_unlock(874532)")
+            .await
+            .expect("unlock");
     }
 }
