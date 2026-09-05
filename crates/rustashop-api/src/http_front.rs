@@ -89,6 +89,10 @@ fn front_matcher() -> UrlMatcher {
             Method::Get,
         ))
         .expect("get product route");
+    // Unhandled name so the kernel `Ok(_)` arm stays reachable in tests.
+    collection
+        .add(Route::with_method("orphan", "/__orphan", Method::Get))
+        .expect("orphan route");
     UrlMatcher::new(collection)
 }
 
@@ -125,7 +129,8 @@ pub fn configure_serenade_front(cfg: &mut actix_web::web::ServiceConfig) {
         .route(
             "/v1/products/{id}",
             actix_web::web::get().to(serenade_dispatch),
-        );
+        )
+        .route("/__orphan", actix_web::web::get().to(serenade_dispatch));
 }
 
 #[cfg(test)]
@@ -163,11 +168,87 @@ mod tests {
                 .configure(configure_serenade_front),
         )
         .await;
-        let req = actix_test::TestRequest::get()
+        let list = actix_test::TestRequest::get()
             .uri("/v1/products")
             .to_request();
+        let list_resp = actix_test::call_service(&app, list).await;
+        assert_eq!(list_resp.status(), 500);
+
+        let get = actix_test::TestRequest::get()
+            .uri("/v1/products/22222222-2222-2222-2222-222222222221")
+            .to_request();
+        let get_resp = actix_test::call_service(&app, get).await;
+        assert_eq!(get_resp.status(), 500);
+    }
+
+    #[actix_web::test]
+    async fn list_products_accepts_query_string() {
+        let kernel = web::Data::new(commerce_http_kernel(None));
+        let app = actix_test::init_service(
+            App::new()
+                .app_data(kernel)
+                .configure(configure_serenade_front),
+        )
+        .await;
+        let req = actix_test::TestRequest::get()
+            .uri("/v1/products?limit=1&offset=0")
+            .to_request();
         let resp = actix_test::call_service(&app, req).await;
+        // No catalog: still exercises query-string injection + list arm.
         assert_eq!(resp.status(), 500);
+    }
+
+    #[actix_web::test]
+    async fn orphan_route_maps_to_not_found() {
+        let kernel = web::Data::new(commerce_http_kernel(None));
+        let app = actix_test::init_service(
+            App::new()
+                .app_data(kernel)
+                .configure(configure_serenade_front),
+        )
+        .await;
+        let req = actix_test::TestRequest::get().uri("/__orphan").to_request();
+        let resp = actix_test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 404);
+    }
+
+    #[actix_web::test]
+    async fn dispatch_maps_unsupported_method() {
+        let kernel = web::Data::new(commerce_http_kernel(None));
+        let request = actix_test::TestRequest::default()
+            .method(actix_web::http::Method::TRACE)
+            .uri("/")
+            .to_http_request();
+        let response = serenade_dispatch(request, web::Bytes::new(), kernel).await;
+        assert_eq!(response.status(), 405);
+    }
+
+    #[actix_web::test]
+    async fn get_product_via_catalog_requires_id() {
+        let response = get_product_via_catalog(None, None).await;
+        assert_eq!(response.status(), 500);
+        let response = get_product_via_catalog(None, Some("x")).await;
+        assert_eq!(response.status(), 500);
+    }
+
+    #[cfg(feature = "persist-sqlx")]
+    #[actix_web::test]
+    async fn get_product_via_catalog_missing_id_with_catalog() {
+        use rustashop_persist_sqlx::SqlxCatalogRepository;
+        use sqlx::postgres::PgPoolOptions;
+
+        let Ok(url) = std::env::var("DATABASE_URL") else {
+            eprintln!("skip: DATABASE_URL is not set");
+            return;
+        };
+        let pool = PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&url)
+            .await
+            .expect("connect");
+        let catalog = SqlxCatalogRepository::new(pool);
+        let response = get_product_via_catalog(Some(&catalog), None).await;
+        assert_eq!(response.status(), 404);
     }
 
     #[actix_web::test]

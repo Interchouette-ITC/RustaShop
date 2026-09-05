@@ -34,9 +34,10 @@ impl ListProductsQuery {
         let mut offset = None;
         for pair in query.split('&') {
             let mut parts = pair.splitn(2, '=');
-            let Some(key) = parts.next() else {
+            let key = parts.next().unwrap_or("");
+            if key.is_empty() {
                 continue;
-            };
+            }
             let value = parts.next().unwrap_or("");
             match key {
                 "limit" => limit = value.parse().ok(),
@@ -228,5 +229,43 @@ mod tests {
         assert_eq!(query.limit, Some(5));
         assert_eq!(query.offset, Some(10));
         assert_eq!(ListProductsQuery::from_query_string(None).limit, None);
+        assert_eq!(ListProductsQuery::from_query_string(Some("")).limit, None);
+        let noisy = ListProductsQuery::from_query_string(Some("&=1&foo=bar&limit=nope"));
+        assert_eq!(noisy.limit, None);
+        assert_eq!(noisy.offset, None);
+    }
+
+    #[test]
+    fn openapi_stubs_are_callable() {
+        list_products();
+        get_product();
+    }
+}
+
+#[cfg(all(test, feature = "persist-sqlx"))]
+mod catalog_error_tests {
+    use super::*;
+    use rustashop_persist_sqlx::SqlxCatalogRepository;
+    use sqlx::postgres::PgPoolOptions;
+
+    #[tokio::test]
+    async fn maps_nul_and_closed_pool_errors() {
+        let Ok(url) = std::env::var("DATABASE_URL") else {
+            eprintln!("skip: DATABASE_URL is not set");
+            return;
+        };
+        let pool = PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&url)
+            .await
+            .expect("connect");
+        let catalog = SqlxCatalogRepository::new(pool.clone());
+        let nul = get_product_response(&catalog, "a\0b").await;
+        assert_eq!(nul.status(), 422);
+        pool.close().await;
+        let list = list_products_response(&catalog, &ListProductsQuery::default()).await;
+        assert_eq!(list.status(), 500);
+        let get = get_product_response(&catalog, "22222222-2222-2222-2222-222222222221").await;
+        assert_eq!(get.status(), 500);
     }
 }

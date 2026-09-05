@@ -49,6 +49,14 @@ async fn products_list_and_get_seeded_rows() {
         .to_request();
     let missing_resp = test::call_service(&app, missing).await;
     assert_eq!(missing_resp.status(), 404);
+
+    let paged = test::TestRequest::get()
+        .uri("/v1/products?limit=1&offset=0")
+        .to_request();
+    let paged_resp = test::call_service(&app, paged).await;
+    assert!(paged_resp.status().is_success());
+    let page: ProductListResponse = test::read_body_json(paged_resp).await;
+    assert_eq!(page.items.len(), 1);
 }
 
 #[cfg(feature = "persist-sqlx")]
