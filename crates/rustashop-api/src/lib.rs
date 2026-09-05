@@ -32,7 +32,9 @@ pub use carts::{
 };
 pub use checkout::{place_order, OrderLineResponse, OrderResponse};
 pub use health::{health_json_body, healthz, HealthResponse};
-pub use http_front::{commerce_http_kernel, configure_serenade_front, serenade_dispatch};
+pub use http_front::{
+    commerce_http_kernel, configure_serenade_front, serenade_dispatch, CommerceFrontConfig,
+};
 pub use install_env::{
     run_install_write, InstallEnvError, InstallWriteOptions, InstallWriteResult,
 };
@@ -62,20 +64,19 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
     configure_app(cfg, &AdminApiPrefix::from_env());
 }
 
-/// Registers HTTP routes with an explicit operator API prefix.
+/// Registers leftover Actix commerce routes (`Swagger` UI, install static files).
 ///
-/// Serenade-fronted routes (`/healthz`, `/v1/products*`, carts, checkout) are registered via
-/// [`configure_serenade_front`]. Leftover Actix: `OpenAPI` UI, admin, install.
-pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPrefix) {
-    cfg.service(openapi_json).service(swagger_ui());
-    configure_admin_routes(cfg, admin_prefix);
+/// Serenade-fronted JSON (health, catalog, cart, checkout, admin, openapi, install API) is
+/// registered via [`configure_serenade_front`].
+pub fn configure_routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(swagger_ui());
     install_routes::configure_install_from_env(cfg);
 }
 
 /// Registers Serenade front routes then leftover Actix commerce routes.
 pub fn configure_app(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPrefix) {
-    configure_serenade_front(cfg);
-    configure_routes(cfg, admin_prefix);
+    configure_serenade_front(cfg, admin_prefix.as_str());
+    configure_routes(cfg);
 }
 
 #[cfg(test)]
@@ -111,7 +112,9 @@ mod tests {
     async fn healthz_returns_ok_json() {
         let app = test::init_service(
             App::new()
-                .app_data(web::Data::new(commerce_http_kernel(None)))
+                .app_data(web::Data::new(commerce_http_kernel(
+                    CommerceFrontConfig::test_default(),
+                )))
                 .configure(routes),
         )
         .await;
@@ -130,7 +133,9 @@ mod tests {
     async fn swagger_ui_serves_html() {
         let app = test::init_service(
             App::new()
-                .app_data(web::Data::new(commerce_http_kernel(None)))
+                .app_data(web::Data::new(commerce_http_kernel(
+                    CommerceFrontConfig::test_default(),
+                )))
                 .configure(routes),
         )
         .await;
@@ -143,7 +148,9 @@ mod tests {
     async fn openapi_json_lists_product_paths() {
         let app = test::init_service(
             App::new()
-                .app_data(web::Data::new(commerce_http_kernel(None)))
+                .app_data(web::Data::new(commerce_http_kernel(
+                    CommerceFrontConfig::test_default(),
+                )))
                 .configure(routes),
         )
         .await;
@@ -165,8 +172,11 @@ mod tests {
         let prefix = AdminApiPrefix::parse("bk-test1").expect("prefix");
         let app = test::init_service(
             App::new()
-                .app_data(web::Data::new(commerce_http_kernel(None)))
-                .app_data(web::Data::new(AdminAuthConfig::from_token("tok")))
+                .app_data(web::Data::new(commerce_http_kernel(CommerceFrontConfig {
+                    admin_auth: AdminAuthConfig::from_token("tok"),
+                    admin_prefix: prefix.as_str().to_owned(),
+                    ..CommerceFrontConfig::test_default()
+                })))
                 .configure(|cfg| configure_app(cfg, &prefix)),
         )
         .await;
@@ -183,7 +193,7 @@ mod tests {
             .insert_header(("Authorization", "Bearer tok"))
             .to_request();
         let custom_resp = test::call_service(&app, custom).await;
-        // No catalog app_data => handler may 500; route must match (not 404).
+        // No catalog => handler may 500; route must match (not 404).
         assert_ne!(custom_resp.status(), 404);
     }
 
@@ -194,10 +204,13 @@ mod tests {
         std::fs::create_dir_all(&dir).expect("mkdir");
         let app = test::init_service(
             App::new()
-                .app_data(web::Data::new(commerce_http_kernel(None)))
+                .app_data(web::Data::new(commerce_http_kernel(CommerceFrontConfig {
+                    install_root: Some(dir.clone()),
+                    ..CommerceFrontConfig::test_default()
+                })))
                 .configure(|cfg| {
                     install_routes::configure_install(cfg, &dir);
-                    configure_serenade_front(cfg);
+                    configure_serenade_front(cfg, DEFAULT_ADMIN_API_PREFIX);
                 }),
         )
         .await;
@@ -217,7 +230,15 @@ mod tests {
         std::fs::create_dir_all(index.parent().unwrap()).expect("mkdir");
         std::fs::write(&index, "<!doctype html><title>i</title>").expect("write");
         let app = test::init_service(
-            App::new().configure(|cfg| install_routes::configure_install(cfg, &dir)),
+            App::new()
+                .app_data(web::Data::new(commerce_http_kernel(CommerceFrontConfig {
+                    install_root: Some(dir.clone()),
+                    ..CommerceFrontConfig::test_default()
+                })))
+                .configure(|cfg| {
+                    configure_serenade_front(cfg, DEFAULT_ADMIN_API_PREFIX);
+                    install_routes::configure_install(cfg, &dir);
+                }),
         )
         .await;
         let req = test::TestRequest::get()

@@ -1,6 +1,5 @@
 //! `OpenAPI` document and Swagger UI for the Actix API.
 
-use actix_web::{get, HttpResponse, Responder};
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa::{Modify, OpenApi};
 use utoipa_swagger_ui::SwaggerUi;
@@ -11,7 +10,7 @@ use crate::carts::{
     UpdateCartLineRequest,
 };
 use crate::checkout::{CheckoutRequest, OrderLineResponse, OrderResponse};
-use crate::error::ErrorBody;
+use crate::error::{json_response, ErrorBody};
 use crate::health::HealthResponse;
 use crate::products::{
     ProductDetailResponse, ProductListResponse, ProductResponse, ProductVariantResponse,
@@ -76,19 +75,38 @@ impl Modify for AdminSecurityAddon {
 )]
 pub struct ApiDoc;
 
-/// `GET /openapi.json` handler.
+/// Serenade JSON body for `GET /openapi.json`.
+#[must_use]
+pub fn openapi_json_response() -> serenade_http::Response {
+    json_response(200, &ApiDoc::openapi())
+}
+
+/// `GET /openapi.json` `OpenAPI` path (served by the Serenade HTTP front controller).
 #[utoipa::path(
     get,
     path = "/openapi.json",
     responses((status = 200, description = "OpenAPI document"))
 )]
-#[get("/openapi.json")]
-pub async fn openapi_json() -> impl Responder {
-    HttpResponse::Ok().json(ApiDoc::openapi())
-}
+#[allow(clippy::missing_const_for_fn)]
+pub fn openapi_json() {}
 
-/// Swagger UI at `/swagger-ui/`, pointed at [`openapi_json`].
+/// Swagger UI at `/swagger-ui/`, pointed at `/openapi.json`.
 #[must_use]
 pub fn swagger_ui() -> SwaggerUi {
     SwaggerUi::new("/swagger-ui/{_:.*}").url("/openapi.json", ApiDoc::openapi())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn openapi_stub_is_callable() {
+        openapi_json();
+    }
+
+    #[test]
+    fn openapi_json_response_is_ok() {
+        assert_eq!(openapi_json_response().status(), 200);
+    }
 }
