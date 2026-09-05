@@ -2,7 +2,7 @@
 
 use rustashop_domain::{CartLine, CartStatus, Currency, Money};
 use rustashop_persist_seaorm::{migrate, seed_catalog, SeaOrmCatalogRepository};
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection};
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, TransactionTrait};
 use serenade_contracts::{CartRepository, PersistenceError};
 
 const HOODIE_VARIANT: &str = "33333333-3333-3333-3333-333333333331";
@@ -482,6 +482,136 @@ async fn find_cart_and_order_reject_corrupt_rows() {
         repo.get_order(&order.id).await,
         Err(PersistenceError::InvalidInput { .. })
     ));
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn find_variant_rejects_orphan_product() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+    db.execute_unprepared(
+        "ALTER TABLE product_variant DROP CONSTRAINT IF EXISTS product_variant_product_id_fkey",
+    )
+    .await
+    .expect("drop fk");
+    db.execute_unprepared(&format!(
+        "DELETE FROM product WHERE id = (
+            SELECT product_id FROM product_variant WHERE id = '{HOODIE_VARIANT}'::uuid
+        )"
+    ))
+    .await
+    .expect("delete product");
+    let err = repo
+        .find_variant_for_cart(HOODIE_VARIANT)
+        .await
+        .expect_err("orphan product");
+    assert!(matches!(
+        err,
+        PersistenceError::NotFound {
+            entity: "product",
+            ..
+        }
+    ));
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn checkout_rejects_overflow_line_total() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+    let cart = cart_with_hoodie(&repo).await;
+    db.execute_unprepared(&format!(
+        "UPDATE cart_line SET unit_price_minor = {}, quantity = 2 WHERE cart_id = '{}'::uuid",
+        i64::MAX,
+        cart.id
+    ))
+    .await
+    .expect("overflow price");
+    let err = repo
+        .checkout_cart(&cart.id, None)
+        .await
+        .expect_err("overflow");
+    assert!(matches!(err, PersistenceError::InvalidInput { .. }));
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn checkout_checked_out_cart_returns_existing_order_in_txn() {
+    let Some((db, repo)) = race_repo().await else {
+        return;
+    };
+    let cart = cart_with_hoodie(&repo).await;
+    let key = "seaorm-checked-out-in-txn";
+    let hold = db.begin().await.expect("begin hold");
+    hold.execute_unprepared(&format!(
+        "SELECT id FROM cart WHERE id = '{}'::uuid FOR UPDATE",
+        cart.id
+    ))
+    .await
+    .expect("lock cart");
+
+    let cart_id = cart.id.clone();
+    let repo_clone = SeaOrmCatalogRepository::new(db.clone());
+    let join = tokio::spawn(async move { repo_clone.checkout_cart(&cart_id, Some(key)).await });
+    // Hold the row lock until checkout is blocked on FOR UPDATE.
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+
+    hold.execute_unprepared(&format!(
+        r#"INSERT INTO "order" (
+            number, cart_id, state, currency, items_total_minor, total_minor,
+            idempotency_key, placed_at
+        ) VALUES (
+            'RS-hold-checked', '{0}'::uuid, 'placed', 'EUR', 100, 100, '{1}', NOW()
+        )"#,
+        cart.id, key
+    ))
+    .await
+    .expect("insert order");
+    hold.execute_unprepared(&format!(
+        "UPDATE cart SET status = 'checked_out' WHERE id = '{}'::uuid",
+        cart.id
+    ))
+    .await
+    .expect("mark checked out");
+    hold.commit().await.expect("commit hold");
+
+    let order = join.await.expect("join").expect("checkout");
+    assert_eq!(order.idempotency_key.as_deref(), Some(key));
+    unlock(&db).await;
+}
+
+#[tokio::test]
+async fn checkout_recovers_unique_idempotency_conflict() {
+    let Some((db, repo)) = race_repo().await else {
+        return;
+    };
+    let cart_a = cart_with_hoodie(&repo).await;
+    let cart_b = cart_with_hoodie(&repo).await;
+    let key = "seaorm-unique-recover";
+    let hold = db.begin().await.expect("begin hold");
+    hold.execute_unprepared(&format!(
+        r#"INSERT INTO "order" (
+            number, cart_id, state, currency, items_total_minor, total_minor,
+            idempotency_key, placed_at
+        ) VALUES (
+            'RS-hold-unique', '{0}'::uuid, 'placed', 'EUR', 100, 100, '{1}', NOW()
+        )"#,
+        cart_a.id, key
+    ))
+    .await
+    .expect("insert uncommitted order");
+
+    let cart_b_id = cart_b.id.clone();
+    let repo_clone = SeaOrmCatalogRepository::new(db.clone());
+    let join = tokio::spawn(async move { repo_clone.checkout_cart(&cart_b_id, Some(key)).await });
+    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    hold.commit().await.expect("commit hold");
+
+    let order = join.await.expect("join").expect("recover");
+    assert_eq!(order.idempotency_key.as_deref(), Some(key));
+    assert_eq!(count_orders_by_key(&db, key).await, 1);
     unlock(&db).await;
 }
 
