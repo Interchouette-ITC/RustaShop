@@ -254,6 +254,119 @@ async fn staged_checkout_faults_hit_deeper_internal_arms() {
 }
 
 #[tokio::test]
+async fn cart_load_lines_delete_and_checkout_replay_internals() {
+    let Some((db, repo)) = exclusive_repo().await else {
+        return;
+    };
+
+    // load_lines Internal: cart header present, cart_line table gone.
+    let cart = seed_cart_with_hoodie(&repo).await;
+    db.execute_unprepared("DROP TABLE cart_line CASCADE")
+        .await
+        .expect("drop cart_line");
+    assert_internal(
+        &repo
+            .find_cart_by_id(&cart.id)
+            .await
+            .expect_err("find load_lines"),
+    );
+    assert_internal(
+        &serenade_contracts::CartRepository::find_by_token(&repo, &cart.token)
+            .await
+            .expect_err("token load_lines"),
+    );
+    reset_schema(&db).await;
+
+    // delete Internal when cart table is gone.
+    let cart = seed_cart_with_hoodie(&repo).await;
+    db.execute_unprepared("DROP TABLE cart CASCADE")
+        .await
+        .expect("drop cart");
+    assert_internal(
+        &serenade_contracts::CartRepository::delete(&repo, &cart.id)
+            .await
+            .expect_err("delete"),
+    );
+    reset_schema(&db).await;
+
+    // product lookup Internal after variant row still exists.
+    let cart = seed_cart_with_hoodie(&repo).await;
+    let _ = cart;
+    db.execute_unprepared("ALTER TABLE product DROP COLUMN name")
+        .await
+        .expect("break product");
+    assert_internal(
+        &repo
+            .find_variant_for_cart(HOODIE_VARIANT)
+            .await
+            .expect_err("product broken"),
+    );
+    reset_schema(&db).await;
+
+    // save_cart line insert Internal (delete_many still works).
+    let cart = seed_cart_with_hoodie(&repo).await;
+    db.execute_unprepared(
+        r"
+CREATE OR REPLACE FUNCTION rustashop_reject_line_insert() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'fault: cart_line insert blocked';
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER rustashop_reject_line_insert
+  BEFORE INSERT ON cart_line
+  FOR EACH ROW EXECUTE FUNCTION rustashop_reject_line_insert();
+",
+    )
+    .await
+    .expect("line insert trigger");
+    assert_internal(&repo.save_cart(&cart).await.expect_err("line insert"));
+    reset_schema(&db).await;
+
+    // save_cart header update Internal.
+    let cart = seed_cart_with_hoodie(&repo).await;
+    install_reject_cart_update_trigger(&db).await;
+    assert_internal(&repo.save_cart(&cart).await.expect_err("cart update"));
+    reset_schema(&db).await;
+
+    // find_order_by_key Internal after a real order exists (lines table dropped).
+    let cart = seed_cart_with_hoodie(&repo).await;
+    let key = "seaorm-replay-key";
+    let order = repo
+        .checkout_cart(&cart.id, Some(key))
+        .await
+        .expect("checkout");
+    assert_eq!(order.idempotency_key.as_deref(), Some(key));
+    db.execute_unprepared("DROP TABLE order_line CASCADE")
+        .await
+        .expect("drop order_line");
+    assert_internal(
+        &repo
+            .checkout_cart(&cart.id, Some(key))
+            .await
+            .expect_err("replay lines gone"),
+    );
+    reset_schema(&db).await;
+
+    // Checked-out cart + unused key: cart_status conflict path inside txn.
+    let cart = seed_cart_with_hoodie(&repo).await;
+    repo.checkout_cart(&cart.id, None)
+        .await
+        .expect("first checkout");
+    let err = repo
+        .checkout_cart(&cart.id, Some("unused-after-checkout"))
+        .await
+        .expect_err("checked out");
+    assert!(matches!(
+        err,
+        PersistenceError::Conflict {
+            constraint: "cart_status"
+        }
+    ));
+
+    unlock(&db).await;
+}
+
+#[tokio::test]
 async fn closed_db_surfaces_internal_on_begin() {
     let Some((db, repo)) = exclusive_repo().await else {
         return;
