@@ -1,16 +1,13 @@
-//! Checkout HTTP handler.
+//! Checkout handler (JSON via Serenade front; `OpenAPI` stub stays here).
 
-use std::future::{ready, Ready};
-
-use actix_web::dev::Payload;
-use actix_web::{post, web, FromRequest, HttpRequest, HttpResponse};
 use rustashop_domain::Order;
 use rustashop_persist::CatalogRepository;
 use serde::{Deserialize, Serialize};
+use serenade_http::Response;
 use utoipa::ToSchema;
 
 use crate::carts::MoneyResponse;
-use crate::error::{ApiError, ErrorBody};
+use crate::error::{api_error_json_response, json_response, ApiError, ErrorBody};
 use crate::request_param::{ensure_request_param, ensure_request_param_opt};
 
 /// Body for `POST /v1/checkout`.
@@ -102,28 +99,44 @@ impl From<Order> for OrderResponse {
     }
 }
 
-struct IdempotencyKey(Option<String>);
-
-impl FromRequest for IdempotencyKey {
-    type Error = actix_web::Error;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(request: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        ready(Ok(Self(idempotency_key(request))))
-    }
+fn parse_json_body<T: for<'de> Deserialize<'de>>(body: &[u8]) -> Result<T, ApiError> {
+    serde_json::from_slice(body).map_err(|error| ApiError::Unprocessable(error.to_string()))
 }
 
-fn idempotency_key(request: &HttpRequest) -> Option<String> {
-    request
-        .headers()
+/// Reads optional `Idempotency-Key` header (case-insensitive via Serenade headers).
+#[must_use]
+pub fn idempotency_key_from_headers(headers: &serenade_http::Headers) -> Option<String> {
+    headers
         .get("idempotency-key")
-        .and_then(|value| value.to_str().ok())
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(ToOwned::to_owned)
 }
 
-/// Converts a cart into a placed order.
+/// Converts a cart into a placed order as a Serenade JSON [`Response`].
+pub async fn place_order_response(
+    catalog: &CatalogRepository,
+    body: &[u8],
+    idempotency_key: Option<&str>,
+) -> Response {
+    let request = match parse_json_body::<CheckoutRequest>(body) {
+        Ok(request) => request,
+        Err(error) => return api_error_json_response(&error),
+    };
+    if let Err(error) = ensure_request_param(&request.cart_id) {
+        return api_error_json_response(&error);
+    }
+    let key = match ensure_request_param_opt(idempotency_key) {
+        Ok(key) => key,
+        Err(error) => return api_error_json_response(&error),
+    };
+    match catalog.checkout_cart(&request.cart_id, key).await {
+        Ok(order) => json_response(201, &OrderResponse::from(order)),
+        Err(error) => api_error_json_response(&ApiError::from_persist(&error)),
+    }
+}
+
+/// `POST /v1/checkout` `OpenAPI` path (served by the Serenade HTTP front controller).
 #[utoipa::path(
     post,
     path = "/v1/checkout",
@@ -136,17 +149,80 @@ fn idempotency_key(request: &HttpRequest) -> Option<String> {
         (status = 422, description = "Empty cart", body = ErrorBody)
     )
 )]
-#[post("/v1/checkout")]
-pub async fn place_order(
-    store: web::Data<CatalogRepository>,
-    key: IdempotencyKey,
-    body: web::Json<CheckoutRequest>,
-) -> Result<HttpResponse, ApiError> {
-    ensure_request_param(&body.cart_id)?;
-    let key = ensure_request_param_opt(key.0.as_deref())?;
-    let order = store
-        .checkout_cart(&body.cart_id, key)
-        .await
-        .map_err(|error| ApiError::from_persist(&error))?;
-    Ok(HttpResponse::Created().json(OrderResponse::from(order)))
+#[allow(clippy::missing_const_for_fn)]
+pub fn place_order() {}
+
+#[cfg(test)]
+mod stub_tests {
+    use super::*;
+    use serenade_http::Headers;
+
+    #[test]
+    fn openapi_stub_is_callable() {
+        place_order();
+    }
+
+    #[test]
+    fn reads_idempotency_header() {
+        let mut headers = Headers::new();
+        headers.insert("Idempotency-Key", "  abc  ");
+        assert_eq!(
+            idempotency_key_from_headers(&headers).as_deref(),
+            Some("abc")
+        );
+        assert_eq!(idempotency_key_from_headers(&Headers::new()), None);
+        let mut blank = Headers::new();
+        blank.insert("idempotency-key", "   ");
+        assert_eq!(idempotency_key_from_headers(&blank), None);
+    }
+}
+
+#[cfg(all(test, feature = "persist-sqlx"))]
+mod checkout_response_tests {
+    use super::*;
+    use rustashop_persist_sqlx::{migrate, seed_catalog, SqlxCatalogRepository};
+    use sqlx::postgres::PgPoolOptions;
+
+    // Shared with other rustashop-api lib tests that reset `public`.
+    const SCHEMA_LOCK: i64 = 874_521;
+
+    #[tokio::test]
+    async fn covers_bad_body_and_missing_cart() {
+        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
+        let pool = PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&url)
+            .await
+            .expect("connect");
+        sqlx::query("SELECT pg_advisory_lock($1)")
+            .bind(SCHEMA_LOCK)
+            .execute(&pool)
+            .await
+            .expect("lock");
+        sqlx::query("DROP SCHEMA public CASCADE")
+            .execute(&pool)
+            .await
+            .expect("drop");
+        sqlx::query("CREATE SCHEMA public")
+            .execute(&pool)
+            .await
+            .expect("create");
+        migrate(&pool).await.expect("migrate");
+        seed_catalog(&pool).await.expect("seed");
+        let catalog = SqlxCatalogRepository::new(pool);
+
+        let bad = place_order_response(&catalog, b"{}", None).await;
+        assert_eq!(bad.status(), 422);
+
+        let missing = place_order_response(
+            &catalog,
+            br#"{"cart_id":"11111111-1111-1111-1111-111111111111"}"#,
+            None,
+        )
+        .await;
+        assert_eq!(missing.status(), 404);
+
+        let nul = place_order_response(&catalog, br#"{"cart_id":"a\u0000b"}"#, Some("k")).await;
+        assert_eq!(nul.status(), 422);
+    }
 }

@@ -64,17 +64,10 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
 
 /// Registers HTTP routes with an explicit operator API prefix.
 ///
-/// Serenade-fronted routes (`/healthz`, `/v1/products*`) are registered via
-/// [`configure_serenade_front`].
+/// Serenade-fronted routes (`/healthz`, `/v1/products*`, carts, checkout) are registered via
+/// [`configure_serenade_front`]. Leftover Actix: `OpenAPI` UI, admin, install.
 pub fn configure_routes(cfg: &mut web::ServiceConfig, admin_prefix: &AdminApiPrefix) {
-    cfg.service(openapi_json)
-        .service(swagger_ui())
-        .service(create_cart)
-        .service(get_cart)
-        .service(add_cart_line)
-        .service(update_cart_line)
-        .service(delete_cart_line)
-        .service(place_order);
+    cfg.service(openapi_json).service(swagger_ui());
     configure_admin_routes(cfg, admin_prefix);
     install_routes::configure_install_from_env(cfg);
 }

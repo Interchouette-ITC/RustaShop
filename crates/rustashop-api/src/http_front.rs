@@ -7,6 +7,11 @@ use serenade_http::{
 };
 use serenade_http_actix::{conversion_error, from_actix, to_actix};
 
+use crate::carts::{
+    add_cart_line_response, create_cart_response, delete_cart_line_response, get_cart_response,
+    update_cart_line_response,
+};
+use crate::checkout::{idempotency_key_from_headers, place_order_response};
 use crate::error::{api_error_json_response, ApiError};
 use crate::health::health_json_body;
 use crate::products::{get_product_response, list_products_response, ListProductsQuery};
@@ -14,12 +19,18 @@ use crate::products::{get_product_response, list_products_response, ListProducts
 const HEALTHZ_ROUTE: &str = "healthz";
 const LIST_PRODUCTS_ROUTE: &str = "list_products";
 const GET_PRODUCT_ROUTE: &str = "get_product";
+const CREATE_CART_ROUTE: &str = "create_cart";
+const GET_CART_ROUTE: &str = "get_cart";
+const ADD_CART_LINE_ROUTE: &str = "add_cart_line";
+const UPDATE_CART_LINE_ROUTE: &str = "update_cart_line";
+const DELETE_CART_LINE_ROUTE: &str = "delete_cart_line";
+const PLACE_ORDER_ROUTE: &str = "place_order";
 const QUERY_STRING_ATTR: &str = "query_string";
 
 /// Builds the Serenade async kernel for routes already moved off Actix handlers.
 ///
-/// Pass `Some(catalog)` for product routes. Unit tests without a database may pass `None`
-/// (product paths then return 503).
+/// Pass `Some(catalog)` for catalog/cart/checkout routes. Unit tests without a database may pass
+/// `None` (those paths then return 503-equivalent internal error JSON).
 #[must_use]
 pub fn commerce_http_kernel(catalog: Option<CatalogRepository>) -> AsyncHttpKernel {
     let routes = front_matcher();
@@ -30,7 +41,10 @@ pub fn commerce_http_kernel(catalog: Option<CatalogRepository>) -> AsyncHttpKern
             .attributes()
             .get::<String>(QUERY_STRING_ATTR)
             .cloned();
-        let product_id = request.attributes().get::<String>("id").cloned();
+        let id = request.attributes().get::<String>("id").cloned();
+        let line_id = request.attributes().get::<String>("line_id").cloned();
+        let body = request.body().to_vec();
+        let idempotency = idempotency_key_from_headers(request.headers());
         box_future(async move {
             match outcome {
                 Ok(found) if found.route_name() == HEALTHZ_ROUTE => Ok(healthz_response()),
@@ -38,8 +52,37 @@ pub fn commerce_http_kernel(catalog: Option<CatalogRepository>) -> AsyncHttpKern
                     Ok(list_products_via_catalog(catalog.as_ref(), query.as_deref()).await)
                 }
                 Ok(found) if found.route_name() == GET_PRODUCT_ROUTE => {
-                    Ok(get_product_via_catalog(catalog.as_ref(), product_id.as_deref()).await)
+                    Ok(get_product_via_catalog(catalog.as_ref(), id.as_deref()).await)
                 }
+                Ok(found) if found.route_name() == CREATE_CART_ROUTE => {
+                    Ok(create_cart_via_catalog(catalog.as_ref(), &body).await)
+                }
+                Ok(found) if found.route_name() == GET_CART_ROUTE => {
+                    Ok(get_cart_via_catalog(catalog.as_ref(), id.as_deref()).await)
+                }
+                Ok(found) if found.route_name() == ADD_CART_LINE_ROUTE => {
+                    Ok(add_cart_line_via_catalog(catalog.as_ref(), id.as_deref(), &body).await)
+                }
+                Ok(found) if found.route_name() == UPDATE_CART_LINE_ROUTE => {
+                    Ok(update_cart_line_via_catalog(
+                        catalog.as_ref(),
+                        id.as_deref(),
+                        line_id.as_deref(),
+                        &body,
+                    )
+                    .await)
+                }
+                Ok(found) if found.route_name() == DELETE_CART_LINE_ROUTE => {
+                    Ok(delete_cart_line_via_catalog(
+                        catalog.as_ref(),
+                        id.as_deref(),
+                        line_id.as_deref(),
+                    )
+                    .await)
+                }
+                Ok(found) if found.route_name() == PLACE_ORDER_ROUTE => Ok(
+                    place_order_via_catalog(catalog.as_ref(), &body, idempotency.as_deref()).await,
+                ),
                 Ok(_) => Err(HttpError::not_found("no handler")),
                 Err(error) => Err(error),
             }
@@ -70,6 +113,86 @@ async fn get_product_via_catalog(
     get_product_response(catalog, product_id).await
 }
 
+async fn create_cart_via_catalog(catalog: Option<&CatalogRepository>, body: &[u8]) -> Response {
+    let Some(catalog) = catalog else {
+        return api_error_json_response(&ApiError::Internal);
+    };
+    create_cart_response(catalog, body).await
+}
+
+async fn get_cart_via_catalog(
+    catalog: Option<&CatalogRepository>,
+    cart_id: Option<&str>,
+) -> Response {
+    let Some(catalog) = catalog else {
+        return api_error_json_response(&ApiError::Internal);
+    };
+    let Some(cart_id) = cart_id else {
+        return api_error_json_response(&ApiError::NotFound);
+    };
+    get_cart_response(catalog, cart_id).await
+}
+
+async fn add_cart_line_via_catalog(
+    catalog: Option<&CatalogRepository>,
+    cart_id: Option<&str>,
+    body: &[u8],
+) -> Response {
+    let Some(catalog) = catalog else {
+        return api_error_json_response(&ApiError::Internal);
+    };
+    let Some(cart_id) = cart_id else {
+        return api_error_json_response(&ApiError::NotFound);
+    };
+    add_cart_line_response(catalog, cart_id, body).await
+}
+
+async fn update_cart_line_via_catalog(
+    catalog: Option<&CatalogRepository>,
+    cart_id: Option<&str>,
+    line_id: Option<&str>,
+    body: &[u8],
+) -> Response {
+    let Some(catalog) = catalog else {
+        return api_error_json_response(&ApiError::Internal);
+    };
+    let Some(cart_id) = cart_id else {
+        return api_error_json_response(&ApiError::NotFound);
+    };
+    let Some(line_id) = line_id else {
+        return api_error_json_response(&ApiError::NotFound);
+    };
+    update_cart_line_response(catalog, cart_id, line_id, body).await
+}
+
+async fn delete_cart_line_via_catalog(
+    catalog: Option<&CatalogRepository>,
+    cart_id: Option<&str>,
+    line_id: Option<&str>,
+) -> Response {
+    let Some(catalog) = catalog else {
+        return api_error_json_response(&ApiError::Internal);
+    };
+    let Some(cart_id) = cart_id else {
+        return api_error_json_response(&ApiError::NotFound);
+    };
+    let Some(line_id) = line_id else {
+        return api_error_json_response(&ApiError::NotFound);
+    };
+    delete_cart_line_response(catalog, cart_id, line_id).await
+}
+
+async fn place_order_via_catalog(
+    catalog: Option<&CatalogRepository>,
+    body: &[u8],
+    idempotency_key: Option<&str>,
+) -> Response {
+    let Some(catalog) = catalog else {
+        return api_error_json_response(&ApiError::Internal);
+    };
+    place_order_response(catalog, body, idempotency_key).await
+}
+
 fn front_matcher() -> UrlMatcher {
     let mut collection = RouteCollection::new();
     collection
@@ -89,6 +212,48 @@ fn front_matcher() -> UrlMatcher {
             Method::Get,
         ))
         .expect("get product route");
+    collection
+        .add(Route::with_method(
+            CREATE_CART_ROUTE,
+            "/v1/carts",
+            Method::Post,
+        ))
+        .expect("create cart route");
+    collection
+        .add(Route::with_method(
+            GET_CART_ROUTE,
+            "/v1/carts/{id}",
+            Method::Get,
+        ))
+        .expect("get cart route");
+    collection
+        .add(Route::with_method(
+            ADD_CART_LINE_ROUTE,
+            "/v1/carts/{id}/lines",
+            Method::Post,
+        ))
+        .expect("add cart line route");
+    collection
+        .add(Route::with_method(
+            UPDATE_CART_LINE_ROUTE,
+            "/v1/carts/{id}/lines/{line_id}",
+            Method::Patch,
+        ))
+        .expect("update cart line route");
+    collection
+        .add(Route::with_method(
+            DELETE_CART_LINE_ROUTE,
+            "/v1/carts/{id}/lines/{line_id}",
+            Method::Delete,
+        ))
+        .expect("delete cart line route");
+    collection
+        .add(Route::with_method(
+            PLACE_ORDER_ROUTE,
+            "/v1/checkout",
+            Method::Post,
+        ))
+        .expect("place order route");
     // Unhandled name so the kernel `Ok(_)` arm stays reachable in tests.
     collection
         .add(Route::with_method("orphan", "/__orphan", Method::Get))
@@ -130,6 +295,24 @@ pub fn configure_serenade_front(cfg: &mut actix_web::web::ServiceConfig) {
             "/v1/products/{id}",
             actix_web::web::get().to(serenade_dispatch),
         )
+        .route("/v1/carts", actix_web::web::post().to(serenade_dispatch))
+        .route(
+            "/v1/carts/{id}",
+            actix_web::web::get().to(serenade_dispatch),
+        )
+        .route(
+            "/v1/carts/{id}/lines",
+            actix_web::web::post().to(serenade_dispatch),
+        )
+        .route(
+            "/v1/carts/{id}/lines/{line_id}",
+            actix_web::web::patch().to(serenade_dispatch),
+        )
+        .route(
+            "/v1/carts/{id}/lines/{line_id}",
+            actix_web::web::delete().to(serenade_dispatch),
+        )
+        .route("/v1/checkout", actix_web::web::post().to(serenade_dispatch))
         .route("/__orphan", actix_web::web::get().to(serenade_dispatch));
 }
 
@@ -182,6 +365,35 @@ mod tests {
     }
 
     #[actix_web::test]
+    async fn cart_checkout_without_catalog_return_internal() {
+        let kernel = web::Data::new(commerce_http_kernel(None));
+        let app = actix_test::init_service(
+            App::new()
+                .app_data(kernel)
+                .configure(configure_serenade_front),
+        )
+        .await;
+        let create = actix_test::TestRequest::post()
+            .uri("/v1/carts")
+            .set_json(serde_json::json!({ "currency": "EUR" }))
+            .to_request();
+        assert_eq!(actix_test::call_service(&app, create).await.status(), 500);
+
+        let get = actix_test::TestRequest::get()
+            .uri("/v1/carts/11111111-1111-1111-1111-111111111111")
+            .to_request();
+        assert_eq!(actix_test::call_service(&app, get).await.status(), 500);
+
+        let checkout = actix_test::TestRequest::post()
+            .uri("/v1/checkout")
+            .set_json(serde_json::json!({
+                "cart_id": "11111111-1111-1111-1111-111111111111"
+            }))
+            .to_request();
+        assert_eq!(actix_test::call_service(&app, checkout).await.status(), 500);
+    }
+
+    #[actix_web::test]
     async fn list_products_accepts_query_string() {
         let kernel = web::Data::new(commerce_http_kernel(None));
         let app = actix_test::init_service(
@@ -229,6 +441,79 @@ mod tests {
         assert_eq!(response.status(), 500);
         let response = get_product_via_catalog(None, Some("x")).await;
         assert_eq!(response.status(), 500);
+    }
+
+    #[actix_web::test]
+    async fn cart_helpers_require_path_params() {
+        assert_eq!(get_cart_via_catalog(None, None).await.status(), 500);
+        assert_eq!(
+            add_cart_line_via_catalog(None, None, b"{}").await.status(),
+            500
+        );
+        assert_eq!(
+            update_cart_line_via_catalog(None, None, None, b"{}")
+                .await
+                .status(),
+            500
+        );
+        assert_eq!(
+            delete_cart_line_via_catalog(None, None, None)
+                .await
+                .status(),
+            500
+        );
+    }
+
+    #[cfg(feature = "persist-sqlx")]
+    #[actix_web::test]
+    async fn cart_helpers_missing_path_with_catalog() {
+        use rustashop_persist_sqlx::SqlxCatalogRepository;
+        use sqlx::postgres::PgPoolOptions;
+
+        let Ok(url) = std::env::var("DATABASE_URL") else {
+            eprintln!("skip: DATABASE_URL is not set");
+            return;
+        };
+        let pool = PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&url)
+            .await
+            .expect("connect");
+        let catalog = SqlxCatalogRepository::new(pool);
+        assert_eq!(
+            get_cart_via_catalog(Some(&catalog), None).await.status(),
+            404
+        );
+        assert_eq!(
+            add_cart_line_via_catalog(Some(&catalog), None, b"{}")
+                .await
+                .status(),
+            404
+        );
+        assert_eq!(
+            update_cart_line_via_catalog(Some(&catalog), None, Some("l"), b"{}")
+                .await
+                .status(),
+            404
+        );
+        assert_eq!(
+            update_cart_line_via_catalog(Some(&catalog), Some("c"), None, b"{}")
+                .await
+                .status(),
+            404
+        );
+        assert_eq!(
+            delete_cart_line_via_catalog(Some(&catalog), None, Some("l"))
+                .await
+                .status(),
+            404
+        );
+        assert_eq!(
+            delete_cart_line_via_catalog(Some(&catalog), Some("c"), None)
+                .await
+                .status(),
+            404
+        );
     }
 
     #[cfg(feature = "persist-sqlx")]
